@@ -1,11 +1,23 @@
 package com.felhr.usbserial;
 
-public abstract class UsbSerialDevice 
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbDeviceConnection;
+
+public abstract class UsbSerialDevice implements UsbSerialInterface
 {
+	private UsbDevice device;
+	private UsbDeviceConnection connection;
 	
-	public UsbSerialDevice()
+	private Object readBufferLock;
+	private Object writeBufferLock;
+	
+	public UsbSerialDevice(UsbDevice device, UsbDeviceConnection connection)
 	{
-		
+		this.device = device;
+		this.connection = connection;
+		this.readBufferLock = new Object();
+		this.writeBufferLock = new Object();
 	}
+	
 
 }
