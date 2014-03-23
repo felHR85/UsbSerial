@@ -54,13 +54,26 @@ public class SerialBuffer
 	
 	public void putReadBuffer(ByteBuffer data)
 	{
-		// TO-DO
+		synchronized(mReadLock)
+		{
+			try
+			{
+				readBuffer.put(data);
+			}catch(BufferOverflowException e)
+			{
+				// TO-DO
+			}
+		}
 	}
 	
 	public byte[] getReadBuffer()
 	{
-		// TO-DO
-		return null;
+		synchronized(mReadLock)
+		{
+			byte[] data = readBuffer.array();
+			readBuffer.clear();
+			return data;
+		}
 	}
 
 }
