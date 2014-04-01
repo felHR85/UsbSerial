@@ -7,7 +7,6 @@ public class SerialBuffer
 {
 	private static final int DEFAULT_WRITE_BUFFER_SIZE = 16 * 1024;
 	private static final int DEFAULT_READ_BUFFER_SIZE = 16 * 1024;
-	
 	private ByteBuffer writeBuffer;
 	private ByteBuffer readBuffer;	
 	private Object mReadLock;
