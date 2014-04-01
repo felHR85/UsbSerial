@@ -1,12 +1,16 @@
 package com.felhr.usbserial;
 
+import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
+import android.util.Log;
 
 public class CP2102SerialDevice extends UsbSerialDevice
 {
+	private static final String CLASS_ID = CP2102SerialDevice.class.getSimpleName();
+	
 	private static final int CP210x_IFC_ENABLE = 0x00;
 	private static final int CP210x_SET_BAUDDIV = 0x01;
 	private static final int CP210x_SET_LINE_CTL = 0x03;
@@ -35,6 +39,8 @@ public class CP2102SerialDevice extends UsbSerialDevice
 	private static final int CP210x_MHS_ALL = 0x0011;
 	private static final int CP210x_XON = 0x0000;
 	private static final int CP210x_XOFF = 0x0000;
+	private static final int USB_TIMEOUT = 5000;
+	private static final int DEFAULT_BAUDRATE = 9600;
 	
 	private UsbInterface mInterface;
 	private UsbEndpoint inEndpoint;
@@ -43,13 +49,39 @@ public class CP2102SerialDevice extends UsbSerialDevice
 	public CP2102SerialDevice(UsbDevice device, UsbDeviceConnection connection) 
 	{
 		super(device, connection);
-		
 	}
 
 	@Override
 	public void open() 
 	{
-		// TODO
+		mInterface = device.getInterface(0); // CP2102 has only one interface
+		
+		if(connection.claimInterface(mInterface, true))
+		{
+			Log.i(CLASS_ID, "Interface succesfully claimed");
+		}else
+		{
+			Log.i(CLASS_ID, "Interface could not be claimed");
+		}
+		
+		int numberEndpoints = mInterface.getEndpointCount();
+		for(int i=0;i<=numberEndpoints-1;i++)
+		{
+			UsbEndpoint endpoint = mInterface.getEndpoint(i);
+			if(endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK
+					&& endpoint.getDirection() == UsbConstants.USB_DIR_IN)
+			{
+				inEndpoint = endpoint;
+			}else
+			{
+				outEndpoint = endpoint;
+			}
+		}
+		
+		// Default Setup
+		setControlCommand(CP210x_IFC_ENABLE, CP210x_UART_ENABLE, null);
+		setBaudRate(DEFAULT_BAUDRATE);
+		
 	}
 
 	@Override
@@ -75,7 +107,13 @@ public class CP2102SerialDevice extends UsbSerialDevice
 	@Override
 	public void setBaudRate(int baudRate) 
 	{
-		// TODO 
+		byte[] data = new byte[] {
+				(byte) (baudRate & 0xff),
+				(byte) (baudRate >> 8 & 0xff),
+				(byte) (baudRate >> 16 & 0xff),
+				(byte) (baudRate >> 24 & 0xff)
+		};
+		setControlCommand(CP210x_SET_BAUDRATE, 0, data);
 	}
 
 	@Override
@@ -104,7 +142,12 @@ public class CP2102SerialDevice extends UsbSerialDevice
 	
 	private int setControlCommand(int request, int value, byte[] data)
 	{
-		return 0;
+		int dataLength = 0;
+		if(data != null)
+		{
+			dataLength = data.length;
+		}
+		return connection.controlTransfer(CP210x_REQTYPE_HOST2DEVICE, request, value, 0, data, dataLength, USB_TIMEOUT);
 	}
 
 }
