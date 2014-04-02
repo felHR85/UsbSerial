@@ -81,7 +81,9 @@ public class CP2102SerialDevice extends UsbSerialDevice
 		// Default Setup
 		setControlCommand(CP210x_IFC_ENABLE, CP210x_UART_ENABLE, null);
 		setBaudRate(DEFAULT_BAUDRATE);
-		
+		setControlCommand(CP210x_SET_LINE_CTL, CP210x_LINE_CTL_DEFAULT,null);
+		setFlowControl(UsbSerialInterface.FLOW_CONTROL_OFF);
+		setControlCommand(CP210x_SET_MHS, CP210x_MHS_DEFAULT, null);
 	}
 
 	@Override
@@ -137,7 +139,25 @@ public class CP2102SerialDevice extends UsbSerialDevice
 	@Override
 	public void setFlowControl(int flowControl) 
 	{
-		// TODO Auto-generated method stub
+		switch(flowControl)
+		{
+		case UsbSerialInterface.FLOW_CONTROL_OFF:
+			byte[] data = new byte[]{
+					0x00000000,
+					0x00000000	
+			};
+			setControlCommand(CP210x_SET_FLOW, 0, data);
+			break;
+		case UsbSerialInterface.FLOW_CONTROL_RTS_CTS_IN:
+			// TO-DO
+			break;
+		case UsbSerialInterface.FLOW_CONTROL_RTS_CTS_OUT:
+			// TO-DO
+			break;
+		case UsbSerialInterface.FLOW_CONTROL_XON_XOFF_OUT:
+			// TO-DO
+			break;
+		}
 	}
 	
 	private int setControlCommand(int request, int value, byte[] data)
