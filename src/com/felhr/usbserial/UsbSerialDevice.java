@@ -1,7 +1,9 @@
 package com.felhr.usbserial;
 
+import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
+import android.hardware.usb.UsbRequest;
 
 public abstract class UsbSerialDevice implements UsbSerialInterface
 {
@@ -42,5 +44,39 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 	public abstract void setParity(int parity);
 	@Override
 	public abstract void setFlowControl(int flowControl);
+	
+	
+	protected class WorkerThread extends Thread
+	{
+		private UsbReadCallback callback;
+		
+		@Override
+		public void run()
+		{
+			UsbRequest request = connection.requestWait();
+			if(request.getEndpoint().getDirection() == UsbConstants.USB_DIR_IN) // Read
+			{
+				
+			}else // Write
+			{
+				
+			}
+		}
+		
+		public void setCallback(UsbReadCallback callback)
+		{
+			this.callback = callback;
+		}
+		
+		private void onReceivedData(byte[] data)
+		{
+			callback.onReceivedData(data);
+		}
+	}
+	
+	public interface UsbReadCallback
+	{
+		public void onReceivedData(byte[] data);
+	}
 	
 }

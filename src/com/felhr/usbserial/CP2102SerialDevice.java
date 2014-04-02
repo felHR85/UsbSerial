@@ -5,6 +5,7 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
+import android.hardware.usb.UsbRequest;
 import android.util.Log;
 
 public class CP2102SerialDevice extends UsbSerialDevice
@@ -45,6 +46,8 @@ public class CP2102SerialDevice extends UsbSerialDevice
 	private UsbInterface mInterface;
 	private UsbEndpoint inEndpoint;
 	private UsbEndpoint outEndpoint;
+	private UsbRequest requestIN;
+	private UsbRequest requestOUT;
 
 	public CP2102SerialDevice(UsbDevice device, UsbDeviceConnection connection) 
 	{
@@ -54,6 +57,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
 	@Override
 	public void open() 
 	{
+		// Get and claim interface
 		mInterface = device.getInterface(0); // CP2102 has only one interface
 		
 		if(connection.claimInterface(mInterface, true))
@@ -64,6 +68,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
 			Log.i(CLASS_ID, "Interface could not be claimed");
 		}
 		
+		// Assign endpoints
 		int numberEndpoints = mInterface.getEndpointCount();
 		for(int i=0;i<=numberEndpoints-1;i++)
 		{
@@ -84,12 +89,19 @@ public class CP2102SerialDevice extends UsbSerialDevice
 		setControlCommand(CP210x_SET_LINE_CTL, CP210x_LINE_CTL_DEFAULT,null);
 		setFlowControl(UsbSerialInterface.FLOW_CONTROL_OFF);
 		setControlCommand(CP210x_SET_MHS, CP210x_MHS_DEFAULT, null);
+		
+		// Initialize UsbRequest
+		requestIN = new UsbRequest();
+		requestOUT = new UsbRequest();
+		requestIN.initialize(connection, inEndpoint);
+		requestOUT.initialize(connection, outEndpoint);
 	}
 
 	@Override
 	public void write(byte[] buffer) 
 	{
-		// TODO 
+		serialBuffer.putWriteBuffer(buffer);
+		requestOUT.queue(serialBuffer.getWriteBuffer(), buffer.length);
 	}
 
 	// This methods is going to need callback
