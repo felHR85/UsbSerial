@@ -5,8 +5,8 @@ import java.nio.ByteBuffer;
 
 public class SerialBuffer 
 {
-	private static final int DEFAULT_WRITE_BUFFER_SIZE = 16 * 1024;
-	private static final int DEFAULT_READ_BUFFER_SIZE = 16 * 1024;
+	public static final int DEFAULT_WRITE_BUFFER_SIZE = 16 * 1024;
+	public static final int DEFAULT_READ_BUFFER_SIZE = 16 * 1024;
 	private ByteBuffer writeBuffer;
 	private ByteBuffer readBuffer;	
 	private Object mReadLock;
@@ -45,9 +45,7 @@ public class SerialBuffer
 	{
 		synchronized(mWriteLock)
 		{
-			ByteBuffer buff = writeBuffer;
-			writeBuffer.clear();
-			return buff;
+			return writeBuffer;
 		}
 	}
 	
@@ -65,14 +63,22 @@ public class SerialBuffer
 		}
 	}
 	
-	public byte[] getReadBuffer()
+	public ByteBuffer getReadBuffer()
 	{
 		synchronized(mReadLock)
 		{
-			byte[] data = readBuffer.array();
-			readBuffer.clear();
-			return data;
+			return readBuffer;
 		}
+	}
+	
+	public void clearWriteBuffer()
+	{
+		writeBuffer.clear();
+	}
+	
+	public void clearReadBuffer()
+	{
+		readBuffer.clear();
 	}
 
 }

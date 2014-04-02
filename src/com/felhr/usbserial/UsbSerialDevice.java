@@ -1,5 +1,7 @@
 package com.felhr.usbserial;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
@@ -49,17 +51,26 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 	protected class WorkerThread extends Thread
 	{
 		private UsbReadCallback callback;
+		private AtomicBoolean working;
+		
+		public WorkerThread()
+		{
+			working.set(true);
+		}
 		
 		@Override
 		public void run()
 		{
-			UsbRequest request = connection.requestWait();
-			if(request.getEndpoint().getDirection() == UsbConstants.USB_DIR_IN) // Read
+			while(working.get())
 			{
-				
-			}else // Write
-			{
-				
+				UsbRequest request = connection.requestWait();
+				if(request.getEndpoint().getDirection() == UsbConstants.USB_DIR_IN) // Read
+				{
+					
+				}else // Write
+				{
+
+				}
 			}
 		}
 		
@@ -71,6 +82,11 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 		private void onReceivedData(byte[] data)
 		{
 			callback.onReceivedData(data);
+		}
+		
+		public void stopWorkingThread()
+		{
+			working.set(false);
 		}
 	}
 	

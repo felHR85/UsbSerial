@@ -108,7 +108,9 @@ public class CP2102SerialDevice extends UsbSerialDevice
 	@Override
 	public int read() 
 	{
-		// TODO 
+		// Input parameter, callback reference
+		// callback reference needed to be passed to WorkingThread
+		requestIN.queue(serialBuffer.getReadBuffer(), SerialBuffer.DEFAULT_READ_BUFFER_SIZE); 
 		return 0;
 	}
 
