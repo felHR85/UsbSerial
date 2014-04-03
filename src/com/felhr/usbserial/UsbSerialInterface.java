@@ -32,7 +32,7 @@ public interface UsbSerialInterface
 	// Common Usb Serial Operations (I/O Asynchronous)
 	public void open();
 	public void write(byte[] buffer);
-	public int read();
+	public int read(UsbReadCallback mCallback);
 	public void close();
 	
 	// Serial port configuration
@@ -41,5 +41,11 @@ public interface UsbSerialInterface
 	public void setStopBits(int stopBits);
 	public void setParity(int parity);
 	public void setFlowControl(int flowControl);
+	
+	// Usb Read Callback
+	public interface UsbReadCallback
+	{
+		public void onReceivedData(byte[] data);
+	}
 	
 }

@@ -104,12 +104,12 @@ public class CP2102SerialDevice extends UsbSerialDevice
 		requestOUT.queue(serialBuffer.getWriteBuffer(), buffer.length);
 	}
 
-	// This methods is going to need callback
 	@Override
-	public int read() 
+	public int read(UsbReadCallback mCallback) 
 	{
-		// Input parameter, callback reference
-		// callback reference needed to be passed to WorkingThread
+		workerThread.setCallback(mCallback);
+		listenThread = new ListenThread(requestIN);
+		listenThread.start();
 		requestIN.queue(serialBuffer.getReadBuffer(), SerialBuffer.DEFAULT_READ_BUFFER_SIZE); 
 		return 0;
 	}

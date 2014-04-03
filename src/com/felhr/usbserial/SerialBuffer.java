@@ -73,12 +73,18 @@ public class SerialBuffer
 	
 	public void clearWriteBuffer()
 	{
-		writeBuffer.clear();
+		synchronized(mWriteLock)
+		{
+			writeBuffer.clear();
+		}
 	}
 	
 	public void clearReadBuffer()
 	{
-		readBuffer.clear();
+		synchronized(mReadLock)
+		{
+			readBuffer.clear();
+		}
 	}
 
 }

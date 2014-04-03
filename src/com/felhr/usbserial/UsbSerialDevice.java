@@ -5,16 +5,24 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
+import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbRequest;
+import android.util.Log;
 
 public abstract class UsbSerialDevice implements UsbSerialInterface
 {
+	private static final String CLASS_ID = UsbSerialDevice.class.getSimpleName();
+	
 	protected final UsbDevice device;
 	protected final UsbDeviceConnection connection;
 	
 	protected SerialBuffer serialBuffer;
 	protected final Object readBufferLock;
 	protected final Object writeBufferLock;
+	
+	private Object objectMonitor;
+	protected ListenThread listenThread;
+	protected WorkerThread workerThread;
 	
 	public UsbSerialDevice(UsbDevice device, UsbDeviceConnection connection)
 	{
@@ -23,6 +31,8 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 		this.readBufferLock = new Object();
 		this.writeBufferLock = new Object();
 		serialBuffer = new SerialBuffer(readBufferLock, writeBufferLock);
+		workerThread = new WorkerThread();
+		workerThread.start();
 	}
 	
 	// Common Usb Serial Operations (I/O Asynchronous)
@@ -31,7 +41,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 	@Override
 	public abstract void write(byte[] buffer);
 	@Override
-	public abstract int read();
+	public abstract int read(UsbReadCallback mCallback);
 	@Override
 	public abstract void close();
 	
@@ -47,7 +57,9 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 	@Override
 	public abstract void setFlowControl(int flowControl);
 	
-	
+	/*
+	 * WorkerThread waits for request notifications regardless of whether they come from IN or OUT endpoints
+	 */
 	protected class WorkerThread extends Thread
 	{
 		private UsbReadCallback callback;
@@ -66,11 +78,17 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 				UsbRequest request = connection.requestWait();
 				if(request.getEndpoint().getDirection() == UsbConstants.USB_DIR_IN) // Read
 				{
-					
+					byte[] data = serialBuffer.getReadBuffer().array();
+					Log.i(CLASS_ID, "Received data length: " + String.valueOf(data.length));
+					serialBuffer.clearReadBuffer();
+					onReceivedData(data);
 				}else // Write
 				{
-
+					int pos = serialBuffer.getWriteBuffer().position();
+					Log.i(CLASS_ID, "Send data length: "  + String.valueOf(pos + 1));
+					serialBuffer.clearWriteBuffer();
 				}
+				objectMonitor.notify();
 			}
 		}
 		
@@ -90,9 +108,46 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 		}
 	}
 	
-	public interface UsbReadCallback
+	/*
+	 * 
+	 */
+	protected class ListenThread extends Thread
 	{
-		public void onReceivedData(byte[] data);
+		private UsbRequest requestIN;
+		private AtomicBoolean listening;
+		
+		protected ListenThread(UsbRequest requestIN)
+		{
+			listening = new AtomicBoolean(true);
+			this.requestIN = requestIN;
+		}
+		
+		@Override
+		public void run()
+		{
+			while(listening.get())
+			{
+				synchronized(objectMonitor)
+				{
+					try 
+					{
+						objectMonitor.wait();
+					} catch (InterruptedException e) 
+					{
+						e.printStackTrace();
+					}
+
+					requestIN.queue(serialBuffer.getReadBuffer(), SerialBuffer.DEFAULT_READ_BUFFER_SIZE);
+				}
+			}
+			
+		}
+		
+		public void stopListenThread()
+		{
+			listening.set(false);
+		}
+		
 	}
 	
 }
