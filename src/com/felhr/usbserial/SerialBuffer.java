@@ -12,12 +12,12 @@ public class SerialBuffer
 	private Object mReadLock;
 	private Object mWriteLock;
 	
-	public SerialBuffer(Object mReadLock, Object mWriteLock)
+	public SerialBuffer()
 	{
 		writeBuffer = ByteBuffer.allocate(DEFAULT_WRITE_BUFFER_SIZE);
 		readBuffer = ByteBuffer.allocate(DEFAULT_READ_BUFFER_SIZE);
-		this.mReadLock = mReadLock;
-		this.mWriteLock = mWriteLock;
+		this.mReadLock =  new Object();
+		this.mWriteLock = new Object();
 	}
 	
 	public void putWriteBuffer(byte[] data)

@@ -117,7 +117,10 @@ public class CP2102SerialDevice extends UsbSerialDevice
 	@Override
 	public void close() 
 	{
-		// TODO 
+		setControlCommand(CP210x_IFC_ENABLE, CP210x_UART_DISABLE, null);
+		connection.close();
+		workerThread.stopWorkingThread();
+		listenThread.stopListenThread();
 	}
 
 	@Override
@@ -147,7 +150,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
 	@Override
 	public void setParity(int parity) 
 	{
-		// TODO Auto-generated method stub
+		// TODO
 	}
 
 	@Override
@@ -181,7 +184,9 @@ public class CP2102SerialDevice extends UsbSerialDevice
 		{
 			dataLength = data.length;
 		}
-		return connection.controlTransfer(CP210x_REQTYPE_HOST2DEVICE, request, value, 0, data, dataLength, USB_TIMEOUT);
+		int response = connection.controlTransfer(CP210x_REQTYPE_HOST2DEVICE, request, value, 0, data, dataLength, USB_TIMEOUT);
+		Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
+		return response;
 	}
 
 }

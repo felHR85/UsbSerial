@@ -17,8 +17,6 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 	protected final UsbDeviceConnection connection;
 	
 	protected SerialBuffer serialBuffer;
-	protected final Object readBufferLock;
-	protected final Object writeBufferLock;
 	
 	private Object objectMonitor;
 	protected ListenThread listenThread;
@@ -28,9 +26,8 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 	{
 		this.device = device;
 		this.connection = connection;
-		this.readBufferLock = new Object();
-		this.writeBufferLock = new Object();
-		serialBuffer = new SerialBuffer(readBufferLock, writeBufferLock);
+		this.objectMonitor = new Object();
+		serialBuffer = new SerialBuffer();
 		workerThread = new WorkerThread();
 		workerThread.start();
 	}
@@ -88,7 +85,10 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 					Log.i(CLASS_ID, "Send data length: "  + String.valueOf(pos + 1));
 					serialBuffer.clearWriteBuffer();
 				}
-				objectMonitor.notify();
+				synchronized(objectMonitor)
+				{
+					objectMonitor.notify();
+				}
 			}
 		}
 		
