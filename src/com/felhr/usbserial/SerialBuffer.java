@@ -76,6 +76,7 @@ public class SerialBuffer
 		synchronized(mReadLock)
 		{
 			byte[] dst = new byte[readBuffer.position()];
+			readBuffer.position(0);
 			readBuffer.get(dst, 0, dst.length);
 			return dst;
 		}
