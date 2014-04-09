@@ -15,6 +15,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
 	private static final int CP210x_IFC_ENABLE = 0x00;
 	private static final int CP210x_SET_BAUDDIV = 0x01;
 	private static final int CP210x_SET_LINE_CTL = 0x03;
+	private static final int CP210x_GET_LINE_CTL = 0x04;
 	private static final int CP210x_SET_MHS = 0x07;
 	private static final int CP210x_SET_BAUDRATE = 0x1E;
 	private static final int CP210x_SET_FLOW = 0x13;
@@ -138,7 +139,8 @@ public class CP2102SerialDevice extends UsbSerialDevice
 	@Override
 	public void setDataBits(int dataBits) 
 	{
-		// TODO 
+		byte[] data = getCTL();
+		
 	}
 
 	@Override
@@ -187,6 +189,13 @@ public class CP2102SerialDevice extends UsbSerialDevice
 		int response = connection.controlTransfer(CP210x_REQTYPE_HOST2DEVICE, request, value, 0, data, dataLength, USB_TIMEOUT);
 		Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
 		return response;
+	}
+	
+	private byte[] getCTL()
+	{
+		byte[] data = new byte[2];
+		setControlCommand(CP210x_GET_LINE_CTL, 0, data);
+		return data;
 	}
 
 }
