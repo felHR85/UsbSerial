@@ -71,6 +71,16 @@ public class SerialBuffer
 		}
 	}
 	
+	public byte[] getDataReceived()
+	{
+		synchronized(mReadLock)
+		{
+			byte[] dst = new byte[readBuffer.position()];
+			readBuffer.get(dst, 0, dst.length);
+			return dst;
+		}
+	}
+	
 	public void clearWriteBuffer()
 	{
 		synchronized(mWriteLock)

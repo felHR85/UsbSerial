@@ -5,7 +5,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
-import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbRequest;
 import android.util.Log;
 
@@ -64,7 +63,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 		
 		public WorkerThread()
 		{
-			working.set(true);
+			working = new AtomicBoolean(true);
 		}
 		
 		@Override
@@ -75,7 +74,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 				UsbRequest request = connection.requestWait();
 				if(request.getEndpoint().getDirection() == UsbConstants.USB_DIR_IN) // Read
 				{
-					byte[] data = serialBuffer.getReadBuffer().array();
+					byte[] data = serialBuffer.getDataReceived();
 					Log.i(CLASS_ID, "Received data length: " + String.valueOf(data.length));
 					serialBuffer.clearReadBuffer();
 					onReceivedData(data);
