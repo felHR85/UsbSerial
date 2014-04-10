@@ -41,14 +41,12 @@ public class CP2102SerialDevice extends UsbSerialDevice
 	private static final int CP210x_MHS_ALL = 0x0011;
 	private static final int CP210x_XON = 0x0000;
 	private static final int CP210x_XOFF = 0x0000;
-	private static final int USB_TIMEOUT = 5000;
 	private static final int DEFAULT_BAUDRATE = 9600;
 	
 	private UsbInterface mInterface;
 	private UsbEndpoint inEndpoint;
 	private UsbEndpoint outEndpoint;
 	private UsbRequest requestIN;
-	private UsbRequest requestOUT;
 
 	public CP2102SerialDevice(UsbDevice device, UsbDeviceConnection connection) 
 	{
@@ -84,6 +82,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
 			}
 		}
 		
+		
 		// Default Setup
 		setControlCommand(CP210x_IFC_ENABLE, CP210x_UART_ENABLE, null);
 		setBaudRate(DEFAULT_BAUDRATE);
@@ -93,24 +92,22 @@ public class CP2102SerialDevice extends UsbSerialDevice
 		
 		// Initialize UsbRequest
 		requestIN = new UsbRequest();
-		requestOUT = new UsbRequest();
 		requestIN.initialize(connection, inEndpoint);
-		requestOUT.initialize(connection, outEndpoint);
+		
+		// Pass references to the threads
+		workerThread.setUsbRequest(requestIN);
 	}
 
 	@Override
 	public void write(byte[] buffer) 
 	{
-		serialBuffer.putWriteBuffer(buffer);
-		requestOUT.queue(serialBuffer.getWriteBuffer(), buffer.length);
+		connection.bulkTransfer(outEndpoint, buffer, buffer.length, USB_TIMEOUT);
 	}
 
 	@Override
 	public int read(UsbReadCallback mCallback) 
 	{
 		workerThread.setCallback(mCallback);
-		listenThread = new ListenThread(requestIN);
-		listenThread.start();
 		requestIN.queue(serialBuffer.getReadBuffer(), SerialBuffer.DEFAULT_READ_BUFFER_SIZE); 
 		return 0;
 	}
@@ -121,7 +118,6 @@ public class CP2102SerialDevice extends UsbSerialDevice
 		setControlCommand(CP210x_IFC_ENABLE, CP210x_UART_DISABLE, null);
 		connection.close();
 		workerThread.stopWorkingThread();
-		listenThread.stopListenThread();
 	}
 
 	@Override
