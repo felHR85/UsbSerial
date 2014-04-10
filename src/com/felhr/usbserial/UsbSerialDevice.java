@@ -78,15 +78,17 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 					Log.i(CLASS_ID, "Received data length: " + String.valueOf(data.length));
 					serialBuffer.clearReadBuffer();
 					onReceivedData(data);
+					
+					synchronized(objectMonitor)
+					{
+						objectMonitor.notify();
+					}
+					
 				}else // Write
 				{
 					int pos = serialBuffer.getWriteBuffer().position();
 					Log.i(CLASS_ID, "Send data length: "  + String.valueOf(pos + 1));
 					serialBuffer.clearWriteBuffer();
-				}
-				synchronized(objectMonitor)
-				{
-					objectMonitor.notify();
 				}
 			}
 		}
