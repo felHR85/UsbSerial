@@ -72,12 +72,16 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 		{
 			while(working.get())
 			{
-				connection.requestWait();
-				byte[] data = serialBuffer.getDataReceived();
-				Log.i(CLASS_ID, "Received data length: " + String.valueOf(data.length));
-				serialBuffer.clearReadBuffer();
-				onReceivedData(data);
-				requestIN.queue(serialBuffer.getReadBuffer(), SerialBuffer.DEFAULT_READ_BUFFER_SIZE);
+				UsbRequest request = connection.requestWait();
+				if(request != null && request.getEndpoint().getType() == UsbConstants.USB_ENDPOINT_XFER_BULK
+						&& request.getEndpoint().getDirection() == UsbConstants.USB_DIR_IN)
+				{
+					byte[] data = serialBuffer.getDataReceived();
+					Log.i(CLASS_ID, "Received data length: " + String.valueOf(data.length));
+					serialBuffer.clearReadBuffer();
+					onReceivedData(data);
+					requestIN.queue(serialBuffer.getReadBuffer(), SerialBuffer.DEFAULT_READ_BUFFER_SIZE);
+				}
 			}
 		}
 		
