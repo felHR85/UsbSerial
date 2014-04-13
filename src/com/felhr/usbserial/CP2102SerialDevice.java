@@ -23,6 +23,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
 	private static final int CP210x_SET_XOFF = 0x0A;
 	
 	private static final int CP210x_REQTYPE_HOST2DEVICE = 0x41;
+	private static final int CP210x_REQTYPE_DEVICE2HOST = 0xC1;
 	
 	/***
 	 *  Default Serial Configuration
@@ -136,19 +137,94 @@ public class CP2102SerialDevice extends UsbSerialDevice
 	public void setDataBits(int dataBits) 
 	{
 		byte[] data = getCTL();
+		switch(dataBits)
+		{
+		case UsbSerialInterface.DATA_BITS_5:
+			data[1] = 5;
+			break;
+		case UsbSerialInterface.DATA_BITS_6:
+			data[1] = 6;
+			break;
+		case UsbSerialInterface.DATA_BITS_7:
+			data[1] = 7;
+			break;
+		case UsbSerialInterface.DATA_BITS_8:
+			data[1] = 8;
+			break;
+		default:
+			return;
+		}
+		byte wValue =  (byte) ((data[1] << 8) | (data[0] & 0xFF));
+		setControlCommand(CP210x_SET_LINE_CTL, wValue, null);
 		
 	}
 
 	@Override
 	public void setStopBits(int stopBits) 
 	{
-		// TODO 
+		byte[] data = getCTL();
+		switch(stopBits)
+		{
+		case UsbSerialInterface.STOP_BITS_1:
+			data[0] &= ~1;
+			data[0] &= ~(1 << 1);
+			break;
+		case UsbSerialInterface.STOP_BITS_15:
+			data[0] |= 1;
+			data[0] &= ~(1 << 1) ;
+			break;
+		case UsbSerialInterface.STOP_BITS_2:
+			data[0] &= ~1;
+			data[0] |= (1 << 1);
+			break;
+		default:
+			return;
+		}
+		byte wValue =  (byte) ((data[1] << 8) | (data[0] & 0xFF));
+		setControlCommand(CP210x_SET_LINE_CTL, wValue, null);
 	}
 
 	@Override
 	public void setParity(int parity) 
 	{
-		// TODO
+		byte[] data = getCTL();
+		switch(parity)
+		{
+		case UsbSerialInterface.PARITY_NONE:
+			data[0] &= ~(1 << 4);
+			data[0] &= ~(1 << 5);
+			data[0] &= ~(1 << 6);
+			data[0] &= ~(1 << 7);
+			break;
+		case UsbSerialInterface.PARITY_ODD:
+			data[0] |= (1 << 4);
+			data[0] &= ~(1 << 5);
+			data[0] &= ~(1 << 6);
+			data[0] &= ~(1 << 7);
+			break;
+		case UsbSerialInterface.PARITY_EVEN:
+			data[0] &= ~(1 << 4);
+			data[0] |= (1 << 5);
+			data[0] &= ~(1 << 6);
+			data[0] &= ~(1 << 7);
+			break;
+		case UsbSerialInterface.PARITY_MARK:
+			data[0] |= (1 << 4);
+			data[0] |= (1 << 5);
+			data[0] &= ~(1 << 6);
+			data[0] &= ~(1 << 7);
+			break;
+		case UsbSerialInterface.PARITY_SPACE:
+			data[0] &= ~(1 << 4);
+			data[0] &= ~(1 << 5);
+			data[0] |= (1 << 6);
+			data[0] &= ~(1 << 7);
+			break;
+		default:
+			return;
+		}
+		byte wValue =  (byte) ((data[1] << 8) | (data[0] & 0xFF));
+		setControlCommand(CP210x_SET_LINE_CTL, wValue, null);
 	}
 
 	@Override
@@ -190,7 +266,8 @@ public class CP2102SerialDevice extends UsbSerialDevice
 	private byte[] getCTL()
 	{
 		byte[] data = new byte[2];
-		setControlCommand(CP210x_GET_LINE_CTL, 0, data);
+		int response = connection.controlTransfer(CP210x_REQTYPE_DEVICE2HOST, CP210x_GET_LINE_CTL, 0, 0, data, data.length,  USB_TIMEOUT );
+		Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
 		return data;
 	}
 
