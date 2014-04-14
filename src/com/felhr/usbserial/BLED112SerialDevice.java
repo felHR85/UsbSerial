@@ -38,6 +38,7 @@ public class BLED112SerialDevice extends UsbSerialDevice
 	};
 	
 	private static final int BLED112_DEFAULT_CONTROL_LINE = 0x0003;
+	private static final int BLED112_DISCONNECT_CONTROL_LINE = 0x0002;
 	
 	private UsbInterface mInterface;
 	private UsbEndpoint inEndpoint;
@@ -109,6 +110,7 @@ public class BLED112SerialDevice extends UsbSerialDevice
 	@Override
 	public void close() 
 	{
+		setControlCommand(BLED112_SET_CONTROL_LINE_STATE, BLED112_DISCONNECT_CONTROL_LINE , null);
 		killWorkingThread();
 		connection.close();
 	}
