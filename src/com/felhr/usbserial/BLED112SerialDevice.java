@@ -115,28 +115,86 @@ public class BLED112SerialDevice extends UsbSerialDevice
 	@Override
 	public void setBaudRate(int baudRate) 
 	{
-		// TODO Auto-generated method stub
+		byte[] data = getLineCoding();
 		
+		data[3] = (byte) (baudRate & 0xff);
+		data[2] = (byte) (baudRate >> 8 & 0xff);
+		data[1] = (byte) (baudRate >> 16 & 0xff);
+		data[0] = (byte) (baudRate >> 24 & 0xff);
+		
+		setControlCommand(BLED112_SET_LINE_CODING, 0, data);
 	}
 
 	@Override
 	public void setDataBits(int dataBits)
 	{
-		// TODO Auto-generated method stub
+		byte[] data = getLineCoding();
+		switch(dataBits)
+		{
+		case UsbSerialInterface.DATA_BITS_5:
+			data[6] = 0x05;
+			break;
+		case UsbSerialInterface.DATA_BITS_6:
+			data[6] = 0x06;
+			break;
+		case UsbSerialInterface.DATA_BITS_7:
+			data[6] = 0x07;
+			break;
+		case UsbSerialInterface.DATA_BITS_8:
+			data[6] = 0x08;
+			break;
+		}
+		
+		setControlCommand(BLED112_SET_LINE_CODING, 0, data);
 		
 	}
 
 	@Override
 	public void setStopBits(int stopBits) 
 	{
-		// TODO Auto-generated method stub
+		byte[] data = getLineCoding();
+		switch(stopBits)
+		{
+		case UsbSerialInterface.STOP_BITS_1:
+			data[4] = 0x00;
+			break;
+		case UsbSerialInterface.STOP_BITS_15:
+			data[4] = 0x01;
+			break;
+		case UsbSerialInterface.STOP_BITS_2:
+			data[4] = 0x02;
+			break;
+		}
+		
+		setControlCommand(BLED112_SET_LINE_CODING, 0, data);
+		
 		
 	}
 
 	@Override
 	public void setParity(int parity) 
 	{
-		// TODO Auto-generated method stub
+		byte[] data = getLineCoding();
+		switch(parity)
+		{
+		case UsbSerialInterface.PARITY_NONE:
+			data[5] = 0x00;
+			break;
+		case UsbSerialInterface.PARITY_ODD:
+			data[5] = 0x01;
+			break;
+		case UsbSerialInterface.PARITY_EVEN:
+			data[5] = 0x02;
+			break;
+		case UsbSerialInterface.PARITY_MARK:
+			data[5] = 0x03;
+			break;
+		case UsbSerialInterface.PARITY_SPACE:
+			data[5] = 0x04;
+			break;
+		}
+		
+		setControlCommand(BLED112_SET_LINE_CODING, 0, data);
 		
 	}
 
@@ -158,5 +216,14 @@ public class BLED112SerialDevice extends UsbSerialDevice
 		Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
 		return response;
 	}
+	
+	private byte[] getLineCoding()
+	{
+		byte[] data = new byte[7];
+		int response = connection.controlTransfer(BLED112_REQTYPE_DEVICE2HOST, BLED112_GET_LINE_CODING, 0, 0, data, data.length, USB_TIMEOUT);
+		Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
+		return data;
+	}
+	
 
 }
