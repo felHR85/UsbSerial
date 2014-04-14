@@ -57,7 +57,9 @@ public class CP2102SerialDevice extends UsbSerialDevice
 	@Override
 	public void open() 
 	{
-		// Get and claim interface
+		
+		// Restart the working thread if it has been killed before and  get and claim interface
+		restartWorkingThread();
 		mInterface = device.getInterface(0); // CP2102 has only one interface
 		
 		if(connection.claimInterface(mInterface, true))
@@ -95,7 +97,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
 		requestIN = new UsbRequest();
 		requestIN.initialize(connection, inEndpoint);
 		
-		// Pass references to the threads
+		// Pass references to the thread
 		workerThread.setUsbRequest(requestIN);
 	}
 
@@ -117,8 +119,8 @@ public class CP2102SerialDevice extends UsbSerialDevice
 	public void close() 
 	{
 		setControlCommand(CP210x_IFC_ENABLE, CP210x_UART_DISABLE, null);
+		killWorkingThread();
 		connection.close();
-		workerThread.stopWorkingThread();
 	}
 
 	@Override

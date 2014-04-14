@@ -52,7 +52,8 @@ public class BLED112SerialDevice extends UsbSerialDevice
 	@Override
 	public void open() 
 	{
-		// Get and claim interface
+		// Restart the working thread if it has been killed before and  get and claim interface
+		restartWorkingThread();
 		mInterface = device.getInterface(1); // BLED112 Interface 0: Communications | Interface 1: CDC Data
 
 		if(connection.claimInterface(mInterface, true))
@@ -108,8 +109,8 @@ public class BLED112SerialDevice extends UsbSerialDevice
 	@Override
 	public void close() 
 	{
+		killWorkingThread();
 		connection.close();
-		workerThread.stopWorkingThread();
 	}
 
 	@Override

@@ -104,5 +104,30 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 		{
 			working.set(false);
 		}
+		
+	}
+
+	/*
+	 * Kill workingThread; This must be called when closing a device
+	 */
+	protected void killWorkingThread()
+	{
+		if(workerThread != null)
+		{
+			workerThread.stopWorkingThread();
+			workerThread = null;
+		}
+	}
+	
+	/*
+	 * Restart workingThread if it has been killed before
+	 */
+	protected void restartWorkingThread()
+	{
+		if(workerThread == null)
+		{
+			workerThread = new WorkerThread();
+			workerThread.start();
+		}
 	}
 }
