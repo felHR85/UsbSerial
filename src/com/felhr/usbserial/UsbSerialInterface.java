@@ -24,10 +24,9 @@ public interface UsbSerialInterface
 	public static final int PARITY_SPACE = 4;
 	
 	public static final int FLOW_CONTROL_OFF = 0;
-	public static final int FLOW_CONTROL_RTS_CTS_IN = 1;
-	public static final int FLOW_CONTROL_RTS_CTS_OUT = 2;
-	public static final int FLOW_CONTROL_XON_XOFF_IN = 3;
-	public static final int FLOW_CONTROL_XON_XOFF_OUT = 4;
+	public static final int FLOW_CONTROL_RTS_CTS= 1;
+	public static final int FLOW_CONTROL_DSR_DTR = 2;
+	public static final int FLOW_CONTROL_XON_XOFF = 3;
 	
 	// Common Usb Serial Operations (I/O Asynchronous)
 	public void open();

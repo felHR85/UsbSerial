@@ -21,6 +21,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
 	private static final int CP210x_SET_FLOW = 0x13;
 	private static final int CP210x_SET_XON = 0x09;
 	private static final int CP210x_SET_XOFF = 0x0A;
+	private static final int CP210x_SET_CHARS = 0x19;
 	
 	private static final int CP210x_REQTYPE_HOST2DEVICE = 0x41;
 	private static final int CP210x_REQTYPE_DEVICE2HOST = 0xC1;
@@ -235,20 +236,46 @@ public class CP2102SerialDevice extends UsbSerialDevice
 		switch(flowControl)
 		{
 		case UsbSerialInterface.FLOW_CONTROL_OFF:
-			byte[] data = new byte[]{
-					0x00000000,
-					0x00000000	
+			byte[] dataOff = new byte[]{
+					(byte) 0x01, (byte) 0x00, (byte) 0x00, (byte) 0x00, 
+					(byte) 0x40, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+					(byte) 0x00, (byte) 0x80, (byte) 0x00, (byte) 0x00,
+					(byte) 0x00, (byte) 0x20, (byte) 0x00, (byte) 0x00
 			};
-			setControlCommand(CP210x_SET_FLOW, 0, data);
+			setControlCommand(CP210x_SET_FLOW, 0, dataOff);
 			break;
-		case UsbSerialInterface.FLOW_CONTROL_RTS_CTS_IN:
-			// TO-DO
+		case UsbSerialInterface.FLOW_CONTROL_RTS_CTS:
+			byte[] dataRTSCTS = new byte[]{
+					(byte) 0x09, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+					(byte) 0x80, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+					(byte) 0x00, (byte) 0x80, (byte) 0x00, (byte) 0x00,
+					(byte) 0x00, (byte) 0x20, (byte) 0x00, (byte) 0x00
+			};
+			setControlCommand(CP210x_SET_FLOW, 0, dataRTSCTS);
 			break;
-		case UsbSerialInterface.FLOW_CONTROL_RTS_CTS_OUT:
-			// TO-DO
+		case UsbSerialInterface.FLOW_CONTROL_DSR_DTR:
+			byte[] dataDSRDTR = new byte[]{
+					(byte) 0x12, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+					(byte) 0x40, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+					(byte) 0x00, (byte) 0x80, (byte) 0x00, (byte) 0x00,
+					(byte) 0x00, (byte) 0x20, (byte) 0x00, (byte) 0x00
+			};
+			setControlCommand(CP210x_SET_FLOW, 0, dataDSRDTR);
 			break;
-		case UsbSerialInterface.FLOW_CONTROL_XON_XOFF_OUT:
-			// TO-DO
+		case UsbSerialInterface.FLOW_CONTROL_XON_XOFF:
+			byte[] dataXONXOFF = new byte[]{
+					(byte) 0x01, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+					(byte) 0x43, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+					(byte) 0x00, (byte) 0x80, (byte) 0x00, (byte) 0x00,
+					(byte) 0x00, (byte) 0x20, (byte) 0x00, (byte) 0x00
+			};
+			
+			byte[] dataChars = new byte[]{
+					(byte) 0x00, (byte) 0x00, (byte) 0x00,
+					(byte) 0x00, (byte) 0x11, (byte) 0x13
+			};
+			setControlCommand(CP210x_SET_CHARS, 0, dataChars);
+			setControlCommand(CP210x_SET_FLOW, 0, dataXONXOFF);
 			break;
 		}
 	}
