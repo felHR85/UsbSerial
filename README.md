@@ -17,6 +17,7 @@ UsbDevice device;
 UsbDeviceConnection usbConnection;
 ...
 CP2102SerialDevice cp2102 = new CP2102SerialDevice(device, usbConnection);
+//UsbSerialDevice bled112 = new BLED112SerialDevice(device, usbConnection);
 ~~~
 
 Open the device and set it up as desired
@@ -49,6 +50,20 @@ Write something
 ~~~
 cp2102.write("DATA".getBytes()); // Important: This operation is synchronous
 ~~~
+
+Close the device:
+~~~
+cp2102.close();
+~~~
+
+In Android usb api, when a usb device has been close it must be reopened
+~~~
+UsbDevice device;
+...
+UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
+manager.openDevice(UsbDevice device)
+~~~
+
 
 TO-DO
 --------------------------------------
