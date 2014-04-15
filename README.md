@@ -73,6 +73,8 @@ TO-DO
 - A serious refactoring is needed to move common logic to UsbSerialDevice (This would help other people to add new devices)
 - Whatever you think can be a good addition
 
+[A little history about what I am doing this](http://felhr85.net/2014/04/15/a-little-library-to-use-serial-port-in-android/)
+
 
 
 
