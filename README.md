@@ -48,7 +48,7 @@ cp2102.read(mCallback);
 
 Write something
 ~~~
-cp2102.write("DATA".getBytes()); // Important: This operation is synchronous
+cp2102.write("DATA".getBytes()); // Async-like operation now! :)
 ~~~
 
 Close the device:
@@ -69,7 +69,6 @@ TO-DO
 --------------------------------------
 - Add more devices (pretty obvious)
 - RTS/CTS and DSR/DTR functions needed to raise hardware flow control signals
-- Eventually, write(byte[] buffer) function will be asynchronous
 - A serious refactoring is needed to move common logic to UsbSerialDevice (This would help other people to add new devices)
 - Whatever you think can be a good addition
 
