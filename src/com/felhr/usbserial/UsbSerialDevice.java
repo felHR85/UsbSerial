@@ -21,6 +21,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 	protected SerialBuffer serialBuffer;
 	
 	protected WorkerThread workerThread;
+	protected WriteThread writeThread;
 	
 	public UsbSerialDevice(UsbDevice device, UsbDeviceConnection connection)
 	{
@@ -28,7 +29,9 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 		this.connection = connection;
 		serialBuffer = new SerialBuffer();
 		workerThread = new WorkerThread();
+		writeThread = new WriteThread();
 		workerThread.start();
+		writeThread.start();
 	}
 	
 	// Common Usb Serial Operations (I/O Asynchronous)
@@ -105,6 +108,37 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 		}
 		
 	}
+	
+	protected class WriteThread extends Thread
+	{
+		private UsbEndpoint outEndpoint;
+		private AtomicBoolean working;
+		
+		public WriteThread()
+		{
+			working = new AtomicBoolean(true);
+		}
+		
+		@Override
+		public void run()
+		{
+			while(working.get())
+			{
+				byte[] data = serialBuffer.getWriteBuffer();
+				connection.bulkTransfer(outEndpoint, data, data.length, USB_TIMEOUT);
+			}
+		}
+		
+		public void setUsbEndpoint(UsbEndpoint outEndpoint)
+		{
+			this.outEndpoint = outEndpoint;
+		}
+		
+		public void stopWriteThread()
+		{
+			working.set(false);
+		}
+	}
 
 	/*
 	 * Kill workingThread; This must be called when closing a device
@@ -127,6 +161,25 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 		{
 			workerThread = new WorkerThread();
 			workerThread.start();
+		}
+	}
+	
+	protected void killWriteThread()
+	{
+		if(writeThread != null)
+		{
+			writeThread.stopWriteThread();
+			writeThread = null;
+			serialBuffer.resetWriteBuffer();
+		}
+	}
+	
+	protected void restartWriteThread()
+	{
+		if(writeThread == null)
+		{
+			writeThread = new WriteThread();
+			writeThread.start();
 		}
 	}
 }

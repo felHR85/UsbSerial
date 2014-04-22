@@ -59,8 +59,9 @@ public class CP2102SerialDevice extends UsbSerialDevice
 	public void open() 
 	{
 		
-		// Restart the working thread if it has been killed before and  get and claim interface
+		// Restart the working thread and writeThread if it has been killed before and  get and claim interface
 		restartWorkingThread();
+		restartWriteThread();
 		mInterface = device.getInterface(0); // CP2102 has only one interface
 		
 		if(connection.claimInterface(mInterface, true))
@@ -98,14 +99,15 @@ public class CP2102SerialDevice extends UsbSerialDevice
 		requestIN = new UsbRequest();
 		requestIN.initialize(connection, inEndpoint);
 		
-		// Pass references to the thread
+		// Pass references to the threads
 		workerThread.setUsbRequest(requestIN);
+		writeThread.setUsbEndpoint(outEndpoint);
 	}
 
 	@Override
 	public void write(byte[] buffer) 
 	{
-		connection.bulkTransfer(outEndpoint, buffer, buffer.length, USB_TIMEOUT);
+		serialBuffer.putWriteBuffer(buffer);
 	}
 
 	@Override
@@ -121,6 +123,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
 	{
 		setControlCommand(CP210x_IFC_ENABLE, CP210x_UART_DISABLE, null);
 		killWorkingThread();
+		killWriteThread();
 		connection.close();
 	}
 

@@ -68,6 +68,11 @@ public class SerialBuffer
 		writeBuffer.put(data);
 	}
 	
+	public void resetWriteBuffer()
+	{
+		writeBuffer.reset();
+	}
+	
 	private class WriteBuffer
 	{
 		private byte[] writeBuffer;
@@ -103,6 +108,11 @@ public class SerialBuffer
 			byte[] dst =  Arrays.copyOfRange(writeBuffer, 0, position);
 			position = -1;
 			return dst;
+		}
+		
+		public synchronized void reset()
+		{
+			position = -1;
 		}
 	}
 
