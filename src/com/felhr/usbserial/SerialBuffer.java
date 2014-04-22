@@ -89,7 +89,7 @@ public class SerialBuffer
 			if(position == -1)
 				position = 0;
 			System.arraycopy(src, 0, writeBuffer, position, src.length);
-			position = src.length - 1;
+			position += src.length;
 			notify();
 		}
 		
