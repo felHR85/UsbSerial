@@ -2,15 +2,19 @@ package com.felhr.usbserial;
 
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 public class SerialBuffer 
 {
 	public static final int DEFAULT_READ_BUFFER_SIZE = 16 * 1024;
-	private ByteBuffer readBuffer;	
+	public static final int DEFAULT_WRITE_BUFFER_SIZE = 16 * 1024;
+	private ByteBuffer readBuffer;
+	private WriteBuffer writeBuffer;
 	
 	public SerialBuffer()
 	{
 		readBuffer = ByteBuffer.allocate(DEFAULT_READ_BUFFER_SIZE);
+		writeBuffer = new WriteBuffer();
 	}
 	
 	public void putReadBuffer(ByteBuffer data)
@@ -51,6 +55,54 @@ public class SerialBuffer
 		synchronized(this)
 		{
 			readBuffer.clear();
+		}
+	}
+	
+	public byte[] getWriteBuffer()
+	{
+		return writeBuffer.get();
+	}
+	
+	public void putWriteBuffer(byte[]data)
+	{
+		writeBuffer.put(data);
+	}
+	
+	private class WriteBuffer
+	{
+		private byte[] writeBuffer;
+		private int position;
+		
+		public WriteBuffer()
+		{
+			this.writeBuffer = new byte[DEFAULT_WRITE_BUFFER_SIZE];
+			position = -1;
+		}
+		
+		public synchronized void put(byte[] src)
+		{
+			if(position == -1)
+				position = 0;
+			System.arraycopy(src, 0, writeBuffer, position, src.length);
+			position = src.length - 1;
+			notify();
+		}
+		
+		public synchronized byte[] get()
+		{
+			if(position == -1)
+			{ 
+				try 
+				{
+					wait();
+				} catch (InterruptedException e) 
+				{
+					e.printStackTrace();
+				}
+			}
+			byte[] dst =  Arrays.copyOfRange(writeBuffer, 0, position);
+			position = -1;
+			return dst;
 		}
 	}
 
