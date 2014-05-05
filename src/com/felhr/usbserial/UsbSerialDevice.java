@@ -37,10 +37,20 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 	// Common Usb Serial Operations (I/O Asynchronous)
 	@Override
 	public abstract void open();
+	
 	@Override
-	public abstract void write(byte[] buffer);
+	public void write(byte[] buffer)
+	{
+		serialBuffer.putWriteBuffer(buffer);
+	}
+	
 	@Override
-	public abstract int read(UsbReadCallback mCallback);
+	public int read(UsbReadCallback mCallback)
+	{
+		workerThread.setCallback(mCallback);
+		workerThread.getUsbRequest().queue(serialBuffer.getReadBuffer(), SerialBuffer.DEFAULT_READ_BUFFER_SIZE); 
+		return 0;
+	}
 	@Override
 	public abstract void close();
 	
@@ -95,6 +105,11 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 		public void setUsbRequest(UsbRequest request)
 		{
 			this.requestIN = request;
+		}
+		
+		public UsbRequest getUsbRequest()
+		{
+			return requestIN;
 		}
 		
 		private void onReceivedData(byte[] data)

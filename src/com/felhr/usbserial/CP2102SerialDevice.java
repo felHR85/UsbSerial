@@ -105,20 +105,6 @@ public class CP2102SerialDevice extends UsbSerialDevice
 	}
 
 	@Override
-	public void write(byte[] buffer) 
-	{
-		serialBuffer.putWriteBuffer(buffer);
-	}
-
-	@Override
-	public int read(UsbReadCallback mCallback) 
-	{
-		workerThread.setCallback(mCallback);
-		requestIN.queue(serialBuffer.getReadBuffer(), SerialBuffer.DEFAULT_READ_BUFFER_SIZE); 
-		return 0;
-	}
-
-	@Override
 	public void close() 
 	{
 		setControlCommand(CP210x_IFC_ENABLE, CP210x_UART_DISABLE, null);
