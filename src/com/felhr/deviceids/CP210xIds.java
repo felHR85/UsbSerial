@@ -2,6 +2,10 @@ package com.felhr.deviceids;
 
 public class CP210xIds 
 {
+	/* Different products and vendors of CP210x family
+	// From current cp210x linux driver:
+	https://github.com/torvalds/linux/blob/164c09978cebebd8b5fc198e9243777dbaecdfa0/drivers/usb/serial/cp210x.c
+	*/
 	private static final ConcreteDevice[] cp210xDevices = new ConcreteDevice[]
 	{
 		new ConcreteDevice(0x045B, 0x0053), 
@@ -139,41 +143,26 @@ public class CP210xIds
 	
 	public static boolean isDeviceSupported(int vendorId, int productId)
 	{
-		// TO-DO
+		for(int i=0;i<=cp210xDevices.length-1;i++)
+		{
+			if(cp210xDevices[i].vendorId == vendorId && cp210xDevices[i].productId == productId )
+			{
+				return true;
+			}
+		}
 		return false;
 	}
 	
 	private static class ConcreteDevice
 	{
-		private int vendorId;
-		private int productId;
+		public int vendorId;
+		public int productId;
 		
 		public ConcreteDevice(int vendorId, int productId)
 		{
 			this.vendorId = vendorId;
 			this.productId = productId;
 		}
-
-		public int getVendorId() 
-		{
-			return vendorId;
-		}
-
-		public void setVendorId(int vendorId) 
-		{
-			this.vendorId = vendorId;
-		}
-
-		public int getProductId() 
-		{
-			return productId;
-		}
-
-		public void setProductId(int productId) 
-		{
-			this.productId = productId;
-		}
-			
 	}
 
 }
