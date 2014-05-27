@@ -100,12 +100,21 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 					// FTDI devices reserves two first bytes of an IN endpoint with info about
 					// modem and Line.
 					if(isFTDIDevice())
-						data = adaptArray(data);
-					
-					// Clear buffer and execute the callback
-					serialBuffer.clearReadBuffer();
-					onReceivedData(data);
-					requestIN.queue(serialBuffer.getReadBuffer(), SerialBuffer.DEFAULT_READ_BUFFER_SIZE);
+					{
+						Log.i(CLASS_ID, String.valueOf(data.length));
+						byte[] data2 = adaptArray(data);
+						// Clear buffer and execute the callback
+						serialBuffer.clearReadBuffer();
+						onReceivedData(data2);
+						requestIN.queue(serialBuffer.getReadBuffer(), SerialBuffer.DEFAULT_READ_BUFFER_SIZE);
+						
+					}else
+					{
+						// Clear buffer and execute the callback
+						serialBuffer.clearReadBuffer();
+						onReceivedData(data);
+						requestIN.queue(serialBuffer.getReadBuffer(), SerialBuffer.DEFAULT_READ_BUFFER_SIZE);
+					}
 				}
 			}
 		}
@@ -141,24 +150,47 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 			int length = ftdiData.length;
 			if(length > 64)
 			{
-				int n = 0;
-				while(n <= length)
+				int n = 1;
+				int p = 64;
+				// Precalculate length without FTDI headers
+				while(p < length)
 				{
-					removeElement(ftdiData, n);
-					removeElement(ftdiData, n+1);
-					n += 64;
+					n++;
+					p = n*64;
 				}
-				return ftdiData;
+				int realLength = length - n*2;
+				byte[] data = new byte[realLength];
+				copyData(ftdiData, data);
+				return data;
 			}else
 			{
 				return Arrays.copyOfRange(ftdiData, 2, length);
-			}
-				
+			}	
 		}
 		
-		private void removeElement(byte[] src, int pos)
+		// Copy data without FTDI headers
+		private void copyData(byte[] src, byte[] dst)
 		{
-		    System.arraycopy(src, pos+1, src, pos, src.length-1-pos);
+			int i = 0; // src index
+			int j = 0; // dst index
+		    while(i <= src.length-1)
+		    {
+		    	if(i != 0 || i != 1)
+		    	{
+		    		if(i % 64 == 0 && i >= 64)
+		    		{
+		    			i += 2;
+		    		}else
+		    		{
+		    			dst[j] = src[i];
+		    			i++;
+			    		j++;
+		    		}	
+		    	}else
+		    	{
+		    		i++;
+		    	}
+		    }
 		}
 		
 	}
