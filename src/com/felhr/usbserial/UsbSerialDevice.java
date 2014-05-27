@@ -1,5 +1,6 @@
 package com.felhr.usbserial;
 
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import android.hardware.usb.UsbConstants;
@@ -22,6 +23,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 	
 	protected WorkerThread workerThread;
 	protected WriteThread writeThread;
+	
 	
 	public UsbSerialDevice(UsbDevice device, UsbDeviceConnection connection)
 	{
@@ -66,6 +68,11 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 	@Override
 	public abstract void setFlowControl(int flowControl);
 	
+	private boolean isFTDIDevice()
+	{
+		return (this instanceof FTDISerialDevice);
+	}
+	
 	/*
 	 * WorkerThread waits for request notifications from IN endpoint
 	 */
@@ -90,6 +97,12 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 						&& request.getEndpoint().getDirection() == UsbConstants.USB_DIR_IN)
 				{
 					byte[] data = serialBuffer.getDataReceived();
+					// FTDI devices reserves two first bytes of an IN endpoint with info about
+					// modem and Line.
+					if(isFTDIDevice())
+						data = adaptArray(data);
+					
+					// Clear buffer and execute the callback
 					serialBuffer.clearReadBuffer();
 					onReceivedData(data);
 					requestIN.queue(serialBuffer.getReadBuffer(), SerialBuffer.DEFAULT_READ_BUFFER_SIZE);
@@ -120,6 +133,32 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 		public void stopWorkingThread()
 		{
 			working.set(false);
+		}
+		
+		// Special treatment needed to FTDI devices
+		private byte[] adaptArray(byte[] ftdiData)
+		{
+			int length = ftdiData.length;
+			if(length > 64)
+			{
+				int n = 0;
+				while(n <= length)
+				{
+					removeElement(ftdiData, n);
+					removeElement(ftdiData, n+1);
+					n += 64;
+				}
+				return ftdiData;
+			}else
+			{
+				return Arrays.copyOfRange(ftdiData, 2, length);
+			}
+				
+		}
+		
+		private void removeElement(byte[] src, int pos)
+		{
+		    System.arraycopy(src, pos+1, src, pos, src.length-1-pos);
 		}
 		
 	}
