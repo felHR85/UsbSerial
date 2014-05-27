@@ -102,7 +102,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 					if(isFTDIDevice())
 					{
 						Log.i(CLASS_ID, String.valueOf(data.length));
-						byte[] data2 = adaptArray(data);
+						byte[] data2 = FTDISerialDevice.FTDIUtilities.adaptArray(data);
 						// Clear buffer and execute the callback
 						serialBuffer.clearReadBuffer();
 						onReceivedData(data2);
@@ -143,56 +143,6 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 		{
 			working.set(false);
 		}
-		
-		// Special treatment needed to FTDI devices
-		private byte[] adaptArray(byte[] ftdiData)
-		{
-			int length = ftdiData.length;
-			if(length > 64)
-			{
-				int n = 1;
-				int p = 64;
-				// Precalculate length without FTDI headers
-				while(p < length)
-				{
-					n++;
-					p = n*64;
-				}
-				int realLength = length - n*2;
-				byte[] data = new byte[realLength];
-				copyData(ftdiData, data);
-				return data;
-			}else
-			{
-				return Arrays.copyOfRange(ftdiData, 2, length);
-			}	
-		}
-		
-		// Copy data without FTDI headers
-		private void copyData(byte[] src, byte[] dst)
-		{
-			int i = 0; // src index
-			int j = 0; // dst index
-		    while(i <= src.length-1)
-		    {
-		    	if(i != 0 || i != 1)
-		    	{
-		    		if(i % 64 == 0 && i >= 64)
-		    		{
-		    			i += 2;
-		    		}else
-		    		{
-		    			dst[j] = src[i];
-		    			i++;
-			    		j++;
-		    		}	
-		    	}else
-		    	{
-		    		i++;
-		    	}
-		    }
-		}
-		
 	}
 	
 	protected class WriteThread extends Thread

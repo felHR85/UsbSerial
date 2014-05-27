@@ -1,5 +1,7 @@
 package com.felhr.usbserial;
 
+import java.util.Arrays;
+
 import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
@@ -276,6 +278,58 @@ public class FTDISerialDevice extends UsbSerialDevice
 		int response = connection.controlTransfer(FTDI_REQTYPE_HOST2DEVICE, request, value, index, data, dataLength, USB_TIMEOUT);
 		Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
 		return response;
+	}
+	
+	public static class FTDIUtilities
+	{
+		// Special treatment needed to FTDI devices
+		public static byte[] adaptArray(byte[] ftdiData)
+		{
+			int length = ftdiData.length;
+			if(length > 64)
+			{
+				int n = 1;
+				int p = 64;
+				// Precalculate length without FTDI headers
+				while(p < length)
+				{
+					n++;
+					p = n*64;
+				}
+				int realLength = length - n*2;
+				byte[] data = new byte[realLength];
+				copyData(ftdiData, data);
+				return data;
+			}else
+			{
+				return Arrays.copyOfRange(ftdiData, 2, length);
+			}	
+		}
+		
+		// Copy data without FTDI headers
+		private static void copyData(byte[] src, byte[] dst)
+		{
+			int i = 0; // src index
+			int j = 0; // dst index
+			while(i <= src.length-1)
+			{
+				if(i != 0 || i != 1)
+				{
+					if(i % 64 == 0 && i >= 64)
+					{
+						i += 2;
+					}else
+					{
+						dst[j] = src[i];
+						i++;
+						j++;
+					}	
+				}else
+				{
+					i++;
+				}
+			}
+		}
 	}
 
 }
