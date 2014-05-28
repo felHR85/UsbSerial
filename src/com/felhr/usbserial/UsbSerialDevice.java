@@ -3,6 +3,9 @@ package com.felhr.usbserial;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.felhr.deviceids.CP210xIds;
+import com.felhr.deviceids.FTDISioIds;
+
 import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
@@ -34,6 +37,25 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 		writeThread = new WriteThread();
 		workerThread.start();
 		writeThread.start();
+	}
+	
+	public static UsbSerialDevice createUsbSerialDevice(UsbDevice device, UsbDeviceConnection connection)
+	{
+		int vid = device.getVendorId();
+		int pid = device.getProductId();
+		if(FTDISioIds.isDeviceSupported(vid, pid))
+		{
+			return new FTDISerialDevice(device, connection);
+		}else if(CP210xIds.isDeviceSupported(vid, pid))
+		{
+			return new CP2102SerialDevice(device, connection);
+		}else if(vid == 0x2458) // BLED112
+		{
+			return new BLED112SerialDevice(device, connection);
+		}else
+		{
+			return null;
+		}
 	}
 	
 	// Common Usb Serial Operations (I/O Asynchronous)
