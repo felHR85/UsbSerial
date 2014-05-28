@@ -313,10 +313,10 @@ public class FTDISerialDevice extends UsbSerialDevice
 			int j = 0; // dst index
 			while(i <= src.length-1)
 			{
-				if(i != 0 || i != 1)
+				if(i != 0 && i != 1)
 				{
 					if(i % 64 == 0 && i >= 64)
-					{
+					{ 
 						i += 2;
 					}else
 					{
