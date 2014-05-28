@@ -9,6 +9,8 @@ Devices Supported
 
 [Bluegiga BLED112 Dongle](https://www.bluegiga.com/en-US/products/bluetooth-4.0-modules/bled112-bluetooth-smart-dongle/) Default 115200,8,1,None,flow off
 
+[FTDI devices](http://www.ftdichip.com/FTProducts.htm) Default: 9600,8,1,None,flow off
+
 How to use it?
 --------------------------------------
 Instantiate a new object of the desired device you want to handle
