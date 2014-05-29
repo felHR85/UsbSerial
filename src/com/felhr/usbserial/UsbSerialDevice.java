@@ -120,12 +120,15 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 					byte[] data = serialBuffer.getDataReceived();
 					// FTDI devices reserves two first bytes of an IN endpoint with info about
 					// modem and Line.
-					if(isFTDIDevice() && data.length > 2)
+					if(isFTDIDevice())
 					{
-						data = FTDISerialDevice.FTDIUtilities.adaptArray(data);
-						// Clear buffer, execute the callback 
-						serialBuffer.clearReadBuffer();
-						onReceivedData(data);
+						if(data.length > 2)
+						{
+							data = FTDISerialDevice.FTDIUtilities.adaptArray(data);
+							// Clear buffer, execute the callback 
+							serialBuffer.clearReadBuffer();
+							onReceivedData(data);
+						}
 					}else
 					{
 						// Clear buffer, execute the callback 
