@@ -1,6 +1,5 @@
 package com.felhr.usbserial;
 
-import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.felhr.deviceids.CP210xIds;
