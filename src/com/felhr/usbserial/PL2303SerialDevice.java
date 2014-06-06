@@ -12,10 +12,13 @@ public class PL2303SerialDevice extends UsbSerialDevice
 {
 	private static final String CLASS_ID = PL2303SerialDevice.class.getSimpleName();
 	
-	private static final int PL2303_REQTYPE_HOST2DEVICE = 0x40;
-	private static final int PL2303_REQTYPE_DEVICE2HOST = 0xC0;
+	private static final int PL2303_REQTYPE_HOST2DEVICE_VENDOR = 0x40;
+	private static final int PL2303_REQTYPE_DEVICE2HOST_VENDOR = 0xC0;
+	private static final int PL2303_REQTYPE_HOST2DEVICE = 0x21;
 	
 	private static final int PL2303_VENDOR_WRITE_REQUEST = 0x01;
+	private static final int PL2303_SET_LINE_CODING = 0x21;
+	
 	
 	private UsbInterface mInterface;
 	private UsbEndpoint inEndpoint;
@@ -61,17 +64,18 @@ public class PL2303SerialDevice extends UsbSerialDevice
 		
 		//Default Setup
 		byte[] buf = new byte[2];
-		setControlCommand(PL2303_REQTYPE_DEVICE2HOST, PL2303_VENDOR_WRITE_REQUEST, 0x8484, 0, buf);
-		setControlCommand(PL2303_REQTYPE_HOST2DEVICE, PL2303_VENDOR_WRITE_REQUEST, 0x0404, 0, buf);
-		setControlCommand(PL2303_REQTYPE_DEVICE2HOST, PL2303_VENDOR_WRITE_REQUEST, 0x8484, 0, buf);
-		setControlCommand(PL2303_REQTYPE_DEVICE2HOST, PL2303_VENDOR_WRITE_REQUEST, 0x8383, 0, buf);
-		setControlCommand(PL2303_REQTYPE_DEVICE2HOST, PL2303_VENDOR_WRITE_REQUEST, 0x8484, 0, buf);
-		setControlCommand(PL2303_REQTYPE_HOST2DEVICE, PL2303_VENDOR_WRITE_REQUEST, 0x0404, 0, buf);
-		setControlCommand(PL2303_REQTYPE_DEVICE2HOST, PL2303_VENDOR_WRITE_REQUEST, 0x8484, 0, buf);
-		setControlCommand(PL2303_REQTYPE_DEVICE2HOST, PL2303_VENDOR_WRITE_REQUEST, 0x8383, 0, buf);
-		setControlCommand(PL2303_REQTYPE_HOST2DEVICE, PL2303_VENDOR_WRITE_REQUEST, 0x0000, 0, null);
-		setControlCommand(PL2303_REQTYPE_HOST2DEVICE, PL2303_VENDOR_WRITE_REQUEST, 0x0001, 0, null);
-		
+		//Specific vendor stuff that I barely understand but It is on linux drivers, So I trust :)
+		setControlCommand(PL2303_REQTYPE_DEVICE2HOST_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x8484, 0, buf);
+		setControlCommand(PL2303_REQTYPE_HOST2DEVICE_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x0404, 0, buf);
+		setControlCommand(PL2303_REQTYPE_DEVICE2HOST_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x8484, 0, buf);
+		setControlCommand(PL2303_REQTYPE_DEVICE2HOST_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x8383, 0, buf);
+		setControlCommand(PL2303_REQTYPE_DEVICE2HOST_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x8484, 0, buf);
+		setControlCommand(PL2303_REQTYPE_HOST2DEVICE_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x0404, 0, buf);
+		setControlCommand(PL2303_REQTYPE_DEVICE2HOST_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x8484, 0, buf);
+		setControlCommand(PL2303_REQTYPE_DEVICE2HOST_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x8383, 0, buf);
+		setControlCommand(PL2303_REQTYPE_HOST2DEVICE_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x0000, 0, null);
+		setControlCommand(PL2303_REQTYPE_HOST2DEVICE_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x0001, 0, null);
+		// End of specific vendor stuff
 		
 		// Initialize UsbRequest
 		requestIN = new UsbRequest();
@@ -124,6 +128,13 @@ public class PL2303SerialDevice extends UsbSerialDevice
 	{
 		// TODO Auto-generated method stub
 		
+	}
+	
+	private byte[] encodeBaudRateDiv(int baudRate)
+	{
+		int tmp;
+		byte[] baudRateEncoded = new byte[4];
+		tmp = 12000000 * 32 / baudRate;
 	}
 	
 	private int setControlCommand(int reqType ,int request, int value, int index, byte[] data)
