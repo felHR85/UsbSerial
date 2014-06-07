@@ -4,6 +4,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.felhr.deviceids.CP210xIds;
 import com.felhr.deviceids.FTDISioIds;
+import com.felhr.deviceids.PL2303Ids;
 
 import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
@@ -43,18 +44,15 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 		int vid = device.getVendorId();
 		int pid = device.getProductId();
 		if(FTDISioIds.isDeviceSupported(vid, pid))
-		{
 			return new FTDISerialDevice(device, connection);
-		}else if(CP210xIds.isDeviceSupported(vid, pid))
-		{
+		else if(CP210xIds.isDeviceSupported(vid, pid))
 			return new CP2102SerialDevice(device, connection);
-		}else if(vid == 0x2458) // BLED112
-		{
+		else if(PL2303Ids.isDeviceSupported(vid, pid))
+			return new PL2303SerialDevice(device, connection);
+		else if(vid == 0x2458) // BLED112
 			return new BLED112SerialDevice(device, connection);
-		}else
-		{
+		else
 			return null;
-		}
 	}
 	
 	// Common Usb Serial Operations (I/O Asynchronous)
