@@ -11,6 +11,8 @@ Devices Supported
 
 [FTDI devices](http://www.ftdichip.com/FTProducts.htm) Default: 9600,8,1,None,flow off
 
+[PL2303 devices](http://www.prolific.com.tw/US/ShowProduct.aspx?p_id=225&pcid=41) Default 9600,8,1,None,flow off
+
 How to use it?
 --------------------------------------
 Instantiate a new object of the desired device you want to handle
@@ -20,6 +22,8 @@ UsbDeviceConnection usbConnection;
 ...
 CP2102SerialDevice cp2102 = new CP2102SerialDevice(device, usbConnection);
 //UsbSerialDevice bled112 = new BLED112SerialDevice(device, usbConnection);
+// Factory method, auto detect current device connected, return null if is not supported
+// UsbSerialDevice serial = UsbSerialDevice.createUsbSerialDevice(device, usbConnection); 
 ~~~
 
 Open the device and set it up as desired
