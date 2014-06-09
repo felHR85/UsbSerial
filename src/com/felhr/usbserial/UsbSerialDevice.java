@@ -1,5 +1,6 @@
 package com.felhr.usbserial;
 
+import java.io.UnsupportedEncodingException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.felhr.deviceids.CP210xIds;
@@ -92,6 +93,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 		return (this instanceof FTDISerialDevice);
 	}
 	
+	
 	/*
 	 * WorkerThread waits for request notifications from IN endpoint
 	 */
@@ -116,6 +118,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 						&& request.getEndpoint().getDirection() == UsbConstants.USB_DIR_IN)
 				{
 					byte[] data = serialBuffer.getDataReceived();
+					
 					// FTDI devices reserves two first bytes of an IN endpoint with info about
 					// modem and Line.
 					if(isFTDIDevice())
