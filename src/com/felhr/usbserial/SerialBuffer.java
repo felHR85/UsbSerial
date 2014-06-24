@@ -9,12 +9,21 @@ public class SerialBuffer
 	public static final int DEFAULT_READ_BUFFER_SIZE = 16 * 1024;
 	public static final int DEFAULT_WRITE_BUFFER_SIZE = 16 * 1024;
 	private ByteBuffer readBuffer;
-	private WriteBuffer writeBuffer;
+	private SynchronizedBuffer writeBuffer;
+	private byte[] readBuffer_compatible; // Read buffer for android < 4.2
 	
-	public SerialBuffer()
+	public SerialBuffer(boolean version)
 	{
-		readBuffer = ByteBuffer.allocate(DEFAULT_READ_BUFFER_SIZE);
-		writeBuffer = new WriteBuffer();
+		writeBuffer = new SynchronizedBuffer();
+		if(version)
+		{
+			readBuffer = ByteBuffer.allocate(DEFAULT_READ_BUFFER_SIZE);
+			
+		}else
+		{
+			readBuffer_compatible = new byte[DEFAULT_READ_BUFFER_SIZE];
+		}
+		
 	}
 	
 	public void putReadBuffer(ByteBuffer data)
@@ -38,6 +47,7 @@ public class SerialBuffer
 			return readBuffer;
 		}
 	}
+	
 	
 	public byte[] getDataReceived()
 	{
@@ -68,19 +78,31 @@ public class SerialBuffer
 		writeBuffer.put(data);
 	}
 	
+	
 	public void resetWriteBuffer()
 	{
 		writeBuffer.reset();
 	}
 	
-	private class WriteBuffer
+	public byte[] getBufferCompatible()
 	{
-		private byte[] writeBuffer;
+		return readBuffer_compatible;
+	}
+	
+	public byte[] getDataReceivedCompatible(int numberBytes)
+	{
+		byte[] tempBuff = Arrays.copyOfRange(readBuffer_compatible, 0, numberBytes-1);
+		return tempBuff;
+	}
+	
+	private class SynchronizedBuffer
+	{
+		private byte[] buffer;
 		private int position;
 		
-		public WriteBuffer()
+		public SynchronizedBuffer()
 		{
-			this.writeBuffer = new byte[DEFAULT_WRITE_BUFFER_SIZE];
+			this.buffer = new byte[DEFAULT_WRITE_BUFFER_SIZE];
 			position = -1;
 		}
 		
@@ -88,7 +110,7 @@ public class SerialBuffer
 		{
 			if(position == -1)
 				position = 0;
-			System.arraycopy(src, 0, writeBuffer, position, src.length);
+			System.arraycopy(src, 0, buffer, position, src.length);
 			position += src.length;
 			notify();
 		}
@@ -105,7 +127,7 @@ public class SerialBuffer
 					e.printStackTrace();
 				}
 			}
-			byte[] dst =  Arrays.copyOfRange(writeBuffer, 0, position);
+			byte[] dst =  Arrays.copyOfRange(buffer, 0, position);
 			position = -1;
 			return dst;
 		}

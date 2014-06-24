@@ -95,8 +95,7 @@ public class PL2303SerialDevice extends UsbSerialDevice
 		requestIN.initialize(connection, inEndpoint);
 
 		// Pass references to the threads
-		workerThread.setUsbRequest(requestIN);
-		writeThread.setUsbEndpoint(outEndpoint);
+		setThreadsParams(requestIN, outEndpoint);
 	}
 
 	@Override
