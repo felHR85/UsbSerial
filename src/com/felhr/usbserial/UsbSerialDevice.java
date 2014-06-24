@@ -241,13 +241,17 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 		@Override
 		public void run()
 		{
+			byte[] dataReceived = null;
+			
 			while(working.get())
 			{
-				int numberBytes= connection.bulkTransfer(inEndpoint, serialBuffer.getBufferCompatible(),
+				int numberBytes = connection.bulkTransfer(inEndpoint, serialBuffer.getBufferCompatible(),
 						SerialBuffer.DEFAULT_READ_BUFFER_SIZE, 0);
-				byte[] dataReceived = serialBuffer.getDataReceivedCompatible(numberBytes);
+				
 				if(numberBytes > 0)
 				{
+					dataReceived = serialBuffer.getDataReceivedCompatible(numberBytes);
+					
 					// FTDI devices reserves two first bytes of an IN endpoint with info about
 					// modem and Line.
 					if(isFTDIDevice())

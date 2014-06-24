@@ -91,7 +91,7 @@ public class SerialBuffer
 	
 	public byte[] getDataReceivedCompatible(int numberBytes)
 	{
-		byte[] tempBuff = Arrays.copyOfRange(readBuffer_compatible, 0, numberBytes-1);
+		byte[] tempBuff = Arrays.copyOfRange(readBuffer_compatible, 0, numberBytes);
 		return tempBuff;
 	}
 	
