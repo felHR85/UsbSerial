@@ -120,9 +120,17 @@ public class SerialBuffer
 				position = 0;
 			if(debugging)
 				UsbSerialDebugger.printLogPut(src, true);
-			System.arraycopy(src, 0, buffer, position, src.length);
-			position += src.length;
-			notify();
+			if(position + src.length > DEFAULT_WRITE_BUFFER_SIZE - 1) //Checking bounds. Source data does not fit in buffer
+			{
+				System.arraycopy(src, 0, buffer, position, DEFAULT_WRITE_BUFFER_SIZE - position);
+				position = DEFAULT_WRITE_BUFFER_SIZE;
+				notify();
+			}else // Source data fits in buffer
+			{
+				System.arraycopy(src, 0, buffer, position, src.length);
+				position += src.length;
+				notify();
+			}
 		}
 		
 		public synchronized byte[] get()
