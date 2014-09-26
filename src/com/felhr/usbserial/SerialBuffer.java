@@ -122,7 +122,8 @@ public class SerialBuffer
 				UsbSerialDebugger.printLogPut(src, true);
 			if(position + src.length > DEFAULT_WRITE_BUFFER_SIZE - 1) //Checking bounds. Source data does not fit in buffer
 			{
-				System.arraycopy(src, 0, buffer, position, DEFAULT_WRITE_BUFFER_SIZE - position);
+				if(position < DEFAULT_WRITE_BUFFER_SIZE)
+					System.arraycopy(src, 0, buffer, position, DEFAULT_WRITE_BUFFER_SIZE - position);
 				position = DEFAULT_WRITE_BUFFER_SIZE;
 				notify();
 			}else // Source data fits in buffer
