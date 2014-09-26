@@ -111,6 +111,13 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 	@Override
 	public abstract void setFlowControl(int flowControl);
 	
+	//Debug options
+	public void debug(boolean value)
+	{
+		if(serialBuffer != null)
+			serialBuffer.debug(value);
+	}
+	
 	private boolean isFTDIDevice()
 	{
 		return (this instanceof FTDISerialDevice);
