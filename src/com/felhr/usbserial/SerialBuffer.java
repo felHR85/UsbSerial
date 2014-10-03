@@ -24,11 +24,11 @@ public class SerialBuffer
 		{
 			readBuffer_compatible = new byte[DEFAULT_READ_BUFFER_SIZE];
 		}
-		
 	}
 	
-	//Debug
-	
+	/*
+	 * Print debug messages
+	 */
 	public void debug(boolean value)
 	{
 		debugging = value;
