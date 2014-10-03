@@ -64,6 +64,8 @@ public class SerialBuffer
 			byte[] dst = new byte[readBuffer.position()];
 			readBuffer.position(0);
 			readBuffer.get(dst, 0, dst.length);
+			if(debugging)
+				UsbSerialDebugger.printReadLogGet(dst, true);
 			return dst;
 		}
 	}
