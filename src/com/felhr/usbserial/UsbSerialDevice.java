@@ -56,6 +56,11 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 	
 	public static UsbSerialDevice createUsbSerialDevice(UsbDevice device, UsbDeviceConnection connection)
 	{
+		/*
+		 * It checks given vid and pid and will return a custom driver or a CDC serial driver.
+		 * When CDC is returned open() method is even more important, its response will inform about if it can be really
+		 * opened as a serial device with a generic CDC serial driver
+		 */
 		int vid = device.getVendorId();
 		int pid = device.getProductId();
 		if(FTDISioIds.isDeviceSupported(vid, pid))
@@ -64,15 +69,13 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 			return new CP2102SerialDevice(device, connection);
 		else if(PL2303Ids.isDeviceSupported(vid, pid))
 			return new PL2303SerialDevice(device, connection);
-		else if(vid == 0x2458) // BLED112
-			return new BLED112SerialDevice(device, connection);
-		else
-			return null;
+		else  
+			return new CDCSerialDevice(device, connection);
 	}
 	
 	// Common Usb Serial Operations (I/O Asynchronous)
 	@Override
-	public abstract void open();
+	public abstract boolean open();
 	
 	@Override
 	public void write(byte[] buffer)

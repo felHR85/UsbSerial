@@ -29,7 +29,7 @@ public interface UsbSerialInterface
 	public static final int FLOW_CONTROL_XON_XOFF = 3;
 	
 	// Common Usb Serial Operations (I/O Asynchronous)
-	public void open();
+	public boolean open();
 	public void write(byte[] buffer);
 	public int read(UsbReadCallback mCallback);
 	public void close();

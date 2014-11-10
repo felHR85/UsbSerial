@@ -56,7 +56,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
 	}
 
 	@Override
-	public void open() 
+	public boolean open() 
 	{
 		
 		// Restart the working thread and writeThread if it has been killed before and  get and claim interface
@@ -70,6 +70,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
 		}else
 		{
 			Log.i(CLASS_ID, "Interface could not be claimed");
+			return false;
 		}
 		
 		// Assign endpoints
@@ -89,11 +90,14 @@ public class CP2102SerialDevice extends UsbSerialDevice
 		
 		
 		// Default Setup
-		setControlCommand(CP210x_IFC_ENABLE, CP210x_UART_ENABLE, null);
+		if(setControlCommand(CP210x_IFC_ENABLE, CP210x_UART_ENABLE, null) < 0)
+			return false;
 		setBaudRate(DEFAULT_BAUDRATE);
-		setControlCommand(CP210x_SET_LINE_CTL, CP210x_LINE_CTL_DEFAULT,null);
+		if(setControlCommand(CP210x_SET_LINE_CTL, CP210x_LINE_CTL_DEFAULT,null) < 0)
+			return false;
 		setFlowControl(UsbSerialInterface.FLOW_CONTROL_OFF);
-		setControlCommand(CP210x_SET_MHS, CP210x_MHS_DEFAULT, null);
+		if(setControlCommand(CP210x_SET_MHS, CP210x_MHS_DEFAULT, null) < 0)
+			return false;
 		
 		// Initialize UsbRequest
 		requestIN = new UsbRequest();
@@ -101,6 +105,8 @@ public class CP2102SerialDevice extends UsbSerialDevice
 		
 		// Pass references to the threads
 		setThreadsParams(requestIN, outEndpoint);
+		
+		return true;
 	}
 
 	@Override

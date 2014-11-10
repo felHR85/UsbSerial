@@ -65,7 +65,7 @@ public class FTDISerialDevice extends UsbSerialDevice
 	}
 
 	@Override
-	public void open() 
+	public boolean open() 
 	{
 		// Restart the working thread and writeThread if it has been killed before and claim interface
 		restartWorkingThread();
@@ -78,6 +78,7 @@ public class FTDISerialDevice extends UsbSerialDevice
 		}else
 		{
 			Log.i(CLASS_ID, "Interface could not be claimed");
+			return false;
 		}
 		
 		// Assign endpoints
@@ -96,13 +97,19 @@ public class FTDISerialDevice extends UsbSerialDevice
 		}
 		
 		// Default Setup
-		setControlCommand(FTDI_SIO_RESET, 0x00, 0, null);
-		setControlCommand(FTDI_SIO_SET_DATA, FTDI_SET_DATA_DEFAULT, 0, null);
+		if(setControlCommand(FTDI_SIO_RESET, 0x00, 0, null) < 0)
+			return false;
+		if(setControlCommand(FTDI_SIO_SET_DATA, FTDI_SET_DATA_DEFAULT, 0, null) < 0)
+			return false;
 		currentSioSetData = FTDI_SET_DATA_DEFAULT;
-		setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SET_MODEM_CTRL_DEFAULT1, 0, null);
-		setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SET_MODEM_CTRL_DEFAULT2, 0, null);
-		setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, 0, null);
-		setControlCommand(FTDI_SIO_SET_BAUD_RATE, FTDI_BAUDRATE_9600, 0, null);
+		if(setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SET_MODEM_CTRL_DEFAULT1, 0, null) < 0)
+			return false;
+		if(setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SET_MODEM_CTRL_DEFAULT2, 0, null) < 0)
+			return false;
+		if(setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, 0, null) < 0)
+			return false;
+		if(setControlCommand(FTDI_SIO_SET_BAUD_RATE, FTDI_BAUDRATE_9600, 0, null) < 0)
+			return false;
 
 		// Initialize UsbRequest
 		requestIN = new UsbRequest();
@@ -110,6 +117,8 @@ public class FTDISerialDevice extends UsbSerialDevice
 
 		// Pass references to the threads
 		setThreadsParams(requestIN, outEndpoint);
+		
+		return true;
 	}
 
 	@Override

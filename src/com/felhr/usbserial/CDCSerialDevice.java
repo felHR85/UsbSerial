@@ -8,18 +8,17 @@ import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbRequest;
 import android.util.Log;
 
-@Deprecated
-public class BLED112SerialDevice extends UsbSerialDevice
+public class CDCSerialDevice extends UsbSerialDevice
 {
-	private static final String CLASS_ID = BLED112SerialDevice.class.getSimpleName();
-	
-	private static final int BLED112_REQTYPE_HOST2DEVICE = 0x21;
-	private static final int BLED112_REQTYPE_DEVICE2HOST = 0xA1;
-	
-	private static final int BLED112_SET_LINE_CODING = 0x20;
-	private static final int BLED112_GET_LINE_CODING = 0x21;
-	private static final int BLED112_SET_CONTROL_LINE_STATE = 0x22;
-	
+	private static final String CLASS_ID = CDCSerialDevice.class.getSimpleName();
+
+	private static final int CDC_REQTYPE_HOST2DEVICE = 0x21;
+	private static final int CDC_REQTYPE_DEVICE2HOST = 0xA1;
+
+	private static final int CDC_SET_LINE_CODING = 0x20;
+	private static final int CDC_GET_LINE_CODING = 0x21;
+	private static final int CDC_SET_CONTROL_LINE_STATE = 0x22;
+
 	/***
 	 *  Default Serial Configuration
 	 *  Baud rate: 115200
@@ -28,7 +27,7 @@ public class BLED112SerialDevice extends UsbSerialDevice
 	 *  Parity: None
 	 *  Flow Control: Off
 	 */
-	private static final byte[] BLED112_DEFAULT_LINE_CODING = new byte[] {
+	private static final byte[] CDC_DEFAULT_LINE_CODING = new byte[] {
 		(byte) 0x00, // Offset 0:4 dwDTERate
 		(byte) 0x01,
 		(byte) 0xC2,
@@ -37,17 +36,16 @@ public class BLED112SerialDevice extends UsbSerialDevice
 		(byte) 0x00, // bParityType (None)
 		(byte) 0x08  // bDataBits (8)
 	};
-	
-	private static final int BLED112_DEFAULT_CONTROL_LINE = 0x0003;
-	private static final int BLED112_DISCONNECT_CONTROL_LINE = 0x0002;
-	
+
+	private static final int CDC_DEFAULT_CONTROL_LINE = 0x0003;
+	private static final int CDC_DISCONNECT_CONTROL_LINE = 0x0002;
+
 	private UsbInterface mInterface;
 	private UsbEndpoint inEndpoint;
 	private UsbEndpoint outEndpoint;
 	private UsbRequest requestIN;
-	
-	@Deprecated
-	public BLED112SerialDevice(UsbDevice device, UsbDeviceConnection connection) 
+
+	public CDCSerialDevice(UsbDevice device, UsbDeviceConnection connection) 
 	{
 		super(device, connection);
 	}
@@ -58,14 +56,33 @@ public class BLED112SerialDevice extends UsbSerialDevice
 		// Restart the working thread if it has been killed before and  get and claim interface
 		restartWorkingThread();
 		restartWriteThread();
-		mInterface = device.getInterface(1); // BLED112 Interface 0: Communications | Interface 1: CDC Data
-
+		
+		int interfaceCount = device.getInterfaceCount();
+		int iIndex = 0;
+		boolean keepGettingInterfaces = true;
+		while(iIndex <= interfaceCount -1 && keepGettingInterfaces)
+		{
+			mInterface = device.getInterface(iIndex);
+			if(mInterface.getInterfaceClass() != UsbConstants.USB_CLASS_CDC_DATA)
+				mInterface = null;
+			else
+				keepGettingInterfaces = false;
+			iIndex++;
+		}
+		
+		if(mInterface == null)
+		{
+			Log.i(CLASS_ID, "There is no CDC class interface");
+			return false;
+		}
+		
 		if(connection.claimInterface(mInterface, true))
 		{
 			Log.i(CLASS_ID, "Interface succesfully claimed");
 		}else
 		{
 			Log.i(CLASS_ID, "Interface could not be claimed");
+			return false;
 		}
 
 		// Assign endpoints
@@ -77,16 +94,30 @@ public class BLED112SerialDevice extends UsbSerialDevice
 					&& endpoint.getDirection() == UsbConstants.USB_DIR_IN)
 			{
 				inEndpoint = endpoint;
-			}else
+			}else if(endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK
+					&& endpoint.getDirection() == UsbConstants.USB_DIR_OUT)
 			{
 				outEndpoint = endpoint;
 			}
 		}
 		
+		if(outEndpoint == null || inEndpoint == null)
+		{
+			Log.i(CLASS_ID, "Interface does not have an IN or OUT interface");
+			return false;
+		}
+
 		// Default Setup
-		setControlCommand(BLED112_SET_LINE_CODING, 0, BLED112_DEFAULT_LINE_CODING);
-		setControlCommand(BLED112_SET_CONTROL_LINE_STATE, BLED112_DEFAULT_CONTROL_LINE, null);
-		
+		if(setControlCommand(CDC_SET_LINE_CODING, 0, CDC_DEFAULT_LINE_CODING) < 0)
+		{
+			Log.i(CLASS_ID, "CDC SET LINE CODING command could not be send correctly");
+			return false;
+		}if(setControlCommand(CDC_SET_CONTROL_LINE_STATE, CDC_DEFAULT_CONTROL_LINE, null) < 0)
+		{
+			Log.i(CLASS_ID, "CDC SET CONTROL LINE STATE command could not be send correctly");
+			return false;
+		}
+
 		// Initialize UsbRequest
 		requestIN = new UsbRequest();
 		requestIN.initialize(connection, inEndpoint);
@@ -100,7 +131,7 @@ public class BLED112SerialDevice extends UsbSerialDevice
 	@Override
 	public void close() 
 	{
-		setControlCommand(BLED112_SET_CONTROL_LINE_STATE, BLED112_DISCONNECT_CONTROL_LINE , null);
+		setControlCommand(CDC_SET_CONTROL_LINE_STATE, CDC_DISCONNECT_CONTROL_LINE , null);
 		killWorkingThread();
 		killWriteThread();
 		connection.close();
@@ -110,13 +141,13 @@ public class BLED112SerialDevice extends UsbSerialDevice
 	public void setBaudRate(int baudRate) 
 	{
 		byte[] data = getLineCoding();
-		
+
 		data[3] = (byte) (baudRate & 0xff);
 		data[2] = (byte) (baudRate >> 8 & 0xff);
 		data[1] = (byte) (baudRate >> 16 & 0xff);
 		data[0] = (byte) (baudRate >> 24 & 0xff);
-		
-		setControlCommand(BLED112_SET_LINE_CODING, 0, data);
+
+		setControlCommand(CDC_SET_LINE_CODING, 0, data);
 	}
 
 	@Override
@@ -138,9 +169,9 @@ public class BLED112SerialDevice extends UsbSerialDevice
 			data[6] = 0x08;
 			break;
 		}
-		
-		setControlCommand(BLED112_SET_LINE_CODING, 0, data);
-		
+
+		setControlCommand(CDC_SET_LINE_CODING, 0, data);
+
 	}
 
 	@Override
@@ -159,10 +190,10 @@ public class BLED112SerialDevice extends UsbSerialDevice
 			data[4] = 0x02;
 			break;
 		}
-		
-		setControlCommand(BLED112_SET_LINE_CODING, 0, data);
-		
-		
+
+		setControlCommand(CDC_SET_LINE_CODING, 0, data);
+
+
 	}
 
 	@Override
@@ -187,18 +218,18 @@ public class BLED112SerialDevice extends UsbSerialDevice
 			data[5] = 0x04;
 			break;
 		}
-		
-		setControlCommand(BLED112_SET_LINE_CODING, 0, data);
-		
+
+		setControlCommand(CDC_SET_LINE_CODING, 0, data);
+
 	}
 
 	@Override
 	public void setFlowControl(int flowControl) 
 	{
 		// TODO Auto-generated method stub
-		
+
 	}
-	
+
 	private int setControlCommand(int request, int value, byte[] data)
 	{
 		int dataLength = 0;
@@ -206,18 +237,17 @@ public class BLED112SerialDevice extends UsbSerialDevice
 		{
 			dataLength = data.length;
 		}
-		int response = connection.controlTransfer(BLED112_REQTYPE_HOST2DEVICE, request, value, 0, data, dataLength, USB_TIMEOUT);
+		int response = connection.controlTransfer(CDC_REQTYPE_HOST2DEVICE, request, value, 0, data, dataLength, USB_TIMEOUT);
 		Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
 		return response;
 	}
-	
+
 	private byte[] getLineCoding()
 	{
 		byte[] data = new byte[7];
-		int response = connection.controlTransfer(BLED112_REQTYPE_DEVICE2HOST, BLED112_GET_LINE_CODING, 0, 0, data, data.length, USB_TIMEOUT);
+		int response = connection.controlTransfer(CDC_REQTYPE_DEVICE2HOST, CDC_GET_LINE_CODING, 0, 0, data, data.length, USB_TIMEOUT);
 		Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
 		return data;
 	}
-	
 
 }
