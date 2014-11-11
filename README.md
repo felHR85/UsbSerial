@@ -2,6 +2,7 @@ UsbSerial
 =========
 
 Usb serial controller for Android.
+[A more complete description](http://felhr85.net/2014/11/11/usbserial-a-serial-port-driver-library-for-android-v2-0/)
 
 Devices Supported
 --------------------------------------
@@ -21,7 +22,6 @@ UsbDevice device;
 UsbDeviceConnection usbConnection;
 ...
 CP2102SerialDevice cp2102 = new CP2102SerialDevice(device, usbConnection);
-//UsbSerialDevice bled112 = new BLED112SerialDevice(device, usbConnection);
 // Factory method, auto detect current device connected, return null if is not supported
 // UsbSerialDevice serial = UsbSerialDevice.createUsbSerialDevice(device, usbConnection); 
 ~~~
@@ -73,12 +73,9 @@ manager.openDevice(UsbDevice device)
 
 TO-DO
 --------------------------------------
-- Add more devices (pretty obvious)
 - RTS/CTS and DSR/DTR functions needed to raise hardware flow control signals
-- A serious refactoring is needed to move common logic to UsbSerialDevice (This would help other people to add new devices)
-- Whatever you think can be a good addition
 
-[A little history about why I am doing this](http://felhr85.net/2014/04/15/a-little-library-to-use-serial-port-in-android/)
+
 
 
 
