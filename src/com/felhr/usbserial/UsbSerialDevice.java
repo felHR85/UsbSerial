@@ -10,6 +10,7 @@ import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
+import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbRequest;
 
 public abstract class UsbSerialDevice implements UsbSerialInterface
@@ -69,8 +70,10 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 			return new CP2102SerialDevice(device, connection);
 		else if(PL2303Ids.isDeviceSupported(vid, pid))
 			return new PL2303SerialDevice(device, connection);
-		else  
+		else if(isCdcDevice(device))  
 			return new CDCSerialDevice(device, connection);
+		else 
+			return null;
 	}
 	
 	// Common Usb Serial Operations (I/O Asynchronous)
@@ -124,6 +127,18 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 	private boolean isFTDIDevice()
 	{
 		return (this instanceof FTDISerialDevice);
+	}
+	
+	private static boolean isCdcDevice(UsbDevice device)
+	{
+		int iIndex = device.getInterfaceCount();
+		for(int i=0;i<=iIndex-1;i++)
+		{
+			UsbInterface iface = device.getInterface(i);
+			if(iface.getInterfaceClass() == UsbConstants.USB_CLASS_CDC_DATA)
+				return true;
+		}
+		return false;
 	}
 	
 	
