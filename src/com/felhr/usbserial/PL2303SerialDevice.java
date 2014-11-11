@@ -175,6 +175,8 @@ public class PL2303SerialDevice extends UsbSerialDevice
 				setControlCommand(PL2303_REQTYPE_HOST2DEVICE, PL2303_SET_LINE_CODING, 0x0000, 0, defaultSetLine);
 			}
 			break;
+		default:
+			return;
 		}
 		
 	}
@@ -205,6 +207,8 @@ public class PL2303SerialDevice extends UsbSerialDevice
 				setControlCommand(PL2303_REQTYPE_HOST2DEVICE, PL2303_SET_LINE_CODING, 0x0000, 0, defaultSetLine);
 			}
 			break;
+		default:
+			return;
 		}
 	}
 
@@ -248,6 +252,8 @@ public class PL2303SerialDevice extends UsbSerialDevice
 				setControlCommand(PL2303_REQTYPE_HOST2DEVICE, PL2303_SET_LINE_CODING, 0x0000, 0, defaultSetLine);	
 			}
 			break;
+		default:
+			return;
 		}
 		
 	}

@@ -271,6 +271,8 @@ public class CP2102SerialDevice extends UsbSerialDevice
 			setControlCommand(CP210x_SET_CHARS, 0, dataChars);
 			setControlCommand(CP210x_SET_FLOW, 0, dataXONXOFF);
 			break;
+		default:
+			return;
 		}
 	}
 	

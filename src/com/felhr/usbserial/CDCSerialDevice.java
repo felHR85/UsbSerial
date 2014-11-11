@@ -168,6 +168,8 @@ public class CDCSerialDevice extends UsbSerialDevice
 		case UsbSerialInterface.DATA_BITS_8:
 			data[6] = 0x08;
 			break;
+		default:
+			return;
 		}
 
 		setControlCommand(CDC_SET_LINE_CODING, 0, data);
@@ -189,6 +191,8 @@ public class CDCSerialDevice extends UsbSerialDevice
 		case UsbSerialInterface.STOP_BITS_2:
 			data[4] = 0x02;
 			break;
+		default:
+			return;
 		}
 
 		setControlCommand(CDC_SET_LINE_CODING, 0, data);
@@ -217,6 +221,8 @@ public class CDCSerialDevice extends UsbSerialDevice
 		case UsbSerialInterface.PARITY_SPACE:
 			data[5] = 0x04;
 			break;
+		default:
+			return;
 		}
 
 		setControlCommand(CDC_SET_LINE_CODING, 0, data);

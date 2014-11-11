@@ -164,6 +164,8 @@ public class FTDISerialDevice extends UsbSerialDevice
 			value = FTDI_BAUDRATE_921600;
 		else if(baudRate > 921600)
 			value = FTDI_BAUDRATE_921600;
+		else
+			value = FTDI_BAUDRATE_9600;
 		setControlCommand(FTDI_SIO_SET_BAUD_RATE, value, 0, null);	
 	}
 
@@ -200,6 +202,13 @@ public class FTDISerialDevice extends UsbSerialDevice
 			currentSioSetData |= (1 << 3);
 			setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
 			break;
+		default:
+			currentSioSetData &= ~1;
+			currentSioSetData &= ~(1 << 1);
+			currentSioSetData &= ~(1 << 2);
+			currentSioSetData |= (1 << 3);
+			setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+			break;
 		}
 		
 	}
@@ -227,6 +236,11 @@ public class FTDISerialDevice extends UsbSerialDevice
 			currentSioSetData &= ~(1 << 13);
 			setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
 			break;
+		default:
+			currentSioSetData &= ~(1 << 11);
+			currentSioSetData &= ~(1 << 12);
+			currentSioSetData &= ~(1 << 13);
+			setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);	
 		}
 		
 	}
@@ -266,6 +280,12 @@ public class FTDISerialDevice extends UsbSerialDevice
 			currentSioSetData |= (1 << 10);
 			setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
 			break;
+		default:
+			currentSioSetData &= ~(1 << 8);
+			currentSioSetData &= ~(1 << 9);
+			currentSioSetData &= ~(1 << 10);
+			setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+			break;
 		}
 		
 	}
@@ -290,6 +310,9 @@ public class FTDISerialDevice extends UsbSerialDevice
 			int indexXONXOFF = 0x0004;
 			int wValue = 0x1311;
 			setControlCommand(FTDI_SIO_SET_FLOW_CTRL, wValue, indexXONXOFF , null);
+			break;
+		default:
+			setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, 0, null);
 			break;
 		}
 	}
