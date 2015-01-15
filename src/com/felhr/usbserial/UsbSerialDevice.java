@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.felhr.deviceids.CP210xIds;
 import com.felhr.deviceids.FTDISioIds;
 import com.felhr.deviceids.PL2303Ids;
+import com.felhr.deviceids.XdcVcpIds;
 
 import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
@@ -70,6 +71,8 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 			return new CP2102SerialDevice(device, connection);
 		else if(PL2303Ids.isDeviceSupported(vid, pid))
 			return new PL2303SerialDevice(device, connection);
+		else if(XdcVcpIds.isDeviceSupported(vid, pid))
+			return new XdcVcpSerialDevice(device, connection);
 		else if(isCdcDevice(device))  
 			return new CDCSerialDevice(device, connection);
 		else 
