@@ -71,8 +71,8 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 			return new CP2102SerialDevice(device, connection);
 		else if(PL2303Ids.isDeviceSupported(vid, pid))
 			return new PL2303SerialDevice(device, connection);
-		else if(XdcVcpIds.isDeviceSupported(vid, pid))
-			return new XdcVcpSerialDevice(device, connection);
+		//else if(XdcVcpIds.isDeviceSupported(vid, pid))
+			//return new XdcVcpSerialDevice(device, connection);
 		else if(isCdcDevice(device))  
 			return new CDCSerialDevice(device, connection);
 		else 
