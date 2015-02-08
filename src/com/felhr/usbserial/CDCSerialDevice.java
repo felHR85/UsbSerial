@@ -131,7 +131,7 @@ public class CDCSerialDevice extends UsbSerialDevice
 	@Override
 	public void close() 
 	{
-		setControlCommand(CDC_SET_CONTROL_LINE_STATE, CDC_DISCONNECT_CONTROL_LINE , null);
+		//setControlCommand(CDC_SET_CONTROL_LINE_STATE, CDC_DISCONNECT_CONTROL_LINE , null);
 		killWorkingThread();
 		killWriteThread();
 		connection.close();
