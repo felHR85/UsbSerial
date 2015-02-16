@@ -29,8 +29,8 @@ public class CDCSerialDevice extends UsbSerialDevice
 	 */
 	private static final byte[] CDC_DEFAULT_LINE_CODING = new byte[] {
 		(byte) 0x00, // Offset 0:4 dwDTERate
-		(byte) 0x01,
 		(byte) 0xC2,
+		(byte) 0x01,
 		(byte) 0x00,
 		(byte) 0x00, // Offset 5 bCharFormat (1 Stop bit)
 		(byte) 0x00, // bParityType (None)
@@ -131,7 +131,7 @@ public class CDCSerialDevice extends UsbSerialDevice
 	@Override
 	public void close() 
 	{
-		setControlCommand(CDC_SET_CONTROL_LINE_STATE, CDC_DISCONNECT_CONTROL_LINE , null);
+		//setControlCommand(CDC_SET_CONTROL_LINE_STATE, CDC_DISCONNECT_CONTROL_LINE , null);
 		killWorkingThread();
 		killWriteThread();
 		connection.close();
@@ -142,10 +142,10 @@ public class CDCSerialDevice extends UsbSerialDevice
 	{
 		byte[] data = getLineCoding();
 
-		data[3] = (byte) (baudRate & 0xff);
-		data[2] = (byte) (baudRate >> 8 & 0xff);
-		data[1] = (byte) (baudRate >> 16 & 0xff);
-		data[0] = (byte) (baudRate >> 24 & 0xff);
+		data[0] = (byte) (baudRate & 0xff);
+		data[1] = (byte) (baudRate >> 8 & 0xff);
+		data[2] = (byte) (baudRate >> 16 & 0xff);
+		data[3] = (byte) (baudRate >> 24 & 0xff);
 
 		setControlCommand(CDC_SET_LINE_CODING, 0, data);
 	}
