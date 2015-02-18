@@ -47,7 +47,13 @@ public class CDCSerialDevice extends UsbSerialDevice
 
 	public CDCSerialDevice(UsbDevice device, UsbDeviceConnection connection) 
 	{
+		this(device, connection, -1);
+	}
+
+	public CDCSerialDevice(UsbDevice device, UsbDeviceConnection connection, int iface)
+	{
 		super(device, connection);
+		mInterface = device.getInterface(iface >= 0 ? iface : findFirstCDC(device));
 	}
 
 	@Override
@@ -56,25 +62,6 @@ public class CDCSerialDevice extends UsbSerialDevice
 		// Restart the working thread if it has been killed before and  get and claim interface
 		restartWorkingThread();
 		restartWriteThread();
-		
-		int interfaceCount = device.getInterfaceCount();
-		int iIndex = 0;
-		boolean keepGettingInterfaces = true;
-		while(iIndex <= interfaceCount -1 && keepGettingInterfaces)
-		{
-			mInterface = device.getInterface(iIndex);
-			if(mInterface.getInterfaceClass() != UsbConstants.USB_CLASS_CDC_DATA)
-				mInterface = null;
-			else
-				keepGettingInterfaces = false;
-			iIndex++;
-		}
-		
-		if(mInterface == null)
-		{
-			Log.i(CLASS_ID, "There is no CDC class interface");
-			return false;
-		}
 		
 		if(connection.claimInterface(mInterface, true))
 		{
@@ -134,7 +121,7 @@ public class CDCSerialDevice extends UsbSerialDevice
 		//setControlCommand(CDC_SET_CONTROL_LINE_STATE, CDC_DISCONNECT_CONTROL_LINE , null);
 		killWorkingThread();
 		killWriteThread();
-		connection.close();
+		connection.releaseInterface(mInterface);
 	}
 
 	@Override
@@ -243,7 +230,7 @@ public class CDCSerialDevice extends UsbSerialDevice
 		{
 			dataLength = data.length;
 		}
-		int response = connection.controlTransfer(CDC_REQTYPE_HOST2DEVICE, request, value, 0, data, dataLength, USB_TIMEOUT);
+		int response = connection.controlTransfer(CDC_REQTYPE_HOST2DEVICE, request, value, mInterface.getId(), data, dataLength, USB_TIMEOUT);
 		Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
 		return response;
 	}
@@ -251,9 +238,25 @@ public class CDCSerialDevice extends UsbSerialDevice
 	private byte[] getLineCoding()
 	{
 		byte[] data = new byte[7];
-		int response = connection.controlTransfer(CDC_REQTYPE_DEVICE2HOST, CDC_GET_LINE_CODING, 0, 0, data, data.length, USB_TIMEOUT);
+		int response = connection.controlTransfer(CDC_REQTYPE_DEVICE2HOST, CDC_GET_LINE_CODING, 0, mInterface.getId(), data, data.length, USB_TIMEOUT);
 		Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
 		return data;
+	}
+
+	private static int findFirstCDC(UsbDevice device)
+	{
+		int interfaceCount = device.getInterfaceCount();
+
+		for (int iIndex = 0; iIndex < interfaceCount; ++iIndex)
+		{
+			if (device.getInterface(iIndex).getInterfaceClass() == UsbConstants.USB_CLASS_CDC_DATA)
+			{
+				return iIndex;
+			}
+		}
+
+		Log.i(CLASS_ID, "There is no CDC class interface");
+		return -1;
 	}
 
 }

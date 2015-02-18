@@ -58,6 +58,11 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 	
 	public static UsbSerialDevice createUsbSerialDevice(UsbDevice device, UsbDeviceConnection connection)
 	{
+		return createUsbSerialDevice(device, connection, -1);
+	}
+
+	public static UsbSerialDevice createUsbSerialDevice(UsbDevice device, UsbDeviceConnection connection, int iface)
+	{
 		/*
 		 * It checks given vid and pid and will return a custom driver or a CDC serial driver.
 		 * When CDC is returned open() method is even more important, its response will inform about if it can be really
@@ -66,15 +71,15 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 		int vid = device.getVendorId();
 		int pid = device.getProductId();
 		if(FTDISioIds.isDeviceSupported(vid, pid))
-			return new FTDISerialDevice(device, connection);
+			return new FTDISerialDevice(device, connection, iface);
 		else if(CP210xIds.isDeviceSupported(vid, pid))
-			return new CP2102SerialDevice(device, connection);
+			return new CP2102SerialDevice(device, connection, iface);
 		else if(PL2303Ids.isDeviceSupported(vid, pid))
-			return new PL2303SerialDevice(device, connection);
+			return new PL2303SerialDevice(device, connection, iface);
 		//else if(XdcVcpIds.isDeviceSupported(vid, pid))
 			//return new XdcVcpSerialDevice(device, connection);
 		else if(isCdcDevice(device))  
-			return new CDCSerialDevice(device, connection);
+			return new CDCSerialDevice(device, connection, iface);
 		else 
 			return null;
 	}
@@ -132,7 +137,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 		return (this instanceof FTDISerialDevice);
 	}
 	
-	private static boolean isCdcDevice(UsbDevice device)
+	public static boolean isCdcDevice(UsbDevice device)
 	{
 		int iIndex = device.getInterfaceCount();
 		for(int i=0;i<=iIndex-1;i++)

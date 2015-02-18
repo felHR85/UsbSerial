@@ -61,7 +61,13 @@ public class FTDISerialDevice extends UsbSerialDevice
 	
 	public FTDISerialDevice(UsbDevice device, UsbDeviceConnection connection) 
 	{
+		this(device, connection, -1);
+	}
+
+	public FTDISerialDevice(UsbDevice device, UsbDeviceConnection connection, int iface)
+	{
 		super(device, connection);
+		mInterface = device.getInterface(iface >= 0 ? iface : 0);
 	}
 
 	@Override
@@ -70,7 +76,6 @@ public class FTDISerialDevice extends UsbSerialDevice
 		// Restart the working thread and writeThread if it has been killed before and claim interface
 		restartWorkingThread();
 		restartWriteThread();
-		mInterface = device.getInterface(0); // FTDI devices have only one interface
 
 		if(connection.claimInterface(mInterface, true))
 		{
@@ -129,7 +134,7 @@ public class FTDISerialDevice extends UsbSerialDevice
 		currentSioSetData = 0x0000;
 		killWorkingThread();
 		killWriteThread();
-		connection.close();
+		connection.releaseInterface(mInterface);
 	}
 
 	@Override
@@ -324,7 +329,7 @@ public class FTDISerialDevice extends UsbSerialDevice
 		{
 			dataLength = data.length;
 		}
-		int response = connection.controlTransfer(FTDI_REQTYPE_HOST2DEVICE, request, value, index, data, dataLength, USB_TIMEOUT);
+		int response = connection.controlTransfer(FTDI_REQTYPE_HOST2DEVICE, request, value, mInterface.getId() + 1 + index, data, dataLength, USB_TIMEOUT);
 		Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
 		return response;
 	}
