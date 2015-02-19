@@ -52,17 +52,21 @@ public class CP2102SerialDevice extends UsbSerialDevice
 
 	public CP2102SerialDevice(UsbDevice device, UsbDeviceConnection connection) 
 	{
+		this(device, connection, -1);
+	}
+
+	public CP2102SerialDevice(UsbDevice device, UsbDeviceConnection connection, int iface)
+	{
 		super(device, connection);
+		mInterface = device.getInterface(iface >= 0 ? iface : 0);
 	}
 
 	@Override
 	public boolean open() 
 	{
-		
 		// Restart the working thread and writeThread if it has been killed before and  get and claim interface
 		restartWorkingThread();
 		restartWriteThread();
-		mInterface = device.getInterface(0); // CP2102 has only one interface
 		
 		if(connection.claimInterface(mInterface, true))
 		{
@@ -115,7 +119,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
 		setControlCommand(CP210x_IFC_ENABLE, CP210x_UART_DISABLE, null);
 		killWorkingThread();
 		killWriteThread();
-		connection.close();
+		connection.releaseInterface(mInterface);
 	}
 
 	@Override
@@ -283,7 +287,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
 		{
 			dataLength = data.length;
 		}
-		int response = connection.controlTransfer(CP210x_REQTYPE_HOST2DEVICE, request, value, 0, data, dataLength, USB_TIMEOUT);
+		int response = connection.controlTransfer(CP210x_REQTYPE_HOST2DEVICE, request, value, mInterface.getId(), data, dataLength, USB_TIMEOUT);
 		Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
 		return response;
 	}
@@ -291,7 +295,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
 	private byte[] getCTL()
 	{
 		byte[] data = new byte[2];
-		int response = connection.controlTransfer(CP210x_REQTYPE_DEVICE2HOST, CP210x_GET_LINE_CTL, 0, 0, data, data.length,  USB_TIMEOUT );
+		int response = connection.controlTransfer(CP210x_REQTYPE_DEVICE2HOST, CP210x_GET_LINE_CTL, 0, mInterface.getId(), data, data.length,  USB_TIMEOUT );
 		Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
 		return data;
 	}

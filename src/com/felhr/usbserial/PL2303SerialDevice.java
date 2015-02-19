@@ -39,7 +39,19 @@ public class PL2303SerialDevice extends UsbSerialDevice
 	
 	public PL2303SerialDevice(UsbDevice device, UsbDeviceConnection connection) 
 	{
+		this(device, connection, -1);
+	}
+
+	public PL2303SerialDevice(UsbDevice device, UsbDeviceConnection connection, int iface)
+	{
 		super(device, connection);
+
+		if (iface > 1)
+		{
+			throw new IllegalArgumentException("Multi-interface PL2303 devices not supported!");
+		}
+
+		mInterface = device.getInterface(iface >= 0 ? iface : 0);
 	}
 
 	@Override
@@ -48,7 +60,6 @@ public class PL2303SerialDevice extends UsbSerialDevice
 		// Restart the working thread and writeThread if it has been killed before and claim interface
 		restartWorkingThread();
 		restartWriteThread();
-		mInterface = device.getInterface(0); // PL2303 devices have only one interface
 
 		if(connection.claimInterface(mInterface, true))
 		{
@@ -120,7 +131,7 @@ public class PL2303SerialDevice extends UsbSerialDevice
 	{
 		killWorkingThread();
 		killWriteThread();
-		connection.close();
+		connection.releaseInterface(mInterface);
 	}
 
 	@Override

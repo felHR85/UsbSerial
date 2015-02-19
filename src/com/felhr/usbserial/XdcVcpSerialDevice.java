@@ -56,7 +56,14 @@ public class XdcVcpSerialDevice extends UsbSerialDevice
 
 	public XdcVcpSerialDevice(UsbDevice device, UsbDeviceConnection connection) 
 	{
+		this(device, connection, -1);
+	}
+
+
+	public XdcVcpSerialDevice(UsbDevice device, UsbDeviceConnection connection, int iface)
+	{
 		super(device, connection);
+		mInterface = device.getInterface(iface >= 0 ? iface : 0);
 	}
 
 	@Override
@@ -66,7 +73,6 @@ public class XdcVcpSerialDevice extends UsbSerialDevice
 		// Restart the working thread and writeThread if it has been killed before and  get and claim interface
 		restartWorkingThread();
 		restartWriteThread();
-		mInterface = device.getInterface(0); // XdcVcp has only one interface
 		
 		if(connection.claimInterface(mInterface, true))
 		{
@@ -119,7 +125,7 @@ public class XdcVcpSerialDevice extends UsbSerialDevice
 		setControlCommand(XDCVCP_IFC_ENABLE, XDCVCP_UART_DISABLE, null);
 		killWorkingThread();
 		killWriteThread();
-		connection.close();
+		connection.releaseInterface(mInterface);
 	}
 
 	@Override
@@ -287,7 +293,7 @@ public class XdcVcpSerialDevice extends UsbSerialDevice
 		{
 			dataLength = data.length;
 		}
-		int response = connection.controlTransfer(XDCVCP_REQTYPE_HOST2DEVICE, request, value, 0, data, dataLength, USB_TIMEOUT);
+		int response = connection.controlTransfer(XDCVCP_REQTYPE_HOST2DEVICE, request, value, mInterface.getId(), data, dataLength, USB_TIMEOUT);
 		Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
 		return response;
 	}
@@ -295,7 +301,7 @@ public class XdcVcpSerialDevice extends UsbSerialDevice
 	private byte[] getCTL()
 	{
 		byte[] data = new byte[2];
-		int response = connection.controlTransfer(XDCVCP_REQTYPE_DEVICE2HOST, XDCVCP_GET_LINE_CTL, 0, 0, data, data.length,  USB_TIMEOUT );
+		int response = connection.controlTransfer(XDCVCP_REQTYPE_DEVICE2HOST, XDCVCP_GET_LINE_CTL, 0, mInterface.getId(), data, data.length,  USB_TIMEOUT );
 		Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
 		return data;
 	}
