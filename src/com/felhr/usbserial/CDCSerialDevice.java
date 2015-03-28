@@ -230,7 +230,7 @@ public class CDCSerialDevice extends UsbSerialDevice
 		{
 			dataLength = data.length;
 		}
-		int response = connection.controlTransfer(CDC_REQTYPE_HOST2DEVICE, request, value, mInterface.getId(), data, dataLength, USB_TIMEOUT);
+		int response = connection.controlTransfer(CDC_REQTYPE_HOST2DEVICE, request, value, 0, data, dataLength, USB_TIMEOUT);
 		Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
 		return response;
 	}
@@ -238,7 +238,7 @@ public class CDCSerialDevice extends UsbSerialDevice
 	private byte[] getLineCoding()
 	{
 		byte[] data = new byte[7];
-		int response = connection.controlTransfer(CDC_REQTYPE_DEVICE2HOST, CDC_GET_LINE_CODING, 0, mInterface.getId(), data, data.length, USB_TIMEOUT);
+		int response = connection.controlTransfer(CDC_REQTYPE_DEVICE2HOST, CDC_GET_LINE_CODING, 0, 0, data, data.length, USB_TIMEOUT);
 		Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
 		return data;
 	}
