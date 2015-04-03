@@ -5,7 +5,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.felhr.deviceids.CP210xIds;
 import com.felhr.deviceids.FTDISioIds;
 import com.felhr.deviceids.PL2303Ids;
-import com.felhr.deviceids.XdcVcpIds;
 
 import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;

@@ -95,16 +95,9 @@ public class CDCSerialDevice extends UsbSerialDevice
 		}
 
 		// Default Setup
-		if(setControlCommand(CDC_SET_LINE_CODING, 0, CDC_DEFAULT_LINE_CODING) < 0)
-		{
-			Log.i(CLASS_ID, "CDC SET LINE CODING command could not be send correctly");
-			return false;
-		}if(setControlCommand(CDC_SET_CONTROL_LINE_STATE, CDC_DEFAULT_CONTROL_LINE, null) < 0)
-		{
-			Log.i(CLASS_ID, "CDC SET CONTROL LINE STATE command could not be send correctly");
-			return false;
-		}
-
+		setControlCommand(CDC_SET_LINE_CODING, 0, CDC_DEFAULT_LINE_CODING);	
+		setControlCommand(CDC_SET_CONTROL_LINE_STATE, CDC_DEFAULT_CONTROL_LINE, null);
+		
 		// Initialize UsbRequest
 		requestIN = new UsbRequest();
 		requestIN.initialize(connection, inEndpoint);
@@ -118,7 +111,6 @@ public class CDCSerialDevice extends UsbSerialDevice
 	@Override
 	public void close() 
 	{
-		//setControlCommand(CDC_SET_CONTROL_LINE_STATE, CDC_DISCONNECT_CONTROL_LINE , null);
 		killWorkingThread();
 		killWriteThread();
 		connection.releaseInterface(mInterface);
