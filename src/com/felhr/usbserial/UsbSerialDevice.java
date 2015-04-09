@@ -2,6 +2,7 @@ package com.felhr.usbserial;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.felhr.deviceids.CH34xIds;
 import com.felhr.deviceids.CP210xIds;
 import com.felhr.deviceids.FTDISioIds;
 import com.felhr.deviceids.PL2303Ids;
@@ -75,8 +76,8 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 			return new CP2102SerialDevice(device, connection, iface);
 		else if(PL2303Ids.isDeviceSupported(vid, pid))
 			return new PL2303SerialDevice(device, connection, iface);
-		//else if(XdcVcpIds.isDeviceSupported(vid, pid))
-			//return new XdcVcpSerialDevice(device, connection);
+		else if(CH34xIds.isDeviceSupported(vid, pid))
+			return new CH34xSerialDevice(device, connection, iface);
 		else if(isCdcDevice(device))  
 			return new CDCSerialDevice(device, connection, iface);
 		else 

@@ -2,7 +2,7 @@
  * Heavily based on a pull-request made by Andreas Butti to https://github.com/mik3y/usb-serial-for-android
  * https://github.com/mik3y/usb-serial-for-android/pull/92
  * 
- * I do not own one of these, so I can assure this works
+ * I do not own one of these, so I can't assure this works
  */
 
 package com.felhr.usbserial;
@@ -15,9 +15,6 @@ import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbRequest;
 import android.util.Log;
 
-/*
- * TODO: CLOSE, IDS, UsbSerial factory method update (felhr)
- */
 public class CH34xSerialDevice extends UsbSerialDevice
 {
 	private static final String CLASS_ID = CH34xSerialDevice.class.getSimpleName();
@@ -60,7 +57,6 @@ public class CH34xSerialDevice extends UsbSerialDevice
 	public CH34xSerialDevice(UsbDevice device, UsbDeviceConnection connection) 
 	{
 		super(device, connection);
-		// TODO Auto-generated constructor stub
 	}
 	
 	public CH34xSerialDevice(UsbDevice device, UsbDeviceConnection connection, int iface) 
@@ -121,8 +117,9 @@ public class CH34xSerialDevice extends UsbSerialDevice
 	@Override
 	public void close() 
 	{
-		// TODO felhr CLOSE
-		
+		killWorkingThread();
+		killWriteThread();
+		connection.releaseInterface(mInterface);
 	}
 
 	@Override
@@ -247,24 +244,37 @@ public class CH34xSerialDevice extends UsbSerialDevice
 	private int init()
 	{
 		if(checkState("init #1", 0x5f, 0, new int[]{-1 /* 0x27, 0x30 */, 0x00}) == -1)
+		{
 			return -1;
+		}
 
-		if(setControlCommandOut(0xa1, 0, 0, null) == -1) 
+		if(setControlCommandOut(0xa1, 0, 0, null) < 0) 
+		{
+			Log.i(CLASS_ID, "init failed! #2");
 			return -1;
-		
+		}
+
 		setBaudRate(DEFAULT_BAUDRATE);
 
 		if(checkState("init #4", 0x95, 0x2518, new int[]{-1 /* 0x56, c3*/, 0x00}) == -1)
 			return -1;
 
-		setControlCommandOut(0x9a, 0x2518, 0x0050, null);
-		
+		if(setControlCommandOut(0x9a, 0x2518, 0x0050, null) < 0)
+		{
+			Log.i(CLASS_ID, "init failed! #5");
+			return -1;
+		}
+
 
 		if(checkState("init #6", 0x95, 0x0706, new int[]{0xff, 0xee}) == -1)
 			return -1;
 
-		setControlCommandOut(0xa1, 0x501f, 0xd90a, null);
-		
+		if(setControlCommandOut(0xa1, 0x501f, 0xd90a, null) < 0)
+		{
+			Log.i(CLASS_ID, "init failed! #7");
+			return -1;
+		}
+
 		setBaudRate(DEFAULT_BAUDRATE);
 
 		if(writeHandshakeByte() == -1)
@@ -317,7 +327,7 @@ public class CH34xSerialDevice extends UsbSerialDevice
 		}
 		return 0;			
 	}
-	
+
 	private int setControlCommandOut(int request, int value, int index, byte[] data)
 	{
 		int dataLength = 0;
@@ -329,7 +339,7 @@ public class CH34xSerialDevice extends UsbSerialDevice
 		Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
 		return response;
 	}
-	
+
 	private int setControlCommandIn(int request, int value, int index, byte[] data)
 	{
 		int dataLength = 0;
