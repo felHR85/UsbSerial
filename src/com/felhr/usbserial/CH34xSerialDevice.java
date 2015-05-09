@@ -2,8 +2,9 @@
  * Heavily based on a pull-request made by Andreas Butti to https://github.com/mik3y/usb-serial-for-android
  * https://github.com/mik3y/usb-serial-for-android/pull/92
  * 
- * I do not own one of these, so I can't assure this works
- */
+ * Update May 9 2015: First tests appear to be working. No error messages are received when config the chip
+ * Thanks to Paul Alcock to provide me with one of those Arduino nano clones!!!
+ * */
 
 package com.felhr.usbserial;
 
