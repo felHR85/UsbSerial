@@ -91,7 +91,8 @@ public class CH34xSerialDevice extends UsbSerialDevice
 					&& endpoint.getDirection() == UsbConstants.USB_DIR_IN)
 			{
 				inEndpoint = endpoint;
-			}else
+			}else if(endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK
+					&& endpoint.getDirection() == UsbConstants.USB_DIR_OUT)
 			{
 				outEndpoint = endpoint;
 			}
