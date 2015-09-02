@@ -3,7 +3,7 @@
  * https://github.com/mik3y/usb-serial-for-android/pull/92
  * 
  * Update May 9 2015: First tests appear to be working. No error messages are received when config the chip
- * Thanks to Paul Alcock to provide me with one of those Arduino nano clones!!!
+ * Thanks to Paul Alcock for provide me with one of those Arduino nano clones!!!
  * */
 
 package com.felhr.usbserial;
