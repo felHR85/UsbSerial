@@ -44,16 +44,6 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 		this.device = device;
 		this.connection = connection;
 		serialBuffer = new SerialBuffer(mr1Version);
-		if(mr1Version)
-		{
-			workerThread = new WorkerThread();
-			workerThread.start();
-		}else
-		{
-			readThread = new ReadThread();
-		}
-		writeThread = new WriteThread();
-		writeThread.start();
 	}
 	
 	public static UsbSerialDevice createUsbSerialDevice(UsbDevice device, UsbDeviceConnection connection)
@@ -286,7 +276,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 				{
 					dataReceived = serialBuffer.getDataReceivedCompatible(numberBytes);
 					
-					// FTDI devices reserves two first bytes of an IN endpoint with info about
+					// FTDI devices reserve two first bytes of an IN endpoint with info about
 					// modem and Line.
 					if(isFTDIDevice())
 					{
@@ -352,10 +342,12 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 		{
 			workerThread = new WorkerThread();
 			workerThread.start();
+			while(!workerThread.isAlive()){} // Busy waiting
 		}else if(!mr1Version && readThread == null)
 		{
 			readThread = new ReadThread();
 			readThread.start();
+			while(!readThread.isAlive()){} // Busy waiting
 		}
 	}
 	
@@ -375,6 +367,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 		{
 			writeThread = new WriteThread();
 			writeThread.start();
+			while(!writeThread.isAlive()){} // Busy waiting
 		}
 	}
 }
