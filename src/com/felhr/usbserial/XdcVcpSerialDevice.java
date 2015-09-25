@@ -11,7 +11,7 @@ import android.util.Log;
 /*
  * Werner Wolfrum (w.wolfrum@wolfrum-elektronik.de)
  */
-
+@Deprecated
 public class XdcVcpSerialDevice extends UsbSerialDevice
 {
 	private static final String CLASS_ID = XdcVcpSerialDevice.class.getSimpleName();

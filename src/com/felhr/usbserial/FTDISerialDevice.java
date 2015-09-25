@@ -73,10 +73,6 @@ public class FTDISerialDevice extends UsbSerialDevice
 	@Override
 	public boolean open() 
 	{
-		// Restart the working thread and writeThread if it has been killed before and claim interface
-		restartWorkingThread();
-		restartWriteThread();
-
 		if(connection.claimInterface(mInterface, true))
 		{
 			Log.i(CLASS_ID, "Interface succesfully claimed");
@@ -119,7 +115,11 @@ public class FTDISerialDevice extends UsbSerialDevice
 		// Initialize UsbRequest
 		requestIN = new UsbRequest();
 		requestIN.initialize(connection, inEndpoint);
-
+		
+		// Restart the working thread if it has been killed before and  get and claim interface
+		restartWorkingThread();
+		restartWriteThread();
+				
 		// Pass references to the threads
 		setThreadsParams(requestIN, outEndpoint);
 		

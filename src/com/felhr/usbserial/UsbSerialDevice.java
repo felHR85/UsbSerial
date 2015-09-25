@@ -95,7 +95,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 		}else
 		{
 			readThread.setCallback(mCallback);
-			readThread.start();
+			//readThread.start();
 		}
 		return 0;
 	}
@@ -206,7 +206,8 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 		
 		private void onReceivedData(byte[] data)
 		{
-			callback.onReceivedData(data);
+			if(callback != null)
+				callback.onReceivedData(data);
 		}
 		
 		public void stopWorkingThread()
@@ -269,8 +270,12 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 			
 			while(working.get())
 			{
-				int numberBytes = connection.bulkTransfer(inEndpoint, serialBuffer.getBufferCompatible(),
-						SerialBuffer.DEFAULT_READ_BUFFER_SIZE, 0);
+				int numberBytes;
+				if(inEndpoint != null)
+					numberBytes = connection.bulkTransfer(inEndpoint, serialBuffer.getBufferCompatible(),
+							SerialBuffer.DEFAULT_READ_BUFFER_SIZE, 0);
+				else
+					numberBytes = 0;
 				
 				if(numberBytes > 0)
 				{
@@ -283,11 +288,11 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 						if(dataReceived.length > 2)
 						{
 							dataReceived = FTDISerialDevice.FTDIUtilities.adaptArray(dataReceived);
-							callback.onReceivedData(dataReceived);
+							onReceivedData(dataReceived);
 						}
 					}else
 					{
-						callback.onReceivedData(dataReceived);
+						onReceivedData(dataReceived);
 					}
 				}
 			}
@@ -301,6 +306,12 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 		public void stopReadThread()
 		{
 			working.set(false);
+		}
+		
+		private void onReceivedData(byte[] data)
+		{
+			if(callback != null)
+				callback.onReceivedData(data);
 		}
 	}
 	

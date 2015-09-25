@@ -120,6 +120,10 @@ public class PL2303SerialDevice extends UsbSerialDevice
 		requestIN = new UsbRequest();
 		requestIN.initialize(connection, inEndpoint);
 		
+		// Restart the working thread if it has been killed before and  get and claim interface
+		restartWorkingThread();
+		restartWriteThread();
+		
 		// Pass references to the threads
 		setThreadsParams(requestIN, outEndpoint);
 		
