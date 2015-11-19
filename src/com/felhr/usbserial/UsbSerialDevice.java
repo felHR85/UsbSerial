@@ -30,10 +30,10 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 	protected WriteThread writeThread;
 	protected ReadThread readThread;
 	
-	// Get Android version if version < 4.2 It is not going to be asynchronous read operations
+	// Get Android version if version < 4.3 It is not going to be asynchronous read operations
 	static
 	{
-		if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR1)
+		if(android.os.Build.VERSION.SDK_INT > android.os.Build.VERSION_CODES.JELLY_BEAN_MR1)
 			mr1Version = true;
 		else
 			mr1Version = false;
