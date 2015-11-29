@@ -20,6 +20,7 @@ public class PL2303Ids
 		new ConcreteDevice (0x067b, 0x0609),
 		new ConcreteDevice (0x067b, 0x331a),
 		new ConcreteDevice (0x067b, 0x0307),
+		new ConcreteDevice (0x067b, 0x0463),
 		new ConcreteDevice (0x0557, 0x2008),
 		new ConcreteDevice (0x0547, 0x2008),
 		new ConcreteDevice (0x04bb, 0x0a03),
