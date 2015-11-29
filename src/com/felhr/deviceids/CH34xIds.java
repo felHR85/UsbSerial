@@ -11,7 +11,8 @@ public class CH34xIds
 	{
 		new ConcreteDevice(0x4348, 0x5523),
 		new ConcreteDevice(0x1a86, 0x7523),
-		new ConcreteDevice(0x1a86, 0x5523)
+		new ConcreteDevice(0x1a86, 0x5523),
+		new ConcreteDevice(0x1a86, 0x0445)
 	};
 	
 	public static boolean isDeviceSupported(int vendorId, int productId)
