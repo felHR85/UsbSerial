@@ -71,6 +71,27 @@ manager.openDevice(UsbDevice device)
 ~~~
 
 
+Gradle
+--------------------------------------
+Add the jitpack repo to your your project's build.gradle at the end of repositories
+
+/build.gradle
+```groovy
+allprojects {
+	repositories {
+		jcenter()
+		maven { url "https://jitpack.io" }
+	}
+}
+```
+
+Then add the dependency to your module's build.gradle:
+
+/app/build.gradle
+```groovy
+compile 'com.github.felHR85:UsbSerial:v3.2'
+```
+
 TO-DO
 --------------------------------------
 - RTS/CTS and DSR/DTR functions needed to raise hardware flow control signals
