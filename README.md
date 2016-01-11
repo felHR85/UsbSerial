@@ -1,7 +1,7 @@
 UsbSerial
 =========
 
-Usb serial controller for Android. For more information, there is [a more complete description](http://felhr85.net/2014/11/11/usbserial-a-serial-port-driver-library-for-android-v2-0/) and [an example app](https://github.com/felHR85/SerialPortExample).
+Usb serial controller for Android. For more information, there is [a more complete description](http://felhr85.net/2014/11/11/usbserial-a-serial-port-driver-library-for-android-v2-0/).
 
 Devices Supported
 --------------------------------------

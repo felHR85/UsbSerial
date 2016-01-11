@@ -1,1 +1,1 @@
-include ':usbserial'
+include ':usbserial', ':example'
