@@ -40,6 +40,7 @@ public interface UsbSerialInterface
 	public void setStopBits(int stopBits);
 	public void setParity(int parity);
 	public void setFlowControl(int flowControl);
+	public void setRTS(boolean state);
 	
 	// Usb Read Callback
 	public interface UsbReadCallback
