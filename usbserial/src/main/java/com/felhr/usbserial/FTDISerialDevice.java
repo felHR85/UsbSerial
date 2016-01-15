@@ -321,8 +321,14 @@ public class FTDISerialDevice extends UsbSerialDevice
 			break;
 		}
 	}
-	
-	private int setControlCommand(int request, int value, int index, byte[] data)
+
+    @Override
+    public void setRTS(boolean state)
+    {
+        //TODO
+    }
+
+    private int setControlCommand(int request, int value, int index, byte[] data)
 	{
 		int dataLength = 0;
 		if(data != null)

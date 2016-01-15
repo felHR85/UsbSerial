@@ -279,9 +279,14 @@ public class PL2303SerialDevice extends UsbSerialDevice
 		// TODO
 		
 	}
-	
-	
-	private int setControlCommand(int reqType ,int request, int value, int index, byte[] data)
+
+    @Override
+    public void setRTS(boolean state)
+    {
+        //TODO
+    }
+
+    private int setControlCommand(int reqType , int request, int value, int index, byte[] data)
 	{
 		int dataLength = 0;
 		if(data != null)
@@ -290,6 +295,4 @@ public class PL2303SerialDevice extends UsbSerialDevice
 		Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
 		return response;
 	}
-
-
 }

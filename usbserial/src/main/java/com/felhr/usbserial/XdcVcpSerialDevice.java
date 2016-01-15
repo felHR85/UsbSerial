@@ -285,8 +285,14 @@ public class XdcVcpSerialDevice extends UsbSerialDevice
 			return;
 		}
 	}
-	
-	private int setControlCommand(int request, int value, byte[] data)
+
+    @Override
+    public void setRTS(boolean state)
+    {
+        //TODO
+    }
+
+    private int setControlCommand(int request, int value, byte[] data)
 	{
 		int dataLength = 0;
 		if(data != null)
