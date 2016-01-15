@@ -242,8 +242,14 @@ public class CH34xSerialDevice extends UsbSerialDevice
 		// TODO Auto-generated method stub
 		
 	}
-	
-	private int init()
+
+    @Override
+    public void setRTS(boolean state)
+    {
+        //TODO
+    }
+
+    private int init()
 	{
 		if(checkState("init #1", 0x5f, 0, new int[]{-1 /* 0x27, 0x30 */, 0x00}) == -1)
 		{

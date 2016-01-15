@@ -26,6 +26,9 @@ public class CP2102SerialDevice extends UsbSerialDevice
 	private static final int CP210x_REQTYPE_HOST2DEVICE = 0x41;
 	private static final int CP210x_REQTYPE_DEVICE2HOST = 0xC1;
 	
+	private static final int CP210x_MHS_RTS_ON = 0x202;
+    private static final int CP210x_MHS_RTS_OFF = 0x200;
+	
 	/***
 	 *  Default Serial Configuration
 	 *  Baud rate: 9600
@@ -245,7 +248,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
 		case UsbSerialInterface.FLOW_CONTROL_RTS_CTS:
 			byte[] dataRTSCTS = new byte[]{
 					(byte) 0x09, (byte) 0x00, (byte) 0x00, (byte) 0x00,
-					(byte) 0x80, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+					(byte) 0x40, (byte) 0x00, (byte) 0x00, (byte) 0x00,
 					(byte) 0x00, (byte) 0x80, (byte) 0x00, (byte) 0x00,
 					(byte) 0x00, (byte) 0x20, (byte) 0x00, (byte) 0x00
 			};
@@ -279,6 +282,18 @@ public class CP2102SerialDevice extends UsbSerialDevice
 			return;
 		}
 	}
+
+    @Override
+	public void setRTS(boolean state)
+    {
+        if(state)
+        {
+            setControlCommand(CP210x_SET_MHS, CP210x_MHS_RTS_ON, null);
+        }else
+        {
+            setControlCommand(CP210x_SET_MHS, CP210x_MHS_RTS_OFF, null);
+        }
+    }
 	
 	private int setControlCommand(int request, int value, byte[] data)
 	{
