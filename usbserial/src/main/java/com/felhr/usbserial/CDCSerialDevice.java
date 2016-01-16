@@ -227,6 +227,18 @@ public class CDCSerialDevice extends UsbSerialDevice
         //TODO
     }
 
+    @Override
+    public void getCTS(UsbCTSCallback ctsCallback)
+    {
+        //TODO
+    }
+
+    @Override
+    public void getDSR(UsbDSRCallback dsrCallback)
+    {
+        //TODO
+    }
+
     private int setControlCommand(int request, int value, byte[] data)
     {
         int dataLength = 0;

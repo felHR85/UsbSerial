@@ -310,6 +310,18 @@ public class CP2102SerialDevice extends UsbSerialDevice
         }
     }
 
+    @Override
+    public void getCTS(UsbCTSCallback ctsCallback)
+    {
+        //TODO
+    }
+
+    @Override
+    public void getDSR(UsbDSRCallback dsrCallback)
+    {
+        //TODO
+    }
+
     private int setControlCommand(int request, int value, byte[] data)
     {
         int dataLength = 0;
@@ -318,6 +330,18 @@ public class CP2102SerialDevice extends UsbSerialDevice
             dataLength = data.length;
         }
         int response = connection.controlTransfer(CP210x_REQTYPE_HOST2DEVICE, request, value, mInterface.getId(), data, dataLength, USB_TIMEOUT);
+        Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
+        return response;
+    }
+
+    private int setControlCommand2Host(int request, int value, byte[] data)
+    {
+        int dataLength = 0;
+        if(data != null)
+        {
+            dataLength = data.length;
+        }
+        int response = connection.controlTransfer(CP210x_REQTYPE_DEVICE2HOST, request, value, mInterface.getId(), data, dataLength, USB_TIMEOUT);
         Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
         return response;
     }

@@ -292,6 +292,18 @@ public class PL2303SerialDevice extends UsbSerialDevice
         //TODO
     }
 
+    @Override
+    public void getCTS(UsbCTSCallback ctsCallback)
+    {
+        //TODO
+    }
+
+    @Override
+    public void getDSR(UsbDSRCallback dsrCallback)
+    {
+        //TODO
+    }
+
     private int setControlCommand(int reqType , int request, int value, int index, byte[] data)
     {
         int dataLength = 0;
