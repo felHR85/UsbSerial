@@ -54,7 +54,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
     private static final int DEFAULT_BAUDRATE = 9600;
 
     /**
-     *  Current flow state
+     * Flow control variables
      */
     private boolean rtsCtsEnabled;
     private boolean dtrDsrEnabled;
@@ -147,6 +147,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
         setControlCommand(CP210x_IFC_ENABLE, CP210x_UART_DISABLE, null);
         killWorkingThread();
         killWriteThread();
+        stopFlowControlThread();
         connection.releaseInterface(mInterface);
     }
 
@@ -183,7 +184,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
             default:
                 return;
         }
-        byte wValue =  (byte) ((data[1] << 8) | (data[0] & 0xFF));
+        byte wValue = (byte) ((data[1] << 8) | (data[0] & 0xFF));
         setControlCommand(CP210x_SET_LINE_CTL, wValue, null);
 
     }
@@ -209,7 +210,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
             default:
                 return;
         }
-        byte wValue =  (byte) ((data[1] << 8) | (data[0] & 0xFF));
+        byte wValue = (byte) ((data[1] << 8) | (data[0] & 0xFF));
         setControlCommand(CP210x_SET_LINE_CTL, wValue, null);
     }
 
@@ -283,7 +284,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
                 break;
             case UsbSerialInterface.FLOW_CONTROL_DSR_DTR:
                 byte[] dataDSRDTR = new byte[]{
-                        (byte) 0x12, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+                        (byte) 0x11, (byte) 0x00, (byte) 0x00, (byte) 0x00,
                         (byte) 0x40, (byte) 0x00, (byte) 0x00, (byte) 0x00,
                         (byte) 0x00, (byte) 0x80, (byte) 0x00, (byte) 0x00,
                         (byte) 0x00, (byte) 0x20, (byte) 0x00, (byte) 0x00
@@ -339,13 +340,13 @@ public class CP2102SerialDevice extends UsbSerialDevice
     @Override
     public void getCTS(UsbCTSCallback ctsCallback)
     {
-        //TODO
+        this.ctsCallback = ctsCallback;
     }
 
     @Override
     public void getDSR(UsbDSRCallback dsrCallback)
     {
-        //TODO
+        this.dsrCallback = dsrCallback;
     }
 
     /*
@@ -368,7 +369,28 @@ public class CP2102SerialDevice extends UsbSerialDevice
             while(keep.get())
             {
                 byte[] modemState = pollLines();
-                //TODO: Check line status
+
+                // Check CTS status
+                if(rtsCtsEnabled)
+                {
+                    if(ctsState != ((modemState[0] & 0x10) == 0x10))
+                    {
+                        ctsState = !ctsState;
+                        if(ctsCallback != null)
+                            ctsCallback.onCTSChanged(ctsState);
+                    }
+                }
+
+                // Check DSR status
+                if(dtrDsrEnabled)
+                {
+                    if(dsrState != ((modemState[0] & 0x20) == 0x20))
+                    {
+                        dsrState = !dsrState;
+                        if(dsrCallback != null)
+                            dsrCallback.onDSRChanged(dsrState);
+                    }
+                }
             }
         }
 
@@ -402,6 +424,12 @@ public class CP2102SerialDevice extends UsbSerialDevice
     private void startFlowControlThread()
     {
         flowControlThread.start();
+    }
+
+    private void stopFlowControlThread()
+    {
+        flowControlThread.stopThread();
+        flowControlThread = null;
     }
 
     private int setControlCommand(int request, int value, byte[] data)
