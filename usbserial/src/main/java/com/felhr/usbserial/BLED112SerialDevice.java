@@ -199,6 +199,12 @@ public class BLED112SerialDevice extends UsbSerialDevice
     }
 
     @Override
+    public void setDTR(boolean state)
+    {
+        //TODO
+    }
+
+    @Override
     public void setFlowControl(int flowControl)
     {
         // TODO Auto-generated method stub

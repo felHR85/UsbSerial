@@ -221,6 +221,12 @@ public class CDCSerialDevice extends UsbSerialDevice
         //TODO
     }
 
+    @Override
+    public void setDTR(boolean state)
+    {
+        //TODO
+    }
+
     private int setControlCommand(int request, int value, byte[] data)
     {
         int dataLength = 0;

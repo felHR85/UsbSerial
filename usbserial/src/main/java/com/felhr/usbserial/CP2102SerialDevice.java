@@ -29,6 +29,8 @@ public class CP2102SerialDevice extends UsbSerialDevice
 
     private static final int CP210x_MHS_RTS_ON = 0x202;
     private static final int CP210x_MHS_RTS_OFF = 0x200;
+    private static final int CP210x_MHS_DTR_ON = 0x101;
+    private static final int CP210x_MHS_DTR_OFF = 0x100;
 
     /***
      *  Default Serial Configuration
@@ -286,6 +288,18 @@ public class CP2102SerialDevice extends UsbSerialDevice
 
     @Override
     public void setRTS(boolean state)
+    {
+        if(state)
+        {
+            setControlCommand(CP210x_SET_MHS, CP210x_MHS_RTS_ON, null);
+        }else
+        {
+            setControlCommand(CP210x_SET_MHS, CP210x_MHS_RTS_OFF, null);
+        }
+    }
+
+    @Override
+    public void setDTR(boolean state)
     {
         if(state)
         {
