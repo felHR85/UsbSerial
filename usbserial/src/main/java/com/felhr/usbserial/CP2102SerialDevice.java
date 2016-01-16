@@ -22,6 +22,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
     private static final int CP210x_SET_XON = 0x09;
     private static final int CP210x_SET_XOFF = 0x0A;
     private static final int CP210x_SET_CHARS = 0x19;
+    private static final int CP210x_GET_MDMSTS = 0x08;
 
     private static final int CP210x_REQTYPE_HOST2DEVICE = 0x41;
     private static final int CP210x_REQTYPE_DEVICE2HOST = 0xC1;
