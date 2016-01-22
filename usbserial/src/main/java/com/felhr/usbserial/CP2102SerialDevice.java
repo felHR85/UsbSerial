@@ -25,6 +25,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
     private static final int CP210x_SET_XOFF = 0x0A;
     private static final int CP210x_SET_CHARS = 0x19;
     private static final int CP210x_GET_MDMSTS = 0x08;
+    private static final int CP210x_GET_COMM_STATUS = 0x10;
 
     private static final int CP210x_REQTYPE_HOST2DEVICE = 0x41;
     private static final int CP210x_REQTYPE_DEVICE2HOST = 0xC1;
@@ -281,6 +282,8 @@ public class CP2102SerialDevice extends UsbSerialDevice
                 rtsCtsEnabled = true;
                 startFlowControlThread();
                 setControlCommand(CP210x_SET_FLOW, 0, dataRTSCTS);
+                setControlCommand(CP210x_SET_MHS, CP210x_MHS_RTS_ON, null);
+
                 break;
             case UsbSerialInterface.FLOW_CONTROL_DSR_DTR:
                 byte[] dataDSRDTR = new byte[]{
