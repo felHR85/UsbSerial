@@ -82,8 +82,8 @@ public class CP2102SerialDevice extends UsbSerialDevice
         super(device, connection);
         rtsCtsEnabled = false;
         dtrDsrEnabled = false;
-        ctsState = false;
-        dsrState = false;
+        ctsState = true;
+        dsrState = true;
         mInterface = device.getInterface(iface >= 0 ? iface : 0);
     }
 
@@ -280,10 +280,11 @@ public class CP2102SerialDevice extends UsbSerialDevice
                         (byte) 0x00, (byte) 0x20, (byte) 0x00, (byte) 0x00
                 };
                 rtsCtsEnabled = true;
-                startFlowControlThread();
                 setControlCommand(CP210x_SET_FLOW, 0, dataRTSCTS);
                 setControlCommand(CP210x_SET_MHS, CP210x_MHS_RTS_ON, null);
-
+                byte[] commStatusCTS = getCommStatus();
+                ctsState = (commStatusCTS[4] & 0x01) == 0x00;
+                startFlowControlThread();
                 break;
             case UsbSerialInterface.FLOW_CONTROL_DSR_DTR:
                 byte[] dataDSRDTR = new byte[]{
@@ -293,9 +294,11 @@ public class CP2102SerialDevice extends UsbSerialDevice
                         (byte) 0x00, (byte) 0x20, (byte) 0x00, (byte) 0x00
                 };
                 dtrDsrEnabled = true;
-                startFlowControlThread();
                 setControlCommand(CP210x_SET_FLOW, 0, dataDSRDTR);
                 setControlCommand(CP210x_SET_MHS, CP210x_MHS_DTR_ON, null);
+                byte[] commStatusDSR = getCommStatus();
+                dsrState = (commStatusDSR[4] & 0x02) == 0x00;
+                startFlowControlThread();
                 break;
             case UsbSerialInterface.FLOW_CONTROL_XON_XOFF:
                 byte[] dataXONXOFF = new byte[]{
