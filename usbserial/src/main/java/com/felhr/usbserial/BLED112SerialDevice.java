@@ -199,10 +199,28 @@ public class BLED112SerialDevice extends UsbSerialDevice
     }
 
     @Override
+    public void setDTR(boolean state)
+    {
+        //TODO
+    }
+
+    @Override
     public void setFlowControl(int flowControl)
     {
         // TODO Auto-generated method stub
 
+    }
+
+    @Override
+    public void getCTS(UsbCTSCallback ctsCallback)
+    {
+        //TODO
+    }
+
+    @Override
+    public void getDSR(UsbDSRCallback dsrCallback)
+    {
+        //TODO
     }
 
     private int setControlCommand(int request, int value, byte[] data)

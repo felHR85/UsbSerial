@@ -8,6 +8,8 @@ import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbRequest;
 import android.util.Log;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class CP2102SerialDevice extends UsbSerialDevice
 {
     private static final String CLASS_ID = CP2102SerialDevice.class.getSimpleName();
@@ -22,12 +24,16 @@ public class CP2102SerialDevice extends UsbSerialDevice
     private static final int CP210x_SET_XON = 0x09;
     private static final int CP210x_SET_XOFF = 0x0A;
     private static final int CP210x_SET_CHARS = 0x19;
+    private static final int CP210x_GET_MDMSTS = 0x08;
+    private static final int CP210x_GET_COMM_STATUS = 0x10;
 
     private static final int CP210x_REQTYPE_HOST2DEVICE = 0x41;
     private static final int CP210x_REQTYPE_DEVICE2HOST = 0xC1;
 
     private static final int CP210x_MHS_RTS_ON = 0x202;
     private static final int CP210x_MHS_RTS_OFF = 0x200;
+    private static final int CP210x_MHS_DTR_ON = 0x101;
+    private static final int CP210x_MHS_DTR_OFF = 0x100;
 
     /***
      *  Default Serial Configuration
@@ -48,10 +54,23 @@ public class CP2102SerialDevice extends UsbSerialDevice
     private static final int CP210x_XOFF = 0x0000;
     private static final int DEFAULT_BAUDRATE = 9600;
 
+    /**
+     * Flow control variables
+     */
+    private boolean rtsCtsEnabled;
+    private boolean dtrDsrEnabled;
+    private boolean ctsState;
+    private boolean dsrState;
+
+    private UsbCTSCallback ctsCallback;
+    private UsbDSRCallback dsrCallback;
+
     private UsbInterface mInterface;
     private UsbEndpoint inEndpoint;
     private UsbEndpoint outEndpoint;
     private UsbRequest requestIN;
+
+    private FlowControlThread flowControlThread;
 
     public CP2102SerialDevice(UsbDevice device, UsbDeviceConnection connection)
     {
@@ -61,6 +80,10 @@ public class CP2102SerialDevice extends UsbSerialDevice
     public CP2102SerialDevice(UsbDevice device, UsbDeviceConnection connection, int iface)
     {
         super(device, connection);
+        rtsCtsEnabled = false;
+        dtrDsrEnabled = false;
+        ctsState = true;
+        dsrState = true;
         mInterface = device.getInterface(iface >= 0 ? iface : 0);
     }
 
@@ -110,6 +133,9 @@ public class CP2102SerialDevice extends UsbSerialDevice
         restartWorkingThread();
         restartWriteThread();
 
+        // Create Flow control thread but it will only be started if necessary
+        createFlowControlThread();
+
         // Pass references to the threads
         setThreadsParams(requestIN, outEndpoint);
 
@@ -122,6 +148,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
         setControlCommand(CP210x_IFC_ENABLE, CP210x_UART_DISABLE, null);
         killWorkingThread();
         killWriteThread();
+        stopFlowControlThread();
         connection.releaseInterface(mInterface);
     }
 
@@ -158,7 +185,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
             default:
                 return;
         }
-        byte wValue =  (byte) ((data[1] << 8) | (data[0] & 0xFF));
+        byte wValue = (byte) ((data[1] << 8) | (data[0] & 0xFF));
         setControlCommand(CP210x_SET_LINE_CTL, wValue, null);
 
     }
@@ -184,7 +211,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
             default:
                 return;
         }
-        byte wValue =  (byte) ((data[1] << 8) | (data[0] & 0xFF));
+        byte wValue = (byte) ((data[1] << 8) | (data[0] & 0xFF));
         setControlCommand(CP210x_SET_LINE_CTL, wValue, null);
     }
 
@@ -252,16 +279,26 @@ public class CP2102SerialDevice extends UsbSerialDevice
                         (byte) 0x00, (byte) 0x80, (byte) 0x00, (byte) 0x00,
                         (byte) 0x00, (byte) 0x20, (byte) 0x00, (byte) 0x00
                 };
+                rtsCtsEnabled = true;
                 setControlCommand(CP210x_SET_FLOW, 0, dataRTSCTS);
+                setControlCommand(CP210x_SET_MHS, CP210x_MHS_RTS_ON, null);
+                byte[] commStatusCTS = getCommStatus();
+                ctsState = (commStatusCTS[4] & 0x01) == 0x00;
+                startFlowControlThread();
                 break;
             case UsbSerialInterface.FLOW_CONTROL_DSR_DTR:
                 byte[] dataDSRDTR = new byte[]{
-                        (byte) 0x12, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+                        (byte) 0x11, (byte) 0x00, (byte) 0x00, (byte) 0x00,
                         (byte) 0x40, (byte) 0x00, (byte) 0x00, (byte) 0x00,
                         (byte) 0x00, (byte) 0x80, (byte) 0x00, (byte) 0x00,
                         (byte) 0x00, (byte) 0x20, (byte) 0x00, (byte) 0x00
                 };
+                dtrDsrEnabled = true;
                 setControlCommand(CP210x_SET_FLOW, 0, dataDSRDTR);
+                setControlCommand(CP210x_SET_MHS, CP210x_MHS_DTR_ON, null);
+                byte[] commStatusDSR = getCommStatus();
+                dsrState = (commStatusDSR[4] & 0x02) == 0x00;
+                startFlowControlThread();
                 break;
             case UsbSerialInterface.FLOW_CONTROL_XON_XOFF:
                 byte[] dataXONXOFF = new byte[]{
@@ -295,6 +332,113 @@ public class CP2102SerialDevice extends UsbSerialDevice
         }
     }
 
+    @Override
+    public void setDTR(boolean state)
+    {
+        if(state)
+        {
+            setControlCommand(CP210x_SET_MHS, CP210x_MHS_DTR_ON, null);
+        }else
+        {
+            setControlCommand(CP210x_SET_MHS, CP210x_MHS_DTR_OFF, null);
+        }
+    }
+
+    @Override
+    public void getCTS(UsbCTSCallback ctsCallback)
+    {
+        this.ctsCallback = ctsCallback;
+    }
+
+    @Override
+    public void getDSR(UsbDSRCallback dsrCallback)
+    {
+        this.dsrCallback = dsrCallback;
+    }
+
+    /*
+        Thread to check every X time if flow signals CTS or DSR have been raised
+     */
+    private class FlowControlThread extends Thread
+    {
+        private long time = 40; // 40ms
+
+        private AtomicBoolean keep;
+
+        public FlowControlThread()
+        {
+            keep = new AtomicBoolean(true);
+        }
+
+        @Override
+        public void run()
+        {
+            while(keep.get())
+            {
+                byte[] modemState = pollLines();
+
+                // Check CTS status
+                if(rtsCtsEnabled)
+                {
+                    if(ctsState != ((modemState[0] & 0x10) == 0x10))
+                    {
+                        ctsState = !ctsState;
+                        if(ctsCallback != null)
+                            ctsCallback.onCTSChanged(ctsState);
+                    }
+                }
+
+                // Check DSR status
+                if(dtrDsrEnabled)
+                {
+                    if(dsrState != ((modemState[0] & 0x20) == 0x20))
+                    {
+                        dsrState = !dsrState;
+                        if(dsrCallback != null)
+                            dsrCallback.onDSRChanged(dsrState);
+                    }
+                }
+            }
+        }
+
+        public void stopThread()
+        {
+            keep.set(false);
+        }
+
+        private byte[] pollLines()
+        {
+            synchronized(this)
+            {
+                try
+                {
+                    wait(time);
+                } catch(InterruptedException e)
+                {
+                    e.printStackTrace();
+                }
+            }
+
+            return getModemState();
+        }
+    }
+
+    private void createFlowControlThread()
+    {
+        flowControlThread = new FlowControlThread();
+    }
+
+    private void startFlowControlThread()
+    {
+        flowControlThread.start();
+    }
+
+    private void stopFlowControlThread()
+    {
+        flowControlThread.stopThread();
+        flowControlThread = null;
+    }
+
     private int setControlCommand(int request, int value, byte[] data)
     {
         int dataLength = 0;
@@ -307,12 +451,26 @@ public class CP2102SerialDevice extends UsbSerialDevice
         return response;
     }
 
-    private byte[] getCTL()
+    private byte[] getModemState()
     {
-        byte[] data = new byte[2];
-        int response = connection.controlTransfer(CP210x_REQTYPE_DEVICE2HOST, CP210x_GET_LINE_CTL, 0, mInterface.getId(), data, data.length,  USB_TIMEOUT );
-        Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
+        byte[] data = new byte[1];
+        connection.controlTransfer(CP210x_REQTYPE_DEVICE2HOST, CP210x_GET_MDMSTS, 0, mInterface.getId(), data, 1, USB_TIMEOUT);
         return data;
     }
 
+    private byte[] getCommStatus()
+    {
+        byte[] data = new byte[19];
+        int response = connection.controlTransfer(CP210x_REQTYPE_DEVICE2HOST, CP210x_GET_COMM_STATUS, 0, mInterface.getId(), data, 19, USB_TIMEOUT);
+        Log.i(CLASS_ID, "Control Transfer Response (Comm status): " + String.valueOf(response));
+        return data;
+    }
+
+    private byte[] getCTL()
+    {
+        byte[] data = new byte[2];
+        int response = connection.controlTransfer(CP210x_REQTYPE_DEVICE2HOST, CP210x_GET_LINE_CTL, 0, mInterface.getId(), data, data.length, USB_TIMEOUT);
+        Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
+        return data;
+    }
 }

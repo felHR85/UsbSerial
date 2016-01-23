@@ -249,6 +249,24 @@ public class CH34xSerialDevice extends UsbSerialDevice
         //TODO
     }
 
+    @Override
+    public void setDTR(boolean state)
+    {
+        //TODO
+    }
+
+    @Override
+    public void getCTS(UsbCTSCallback ctsCallback)
+    {
+        //TODO
+    }
+
+    @Override
+    public void getDSR(UsbDSRCallback dsrCallback)
+    {
+        //TODO
+    }
+
     private int init()
     {
         if(checkState("init #1", 0x5f, 0, new int[]{-1 /* 0x27, 0x30 */, 0x00}) == -1)

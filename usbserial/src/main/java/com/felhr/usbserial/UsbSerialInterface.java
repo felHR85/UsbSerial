@@ -41,8 +41,21 @@ public interface UsbSerialInterface
     void setParity(int parity);
     void setFlowControl(int flowControl);
 
-    // Flow control commands
+    // Flow control commands and interface callback
     void setRTS(boolean state);
+    void setDTR(boolean state);
+    void getCTS(UsbCTSCallback ctsCallback);
+    void getDSR(UsbDSRCallback dsrCallback);
+
+    interface UsbCTSCallback
+    {
+        void onCTSChanged(boolean state);
+    }
+
+    interface UsbDSRCallback
+    {
+        void onDSRChanged(boolean state);
+    }
 
     // Usb Read Callback
     interface UsbReadCallback

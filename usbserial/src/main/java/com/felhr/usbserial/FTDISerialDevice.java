@@ -328,6 +328,24 @@ public class FTDISerialDevice extends UsbSerialDevice
         //TODO
     }
 
+    @Override
+    public void setDTR(boolean state)
+    {
+        //TODO
+    }
+
+    @Override
+    public void getCTS(UsbCTSCallback ctsCallback)
+    {
+        //TODO
+    }
+
+    @Override
+    public void getDSR(UsbDSRCallback dsrCallback)
+    {
+        //TODO
+    }
+
     private int setControlCommand(int request, int value, int index, byte[] data)
     {
         int dataLength = 0;
