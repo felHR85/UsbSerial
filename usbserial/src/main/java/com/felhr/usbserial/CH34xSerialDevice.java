@@ -267,6 +267,30 @@ public class CH34xSerialDevice extends UsbSerialDevice
         //TODO
     }
 
+    @Override
+    public void getBreak(UsbBreakCallback breakCallback)
+    {
+        //TODO
+    }
+
+    @Override
+    public void getFrame(UsbFrameCallback frameCallback)
+    {
+        //TODO
+    }
+
+    @Override
+    public void getOverrun(UsbOverrunCallback overrunCallback)
+    {
+        //TODO
+    }
+
+    @Override
+    public void getParity(UsbParityCallback parityCallback)
+    {
+        //TODO
+    }
+
     private int init()
     {
         if(checkState("init #1", 0x5f, 0, new int[]{-1 /* 0x27, 0x30 */, 0x00}) == -1)

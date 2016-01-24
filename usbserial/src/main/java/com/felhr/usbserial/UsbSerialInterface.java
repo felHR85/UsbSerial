@@ -47,6 +47,12 @@ public interface UsbSerialInterface
     void getCTS(UsbCTSCallback ctsCallback);
     void getDSR(UsbDSRCallback dsrCallback);
 
+    // Status methods
+    void getBreak(UsbBreakCallback breakCallback);
+    void getFrame(UsbFrameCallback frameCallback);
+    void getOverrun(UsbOverrunCallback overrunCallback);
+    void getParity(UsbParityCallback parityCallback);
+
     interface UsbCTSCallback
     {
         void onCTSChanged(boolean state);
@@ -55,6 +61,27 @@ public interface UsbSerialInterface
     interface UsbDSRCallback
     {
         void onDSRChanged(boolean state);
+    }
+
+    // Error signals callbacks
+    interface UsbBreakCallback
+    {
+        void onBreakInterrupt();
+    }
+
+    interface UsbFrameCallback
+    {
+        void onFramingError();
+    }
+
+    interface  UsbOverrunCallback
+    {
+        void onOverrunError();
+    }
+
+    interface UsbParityCallback
+    {
+        void onParityError();
     }
 
     // Usb Read Callback

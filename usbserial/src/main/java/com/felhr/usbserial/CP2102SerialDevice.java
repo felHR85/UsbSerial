@@ -356,9 +356,33 @@ public class CP2102SerialDevice extends UsbSerialDevice
         this.dsrCallback = dsrCallback;
     }
 
+    @Override
+    public void getBreak(UsbBreakCallback breakCallback)
+    {
+        //TODO
+    }
+
+    @Override
+    public void getFrame(UsbFrameCallback frameCallback)
+    {
+        //TODO
+    }
+
+    @Override
+    public void getOverrun(UsbOverrunCallback overrunCallback)
+    {
+        //TODO
+    }
+
+    @Override
+    public void getParity(UsbParityCallback parityCallback)
+    {
+        //TODO
+    }
+
     /*
-        Thread to check every X time if flow signals CTS or DSR have been raised
-     */
+            Thread to check every X time if flow signals CTS or DSR have been raised
+         */
     private class FlowControlThread extends Thread
     {
         private long time = 40; // 40ms
