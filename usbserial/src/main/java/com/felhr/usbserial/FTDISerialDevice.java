@@ -22,6 +22,17 @@ public class FTDISerialDevice extends UsbSerialDevice
 
     private static final int FTDI_REQTYPE_HOST2DEVICE = 0x40;
 
+    /**
+     *  RTS and DTR values obtained from FreeBSD FTDI driver
+     *  https://github.com/freebsd/freebsd/blob/70b396ca9c54a94c3fad73c3ceb0a76dffbde635/sys/dev/usb/serial/uftdi_reg.h
+     */
+    private static final int FTDI_SIO_SET_DTR_MASK = 0x1;
+    private static final int FTDI_SIO_SET_DTR_HIGH = (1 | (FTDI_SIO_SET_DTR_MASK << 8));
+    private static final int FTDI_SIO_SET_DTR_LOW = (0 | (FTDI_SIO_SET_DTR_MASK << 8));
+    private static final int FTDI_SIO_SET_RTS_MASK = 0x2;
+    private static final int FTDI_SIO_SET_RTS_HIGH = (2 | (FTDI_SIO_SET_RTS_MASK << 8));
+    private static final int FTDI_SIO_SET_RTS_LOW = (0 | (FTDI_SIO_SET_RTS_MASK << 8));
+
     public static final int FTDI_BAUDRATE_300 = 0x2710;
     public static final int FTDI_BAUDRATE_600 = 0x1388;
     public static final int FTDI_BAUDRATE_1200 = 0x09c4;
@@ -346,13 +357,25 @@ public class FTDISerialDevice extends UsbSerialDevice
     @Override
     public void setRTS(boolean state)
     {
-        //TODO
+        if(state)
+        {
+            setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SIO_SET_RTS_HIGH, 0, null);
+        }else
+        {
+            setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SIO_SET_RTS_LOW, 0, null);
+        }
     }
 
     @Override
     public void setDTR(boolean state)
     {
-        //TODO
+        if(state)
+        {
+            setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SIO_SET_DTR_HIGH, 0, null);
+        }else
+        {
+            setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SIO_SET_DTR_LOW, 0, null);
+        }
     }
 
     @Override
