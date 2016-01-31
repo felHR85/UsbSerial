@@ -323,10 +323,12 @@ public class FTDISerialDevice extends UsbSerialDevice
                 setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, 0, null);
                 break;
             case UsbSerialInterface.FLOW_CONTROL_RTS_CTS:
+                rtsCtsEnabled = true;
                 int indexRTSCTS = 0x0001;
                 setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, indexRTSCTS, null);
                 break;
             case UsbSerialInterface.FLOW_CONTROL_DSR_DTR:
+                dtrDsrEnabled = true;
                 int indexDSRDTR = 0x0002;
                 setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, indexDSRDTR , null);
                 break;
