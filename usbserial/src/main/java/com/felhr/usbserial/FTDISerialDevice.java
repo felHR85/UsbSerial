@@ -53,10 +53,24 @@ public class FTDISerialDevice extends UsbSerialDevice
 
     private int currentSioSetData = 0x0000;
 
+    /**
+     * Flow control variables
+     */
+    private boolean rtsCtsEnabled;
+    private boolean dtrDsrEnabled;
+
+    private boolean ctsState;
+    private boolean dsrState;
+
+    private UsbCTSCallback ctsCallback;
+    private UsbDSRCallback dsrCallback;
+
     private UsbInterface mInterface;
     private UsbEndpoint inEndpoint;
     private UsbEndpoint outEndpoint;
     private UsbRequest requestIN;
+
+    public FTDIUtilities ftdiUtilities;
 
 
     public FTDISerialDevice(UsbDevice device, UsbDeviceConnection connection)
@@ -67,6 +81,11 @@ public class FTDISerialDevice extends UsbSerialDevice
     public FTDISerialDevice(UsbDevice device, UsbDeviceConnection connection, int iface)
     {
         super(device, connection);
+        ftdiUtilities = new FTDIUtilities();
+        rtsCtsEnabled = false;
+        dtrDsrEnabled = false;
+        ctsState = true;
+        dsrState = true;
         mInterface = device.getInterface(iface >= 0 ? iface : 0);
     }
 
@@ -337,13 +356,13 @@ public class FTDISerialDevice extends UsbSerialDevice
     @Override
     public void getCTS(UsbCTSCallback ctsCallback)
     {
-        //TODO
+        this.ctsCallback = ctsCallback;
     }
 
     @Override
     public void getDSR(UsbDSRCallback dsrCallback)
     {
-        //TODO
+        this.dsrCallback = dsrCallback;
     }
 
     @Override
@@ -382,10 +401,10 @@ public class FTDISerialDevice extends UsbSerialDevice
         return response;
     }
 
-    public static class FTDIUtilities
+    public class FTDIUtilities
     {
         // Special treatment needed to FTDI devices
-        public static byte[] adaptArray(byte[] ftdiData)
+        public byte[] adaptArray(byte[] ftdiData)
         {
             int length = ftdiData.length;
             if(length > 64)
@@ -408,8 +427,29 @@ public class FTDISerialDevice extends UsbSerialDevice
             }
         }
 
+        public void checkModemStatus(byte[] data)
+        {
+            if(data.length == 0) // Safeguard for zero length arrays
+                return;
+
+            boolean cts = (data[0] & 0x10) == 0x10;
+            boolean dsr = (data[0] & 0x20) == 0x20;
+
+            if(cts != ctsState) //CTS
+            {
+                ctsState = !ctsState;
+                ctsCallback.onCTSChanged(ctsState);
+            }
+
+            if(dsr != dsrState) //DSR
+            {
+                dsrState = ! dsrState;
+                dsrCallback.onDSRChanged(dsrState);
+            }
+        }
+
         // Copy data without FTDI headers
-        private static void copyData(byte[] src, byte[] dst)
+        private void copyData(byte[] src, byte[] dst)
         {
             int i = 0; // src index
             int j = 0; // dst index
