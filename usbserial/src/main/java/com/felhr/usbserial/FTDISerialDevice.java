@@ -142,6 +142,10 @@ public class FTDISerialDevice extends UsbSerialDevice
         if(setControlCommand(FTDI_SIO_SET_BAUD_RATE, FTDI_BAUDRATE_9600, 0, null) < 0)
             return false;
 
+        // Flow control disabled by default
+        rtsCtsEnabled = false;
+        dtrDsrEnabled = false;
+
         // Initialize UsbRequest
         requestIN = new UsbRequest();
         requestIN.initialize(connection, inEndpoint);
@@ -332,14 +336,18 @@ public class FTDISerialDevice extends UsbSerialDevice
         {
             case UsbSerialInterface.FLOW_CONTROL_OFF:
                 setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, 0, null);
+                rtsCtsEnabled = false;
+                dtrDsrEnabled = false;
                 break;
             case UsbSerialInterface.FLOW_CONTROL_RTS_CTS:
                 rtsCtsEnabled = true;
+                dtrDsrEnabled = false;
                 int indexRTSCTS = 0x0001;
                 setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, indexRTSCTS, null);
                 break;
             case UsbSerialInterface.FLOW_CONTROL_DSR_DTR:
                 dtrDsrEnabled = true;
+                rtsCtsEnabled = false;
                 int indexDSRDTR = 0x0002;
                 setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, indexDSRDTR , null);
                 break;
@@ -460,15 +468,17 @@ public class FTDISerialDevice extends UsbSerialDevice
             boolean cts = (data[0] & 0x10) == 0x10;
             boolean dsr = (data[0] & 0x20) == 0x20;
 
-            if(cts != ctsState) //CTS
+            if(rtsCtsEnabled &&
+                    cts != ctsState && ctsCallback != null) //CTS
             {
                 ctsState = !ctsState;
                 ctsCallback.onCTSChanged(ctsState);
             }
 
-            if(dsr != dsrState) //DSR
+            if(dtrDsrEnabled &&
+                    dsr != dsrState && dsrCallback != null) //DSR
             {
-                dsrState = ! dsrState;
+                dsrState = !dsrState;
                 dsrCallback.onDSRChanged(dsrState);
             }
         }
