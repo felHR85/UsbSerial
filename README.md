@@ -79,8 +79,8 @@ private UsbSerialInterface.UsbDSRCallback dsrCallback = new UsbSerialInterface.U
         }
     };
     
-    serial.getCTS(ctsCallback);
-    //serial.getDSR(dsrCallback);
+serial.getCTS(ctsCallback);
+//serial.getDSR(dsrCallback);
 ~~~
 
 
