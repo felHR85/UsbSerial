@@ -74,7 +74,8 @@ public class UsbService extends Service {
     private UsbSerialInterface.UsbCTSCallback ctsCallback = new UsbSerialInterface.UsbCTSCallback() {
         @Override
         public void onCTSChanged(boolean state) {
-            mHandler.obtainMessage(CTS_CHANGE).sendToTarget();
+            if(mHandler != null)
+                mHandler.obtainMessage(CTS_CHANGE).sendToTarget();
         }
     };
 
@@ -84,7 +85,8 @@ public class UsbService extends Service {
     private UsbSerialInterface.UsbDSRCallback dsrCallback = new UsbSerialInterface.UsbDSRCallback() {
         @Override
         public void onDSRChanged(boolean state) {
-            mHandler.obtainMessage(DSR_CHANGE).sendToTarget();
+            if(mHandler != null)
+                mHandler.obtainMessage(DSR_CHANGE).sendToTarget();
         }
     };
     /*
@@ -238,10 +240,10 @@ public class UsbService extends Service {
                     serialPort.setStopBits(UsbSerialInterface.STOP_BITS_1);
                     serialPort.setParity(UsbSerialInterface.PARITY_NONE);
                     /**
-                     * Flow control Options:
+                     * Current flow control Options:
                      * UsbSerialInterface.FLOW_CONTROL_OFF
-                     * UsbSerialInterface.FLOW_CONTROL_RTS_CTS for CP2102 and FT232
-                     * UsbSerialInterface.FLOW_CONTROL_DSR_DTR for CP2102 and FT232
+                     * UsbSerialInterface.FLOW_CONTROL_RTS_CTS only for CP2102 and FT232
+                     * UsbSerialInterface.FLOW_CONTROL_DSR_DTR only for CP2102 and FT232
                      */
                     serialPort.setFlowControl(UsbSerialInterface.FLOW_CONTROL_OFF);
                     serialPort.read(mCallback);

@@ -72,6 +72,7 @@ public class FTDISerialDevice extends UsbSerialDevice
 
     private boolean ctsState;
     private boolean dsrState;
+    private boolean firstTime; // with this flag we set the CTS and DSR state to the first value received from the FTDI device
 
     private UsbCTSCallback ctsCallback;
     private UsbDSRCallback dsrCallback;
@@ -97,6 +98,7 @@ public class FTDISerialDevice extends UsbSerialDevice
         dtrDsrEnabled = false;
         ctsState = true;
         dsrState = true;
+        firstTime = true;
         mInterface = device.getInterface(iface >= 0 ? iface : 0);
     }
 
@@ -128,6 +130,7 @@ public class FTDISerialDevice extends UsbSerialDevice
         }
 
         // Default Setup
+        firstTime = true;
         if(setControlCommand(FTDI_SIO_RESET, 0x00, 0, null) < 0)
             return false;
         if(setControlCommand(FTDI_SIO_SET_DATA, FTDI_SET_DATA_DEFAULT, 0, null) < 0)
@@ -467,6 +470,14 @@ public class FTDISerialDevice extends UsbSerialDevice
 
             boolean cts = (data[0] & 0x10) == 0x10;
             boolean dsr = (data[0] & 0x20) == 0x20;
+
+            if(firstTime) // First modem status received, set the flags and exit
+            {
+                ctsState = cts;
+                dsrState = dsr;
+                firstTime = false;
+                return;
+            }
 
             if(rtsCtsEnabled &&
                     cts != ctsState && ctsCallback != null) //CTS
