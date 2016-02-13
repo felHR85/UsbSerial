@@ -391,11 +391,14 @@ public class CP2102SerialDevice extends UsbSerialDevice
     {
         private long time = 40; // 40ms
 
+        private boolean firstTime;
+
         private AtomicBoolean keep;
 
         public FlowControlThread()
         {
             keep = new AtomicBoolean(true);
+            firstTime = true;
         }
 
         @Override
@@ -403,28 +406,40 @@ public class CP2102SerialDevice extends UsbSerialDevice
         {
             while(keep.get())
             {
-                byte[] modemState = pollLines();
-
-                // Check CTS status
-                if(rtsCtsEnabled)
+                if(!firstTime) // Only execute the callback when the status change
                 {
-                    if(ctsState != ((modemState[0] & 0x10) == 0x10))
-                    {
-                        ctsState = !ctsState;
-                        if(ctsCallback != null)
-                            ctsCallback.onCTSChanged(ctsState);
-                    }
-                }
+                    byte[] modemState = pollLines();
 
-                // Check DSR status
-                if(dtrDsrEnabled)
-                {
-                    if(dsrState != ((modemState[0] & 0x20) == 0x20))
+                    // Check CTS status
+                    if(rtsCtsEnabled)
                     {
-                        dsrState = !dsrState;
-                        if(dsrCallback != null)
-                            dsrCallback.onDSRChanged(dsrState);
+                        if(ctsState != ((modemState[0] & 0x10) == 0x10))
+                        {
+                            ctsState = !ctsState;
+                            if (ctsCallback != null)
+                                ctsCallback.onCTSChanged(ctsState);
+                        }
                     }
+
+                    // Check DSR status
+                    if(dtrDsrEnabled)
+                    {
+                        if(dsrState != ((modemState[0] & 0x20) == 0x20))
+                        {
+                            dsrState = !dsrState;
+                            if (dsrCallback != null)
+                                dsrCallback.onDSRChanged(dsrState);
+                        }
+                    }
+                }else // Execute the callback always the first time
+                {
+                    if(rtsCtsEnabled && ctsCallback != null)
+                        ctsCallback.onCTSChanged(ctsState);
+
+                    if(dtrDsrEnabled && dsrCallback != null)
+                        dsrCallback.onDSRChanged(dsrState);
+
+                    firstTime = false;
                 }
             }
         }

@@ -471,10 +471,17 @@ public class FTDISerialDevice extends UsbSerialDevice
             boolean cts = (data[0] & 0x10) == 0x10;
             boolean dsr = (data[0] & 0x20) == 0x20;
 
-            if(firstTime) // First modem status received, set the flags and exit
+            if(firstTime) // First modem status received
             {
                 ctsState = cts;
                 dsrState = dsr;
+
+                if(rtsCtsEnabled && ctsCallback != null)
+                    ctsCallback.onCTSChanged(ctsState);
+
+                if(dtrDsrEnabled && dsrCallback != null)
+                    dsrCallback.onDSRChanged(dsrState);
+
                 firstTime = false;
                 return;
             }
