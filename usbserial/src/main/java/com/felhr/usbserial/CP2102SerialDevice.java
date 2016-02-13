@@ -270,6 +270,8 @@ public class CP2102SerialDevice extends UsbSerialDevice
                         (byte) 0x00, (byte) 0x80, (byte) 0x00, (byte) 0x00,
                         (byte) 0x00, (byte) 0x20, (byte) 0x00, (byte) 0x00
                 };
+                rtsCtsEnabled = false;
+                dtrDsrEnabled = false;
                 setControlCommand(CP210x_SET_FLOW, 0, dataOff);
                 break;
             case UsbSerialInterface.FLOW_CONTROL_RTS_CTS:
@@ -280,6 +282,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
                         (byte) 0x00, (byte) 0x20, (byte) 0x00, (byte) 0x00
                 };
                 rtsCtsEnabled = true;
+                dtrDsrEnabled = false;
                 setControlCommand(CP210x_SET_FLOW, 0, dataRTSCTS);
                 setControlCommand(CP210x_SET_MHS, CP210x_MHS_RTS_ON, null);
                 byte[] commStatusCTS = getCommStatus();
@@ -294,6 +297,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
                         (byte) 0x00, (byte) 0x20, (byte) 0x00, (byte) 0x00
                 };
                 dtrDsrEnabled = true;
+                rtsCtsEnabled = false;
                 setControlCommand(CP210x_SET_FLOW, 0, dataDSRDTR);
                 setControlCommand(CP210x_SET_MHS, CP210x_MHS_DTR_ON, null);
                 byte[] commStatusDSR = getCommStatus();
@@ -356,9 +360,33 @@ public class CP2102SerialDevice extends UsbSerialDevice
         this.dsrCallback = dsrCallback;
     }
 
+    @Override
+    public void getBreak(UsbBreakCallback breakCallback)
+    {
+        //TODO
+    }
+
+    @Override
+    public void getFrame(UsbFrameCallback frameCallback)
+    {
+        //TODO
+    }
+
+    @Override
+    public void getOverrun(UsbOverrunCallback overrunCallback)
+    {
+        //TODO
+    }
+
+    @Override
+    public void getParity(UsbParityCallback parityCallback)
+    {
+        //TODO
+    }
+
     /*
-        Thread to check every X time if flow signals CTS or DSR have been raised
-     */
+            Thread to check every X time if flow signals CTS or DSR have been raised
+         */
     private class FlowControlThread extends Thread
     {
         private long time = 40; // 40ms

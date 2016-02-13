@@ -304,6 +304,30 @@ public class PL2303SerialDevice extends UsbSerialDevice
         //TODO
     }
 
+    @Override
+    public void getBreak(UsbBreakCallback breakCallback)
+    {
+        //TODO
+    }
+
+    @Override
+    public void getFrame(UsbFrameCallback frameCallback)
+    {
+        //TODO
+    }
+
+    @Override
+    public void getOverrun(UsbOverrunCallback overrunCallback)
+    {
+        //TODO
+    }
+
+    @Override
+    public void getParity(UsbParityCallback parityCallback)
+    {
+        //TODO
+    }
+
     private int setControlCommand(int reqType , int request, int value, int index, byte[] data)
     {
         int dataLength = 0;

@@ -34,6 +34,8 @@ public class UsbService extends Service {
     public static final String ACTION_CDC_DRIVER_NOT_WORKING = "com.felhr.connectivityservices.ACTION_CDC_DRIVER_NOT_WORKING";
     public static final String ACTION_USB_DEVICE_NOT_WORKING = "com.felhr.connectivityservices.ACTION_USB_DEVICE_NOT_WORKING";
     public static final int MESSAGE_FROM_SERIAL_PORT = 0;
+    public static final int CTS_CHANGE = 1;
+    public static final int DSR_CHANGE = 2;
     private static final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
     private static final int BAUD_RATE = 9600; // BaudRate. Change this value if you need
     public static boolean SERVICE_CONNECTED = false;
@@ -63,6 +65,28 @@ public class UsbService extends Service {
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
+        }
+    };
+
+    /*
+     * State changes in the CTS line will be received here
+     */
+    private UsbSerialInterface.UsbCTSCallback ctsCallback = new UsbSerialInterface.UsbCTSCallback() {
+        @Override
+        public void onCTSChanged(boolean state) {
+            if(mHandler != null)
+                mHandler.obtainMessage(CTS_CHANGE).sendToTarget();
+        }
+    };
+
+    /*
+     * State chanteges in the DSR line will be received here
+     */
+    private UsbSerialInterface.UsbDSRCallback dsrCallback = new UsbSerialInterface.UsbDSRCallback() {
+        @Override
+        public void onDSRChanged(boolean state) {
+            if(mHandler != null)
+                mHandler.obtainMessage(DSR_CHANGE).sendToTarget();
         }
     };
     /*
@@ -215,9 +239,16 @@ public class UsbService extends Service {
                     serialPort.setDataBits(UsbSerialInterface.DATA_BITS_8);
                     serialPort.setStopBits(UsbSerialInterface.STOP_BITS_1);
                     serialPort.setParity(UsbSerialInterface.PARITY_NONE);
+                    /**
+                     * Current flow control Options:
+                     * UsbSerialInterface.FLOW_CONTROL_OFF
+                     * UsbSerialInterface.FLOW_CONTROL_RTS_CTS only for CP2102 and FT232
+                     * UsbSerialInterface.FLOW_CONTROL_DSR_DTR only for CP2102 and FT232
+                     */
                     serialPort.setFlowControl(UsbSerialInterface.FLOW_CONTROL_OFF);
                     serialPort.read(mCallback);
-
+                    serialPort.getCTS(ctsCallback);
+                    serialPort.getDSR(dsrCallback);
                     // Everything went as expected. Send an intent to MainActivity
                     Intent intent = new Intent(ACTION_USB_READY);
                     context.sendBroadcast(intent);

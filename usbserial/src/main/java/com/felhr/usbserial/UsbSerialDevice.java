@@ -146,12 +146,15 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
      */
     protected class WorkerThread extends Thread
     {
+        private UsbSerialDevice usbSerialDevice;
+
         private UsbReadCallback callback;
         private UsbRequest requestIN;
         private AtomicBoolean working;
 
-        public WorkerThread()
+        public WorkerThread(UsbSerialDevice usbSerialDevice)
         {
+            this.usbSerialDevice = usbSerialDevice;
             working = new AtomicBoolean(true);
         }
 
@@ -170,11 +173,12 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
                     // modem and Line.
                     if(isFTDIDevice())
                     {
+                        ((FTDISerialDevice) usbSerialDevice).ftdiUtilities.checkModemStatus(data); //Check the Modem status
+                        serialBuffer.clearReadBuffer();
+
                         if(data.length > 2)
                         {
-                            data = FTDISerialDevice.FTDIUtilities.adaptArray(data);
-                            // Clear buffer, execute the callback
-                            serialBuffer.clearReadBuffer();
+                            data = ((FTDISerialDevice) usbSerialDevice).ftdiUtilities.adaptArray(data);
                             onReceivedData(data);
                         }
                     }else
@@ -249,12 +253,15 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 
     protected class ReadThread extends Thread
     {
+        private UsbSerialDevice usbSerialDevice;
+
         private UsbReadCallback callback;
         private UsbEndpoint inEndpoint;
         private AtomicBoolean working;
 
-        public ReadThread()
+        public ReadThread(UsbSerialDevice usbSerialDevice)
         {
+            this.usbSerialDevice = usbSerialDevice;
             working = new AtomicBoolean(true);
         }
 
@@ -285,9 +292,11 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
                     // modem and Line.
                     if(isFTDIDevice())
                     {
+                        ((FTDISerialDevice) usbSerialDevice).ftdiUtilities.checkModemStatus(dataReceived);
+
                         if(dataReceived.length > 2)
                         {
-                            dataReceived = FTDISerialDevice.FTDIUtilities.adaptArray(dataReceived);
+                            dataReceived = ((FTDISerialDevice) usbSerialDevice).ftdiUtilities.adaptArray(dataReceived);
                             onReceivedData(dataReceived);
                         }
                     }else
@@ -351,12 +360,12 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     {
         if(mr1Version && workerThread == null)
         {
-            workerThread = new WorkerThread();
+            workerThread = new WorkerThread(this);
             workerThread.start();
             while(!workerThread.isAlive()){} // Busy waiting
         }else if(!mr1Version && readThread == null)
         {
-            readThread = new ReadThread();
+            readThread = new ReadThread(this);
             readThread.start();
             while(!readThread.isAlive()){} // Busy waiting
         }

@@ -22,6 +22,17 @@ public class FTDISerialDevice extends UsbSerialDevice
 
     private static final int FTDI_REQTYPE_HOST2DEVICE = 0x40;
 
+    /**
+     *  RTS and DTR values obtained from FreeBSD FTDI driver
+     *  https://github.com/freebsd/freebsd/blob/70b396ca9c54a94c3fad73c3ceb0a76dffbde635/sys/dev/usb/serial/uftdi_reg.h
+     */
+    private static final int FTDI_SIO_SET_DTR_MASK = 0x1;
+    private static final int FTDI_SIO_SET_DTR_HIGH = (1 | (FTDI_SIO_SET_DTR_MASK << 8));
+    private static final int FTDI_SIO_SET_DTR_LOW = (0 | (FTDI_SIO_SET_DTR_MASK << 8));
+    private static final int FTDI_SIO_SET_RTS_MASK = 0x2;
+    private static final int FTDI_SIO_SET_RTS_HIGH = (2 | (FTDI_SIO_SET_RTS_MASK << 8));
+    private static final int FTDI_SIO_SET_RTS_LOW = (0 | (FTDI_SIO_SET_RTS_MASK << 8));
+
     public static final int FTDI_BAUDRATE_300 = 0x2710;
     public static final int FTDI_BAUDRATE_600 = 0x1388;
     public static final int FTDI_BAUDRATE_1200 = 0x09c4;
@@ -53,10 +64,25 @@ public class FTDISerialDevice extends UsbSerialDevice
 
     private int currentSioSetData = 0x0000;
 
+    /**
+     * Flow control variables
+     */
+    private boolean rtsCtsEnabled;
+    private boolean dtrDsrEnabled;
+
+    private boolean ctsState;
+    private boolean dsrState;
+    private boolean firstTime; // with this flag we set the CTS and DSR state to the first value received from the FTDI device
+
+    private UsbCTSCallback ctsCallback;
+    private UsbDSRCallback dsrCallback;
+
     private UsbInterface mInterface;
     private UsbEndpoint inEndpoint;
     private UsbEndpoint outEndpoint;
     private UsbRequest requestIN;
+
+    public FTDIUtilities ftdiUtilities;
 
 
     public FTDISerialDevice(UsbDevice device, UsbDeviceConnection connection)
@@ -67,6 +93,12 @@ public class FTDISerialDevice extends UsbSerialDevice
     public FTDISerialDevice(UsbDevice device, UsbDeviceConnection connection, int iface)
     {
         super(device, connection);
+        ftdiUtilities = new FTDIUtilities();
+        rtsCtsEnabled = false;
+        dtrDsrEnabled = false;
+        ctsState = true;
+        dsrState = true;
+        firstTime = true;
         mInterface = device.getInterface(iface >= 0 ? iface : 0);
     }
 
@@ -98,6 +130,7 @@ public class FTDISerialDevice extends UsbSerialDevice
         }
 
         // Default Setup
+        firstTime = true;
         if(setControlCommand(FTDI_SIO_RESET, 0x00, 0, null) < 0)
             return false;
         if(setControlCommand(FTDI_SIO_SET_DATA, FTDI_SET_DATA_DEFAULT, 0, null) < 0)
@@ -111,6 +144,10 @@ public class FTDISerialDevice extends UsbSerialDevice
             return false;
         if(setControlCommand(FTDI_SIO_SET_BAUD_RATE, FTDI_BAUDRATE_9600, 0, null) < 0)
             return false;
+
+        // Flow control disabled by default
+        rtsCtsEnabled = false;
+        dtrDsrEnabled = false;
 
         // Initialize UsbRequest
         requestIN = new UsbRequest();
@@ -302,12 +339,18 @@ public class FTDISerialDevice extends UsbSerialDevice
         {
             case UsbSerialInterface.FLOW_CONTROL_OFF:
                 setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, 0, null);
+                rtsCtsEnabled = false;
+                dtrDsrEnabled = false;
                 break;
             case UsbSerialInterface.FLOW_CONTROL_RTS_CTS:
+                rtsCtsEnabled = true;
+                dtrDsrEnabled = false;
                 int indexRTSCTS = 0x0001;
                 setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, indexRTSCTS, null);
                 break;
             case UsbSerialInterface.FLOW_CONTROL_DSR_DTR:
+                dtrDsrEnabled = true;
+                rtsCtsEnabled = false;
                 int indexDSRDTR = 0x0002;
                 setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, indexDSRDTR , null);
                 break;
@@ -325,23 +368,59 @@ public class FTDISerialDevice extends UsbSerialDevice
     @Override
     public void setRTS(boolean state)
     {
-        //TODO
+        if(state)
+        {
+            setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SIO_SET_RTS_HIGH, 0, null);
+        }else
+        {
+            setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SIO_SET_RTS_LOW, 0, null);
+        }
     }
 
     @Override
     public void setDTR(boolean state)
     {
-        //TODO
+        if(state)
+        {
+            setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SIO_SET_DTR_HIGH, 0, null);
+        }else
+        {
+            setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SIO_SET_DTR_LOW, 0, null);
+        }
     }
 
     @Override
     public void getCTS(UsbCTSCallback ctsCallback)
     {
-        //TODO
+        this.ctsCallback = ctsCallback;
     }
 
     @Override
     public void getDSR(UsbDSRCallback dsrCallback)
+    {
+        this.dsrCallback = dsrCallback;
+    }
+
+    @Override
+    public void getBreak(UsbBreakCallback breakCallback)
+    {
+        //TODO
+    }
+
+    @Override
+    public void getFrame(UsbFrameCallback frameCallback)
+    {
+        //TODO
+    }
+
+    @Override
+    public void getOverrun(UsbOverrunCallback overrunCallback)
+    {
+        //TODO
+    }
+
+    @Override
+    public void getParity(UsbParityCallback parityCallback)
     {
         //TODO
     }
@@ -358,10 +437,10 @@ public class FTDISerialDevice extends UsbSerialDevice
         return response;
     }
 
-    public static class FTDIUtilities
+    public class FTDIUtilities
     {
         // Special treatment needed to FTDI devices
-        public static byte[] adaptArray(byte[] ftdiData)
+        public byte[] adaptArray(byte[] ftdiData)
         {
             int length = ftdiData.length;
             if(length > 64)
@@ -384,8 +463,39 @@ public class FTDISerialDevice extends UsbSerialDevice
             }
         }
 
+        public void checkModemStatus(byte[] data)
+        {
+            if(data.length == 0) // Safeguard for zero length arrays
+                return;
+
+            boolean cts = (data[0] & 0x10) == 0x10;
+            boolean dsr = (data[0] & 0x20) == 0x20;
+
+            if(firstTime) // First modem status received, set the flags and exit
+            {
+                ctsState = cts;
+                dsrState = dsr;
+                firstTime = false;
+                return;
+            }
+
+            if(rtsCtsEnabled &&
+                    cts != ctsState && ctsCallback != null) //CTS
+            {
+                ctsState = !ctsState;
+                ctsCallback.onCTSChanged(ctsState);
+            }
+
+            if(dtrDsrEnabled &&
+                    dsr != dsrState && dsrCallback != null) //DSR
+            {
+                dsrState = !dsrState;
+                dsrCallback.onDSRChanged(dsrState);
+            }
+        }
+
         // Copy data without FTDI headers
-        private static void copyData(byte[] src, byte[] dst)
+        private void copyData(byte[] src, byte[] dst)
         {
             int i = 0; // src index
             int j = 0; // dst index
