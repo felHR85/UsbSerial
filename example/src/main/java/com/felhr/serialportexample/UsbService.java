@@ -237,6 +237,12 @@ public class UsbService extends Service {
                     serialPort.setDataBits(UsbSerialInterface.DATA_BITS_8);
                     serialPort.setStopBits(UsbSerialInterface.STOP_BITS_1);
                     serialPort.setParity(UsbSerialInterface.PARITY_NONE);
+                    /**
+                     * Flow control Options:
+                     * UsbSerialInterface.FLOW_CONTROL_OFF
+                     * UsbSerialInterface.FLOW_CONTROL_RTS_CTS for CP2102 and FT232
+                     * UsbSerialInterface.FLOW_CONTROL_DSR_DTR for CP2102 and FT232
+                     */
                     serialPort.setFlowControl(UsbSerialInterface.FLOW_CONTROL_OFF);
                     serialPort.read(mCallback);
                     serialPort.getCTS(ctsCallback);
