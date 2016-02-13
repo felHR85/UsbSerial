@@ -37,8 +37,8 @@ public class CDCSerialDevice extends UsbSerialDevice
             (byte) 0x08  // bDataBits (8)
     };
 
-    private static final int CDC_DEFAULT_CONTROL_LINE = 0x0003;
-    private static final int CDC_DISCONNECT_CONTROL_LINE = 0x0002;
+    private static final int CDC_CONTROL_LINE_ON = 0x0003;
+    private static final int CDC_CONTROL_LINE_OFF = 0x0000;
 
     private UsbInterface mInterface;
     private UsbEndpoint inEndpoint;
@@ -92,7 +92,7 @@ public class CDCSerialDevice extends UsbSerialDevice
 
         // Default Setup
         setControlCommand(CDC_SET_LINE_CODING, 0, CDC_DEFAULT_LINE_CODING);
-        setControlCommand(CDC_SET_CONTROL_LINE_STATE, CDC_DEFAULT_CONTROL_LINE, null);
+        setControlCommand(CDC_SET_CONTROL_LINE_STATE, CDC_CONTROL_LINE_ON, null);
 
         // Initialize UsbRequest
         requestIN = new UsbRequest();
@@ -111,9 +111,11 @@ public class CDCSerialDevice extends UsbSerialDevice
     @Override
     public void close()
     {
+        setControlCommand(CDC_SET_CONTROL_LINE_STATE, CDC_CONTROL_LINE_OFF, null);
         killWorkingThread();
         killWriteThread();
         connection.releaseInterface(mInterface);
+        connection.close();
     }
 
     @Override
