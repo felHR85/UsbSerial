@@ -80,7 +80,7 @@ public class UsbService extends Service {
     };
 
     /*
-     * State chanteges in the DSR line will be received here
+     * State changes in the DSR line will be received here
      */
     private UsbSerialInterface.UsbDSRCallback dsrCallback = new UsbSerialInterface.UsbDSRCallback() {
         @Override

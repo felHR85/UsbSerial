@@ -31,7 +31,19 @@ serial.open();
 serial.setBaudRate(115200);
 serial.setDataBits(UsbSerialInterface.DATA_BITS_8);
 serial.setParity(UsbSerialInterface.PARITY_ODD);
+serial.setFlowControl(UsbSerialInterface.FLOW_CONTROL_OFF); 
 ~~~~
+
+If flow control is needed (currently only supported in CP201x and FTDI devices)
+~~~
+/**
+Values:
+    UsbSerialInterface.FLOW_CONTROL_OFF
+    UsbSerialInterface.FLOW_CONTROL_RTS_CTS 
+    UsbSerialInterface.FLOW_CONTROL_DSR_DTR
+**/
+serial.setFlowControl(UsbSerialInterface.FLOW_CONTROL_RTS_CTS);
+~~~
 
 There is no need to be polling if you want to perform a bulk transaction to a IN endpoint. Define a simply callback
 ~~~
@@ -51,9 +63,39 @@ And pass a reference of it
 serial.read(mCallback);
 ~~~
 
+Changes in the CTS and DSR lines will be received in the same manner. Define a callback and pass a reference of it.
+~~~
+private UsbSerialInterface.UsbCTSCallback ctsCallback = new UsbSerialInterface.UsbCTSCallback() {
+        @Override
+        public void onCTSChanged(boolean state) {
+           // Code here :)
+        }
+    };
+    
+private UsbSerialInterface.UsbDSRCallback dsrCallback = new UsbSerialInterface.UsbDSRCallback() {
+        @Override
+        public void onDSRChanged(boolean state) {
+           // Code here :)
+        }
+    };
+    
+    serial.getCTS(ctsCallback);
+    //serial.getDSR(dsrCallback);
+~~~
+
+
+
 Write something
 ~~~
 serial.write("DATA".getBytes()); // Async-like operation now! :)
+~~~
+
+Raise the state of the RTS or DTR lines
+~~~
+serial.setRTS(true); // Raised
+serial.setRTS(false); // Not Raised
+serial.setDTR(true); // Raised
+serial.setDTR(false); // Not Raised
 ~~~
 
 Close the device:
@@ -93,7 +135,7 @@ compile 'com.github.felHR85:UsbSerial:3.3'
 
 TO-DO
 --------------------------------------
-- RTS/CTS and DSR/DTR functions needed to raise hardware flow control signals
+- RTS/CTS and DSR/DTR implementations for PL2303, CDC and CH430/431
 
 
 
