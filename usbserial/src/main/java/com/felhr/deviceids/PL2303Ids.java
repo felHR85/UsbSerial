@@ -9,7 +9,7 @@ public class PL2303Ids
 
     private static final ConcreteDevice[] pl2303Devices = new ConcreteDevice[]
             {
-                    new ConcreteDevice(0x04a5, 0x4027),
+                    new ConcreteDevice (0x04a5, 0x4027),
                     new ConcreteDevice (0x067b, 0x2303),
                     new ConcreteDevice (0x067b, 0x04bb),
                     new ConcreteDevice (0x067b, 0x1234),
@@ -64,6 +64,7 @@ public class PL2303Ids
                     new ConcreteDevice (0x11ad, 0x0001),
                     new ConcreteDevice (0x0b63, 0x6530),
                     new ConcreteDevice (0x0b8c, 0x2303),
+                    new ConcreteDevice (0x110a, 0x1150)
             };
 
     public static boolean isDeviceSupported(int vendorId, int productId)
