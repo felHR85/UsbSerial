@@ -385,8 +385,8 @@ public class CP2102SerialDevice extends UsbSerialDevice
     }
 
     /*
-            Thread to check every X time if flow signals CTS or DSR have been raised
-         */
+        Thread to check every X time if flow signals CTS or DSR have been raised
+    */
     private class FlowControlThread extends Thread
     {
         private long time = 40; // 40ms
