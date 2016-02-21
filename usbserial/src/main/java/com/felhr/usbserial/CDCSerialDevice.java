@@ -74,6 +74,8 @@ public class CDCSerialDevice extends UsbSerialDevice
             // Pass references to the threads
             setThreadsParams(requestIN, outEndpoint);
 
+            asyncMode = true;
+
             return true;
         }else
         {
@@ -98,6 +100,7 @@ public class CDCSerialDevice extends UsbSerialDevice
         if(ret)
         {
             setSyncParams(inEndpoint, outEndpoint);
+            asyncMode = false;
             return true;
         }else
         {

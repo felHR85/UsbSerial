@@ -72,6 +72,8 @@ public class PL2303SerialDevice extends UsbSerialDevice
             // Pass references to the threads
             setThreadsParams(requestIN, outEndpoint);
 
+            asyncMode = true;
+
             return true;
         }else
         {
@@ -94,6 +96,7 @@ public class PL2303SerialDevice extends UsbSerialDevice
         if(ret)
         {
             setSyncParams(inEndpoint, outEndpoint);
+            asyncMode = false;
             return true;
         }else
         {

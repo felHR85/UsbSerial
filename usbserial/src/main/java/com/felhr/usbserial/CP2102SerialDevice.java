@@ -108,6 +108,8 @@ public class CP2102SerialDevice extends UsbSerialDevice
             // Pass references to the threads
             setThreadsParams(requestIN, outEndpoint);
 
+            asyncMode = true;
+
             return true;
         }else
         {
@@ -134,6 +136,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
             // Create Flow control thread but it will only be started if necessary
             createFlowControlThread();
             setSyncParams(inEndpoint, outEndpoint);
+            asyncMode = false;
             return true;
         }else
         {

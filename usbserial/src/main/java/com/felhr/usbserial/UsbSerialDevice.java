@@ -34,6 +34,8 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     private UsbEndpoint inEndpoint;
     private UsbEndpoint outEndpoint;
 
+    protected boolean asyncMode;
+
     // Get Android version if version < 4.3 It is not going to be asynchronous read operations
     static
     {
@@ -47,6 +49,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     {
         this.device = device;
         this.connection = connection;
+        this.asyncMode = true;
         serialBuffer = new SerialBuffer(mr1Version);
     }
 
@@ -86,30 +89,16 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     @Override
     public void write(byte[] buffer)
     {
-        serialBuffer.putWriteBuffer(buffer);
-    }
-
-    // Common Usb Serial Operations (I/O Synchronous)
-    @Override
-    public int syncWrite(byte[] buffer, int timeout)
-    {
-        if(buffer == null)
-            return 0;
-
-        return connection.bulkTransfer(outEndpoint, buffer, buffer.length, timeout);
-    }
-
-    @Override
-    public int syncRead(byte[] buffer, int timeout)
-    {
-        if(buffer == null)
-            return 0;
-        return connection.bulkTransfer(inEndpoint, buffer, buffer.length, timeout);
+        if(asyncMode)
+            serialBuffer.putWriteBuffer(buffer);
     }
 
     @Override
     public int read(UsbReadCallback mCallback)
     {
+        if(!asyncMode)
+            return -1;
+
         if(mr1Version)
         {
             workerThread.setCallback(mCallback);
@@ -125,6 +114,42 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 
     @Override
     public abstract void close();
+
+    // Common Usb Serial Operations (I/O Synchronous)
+    @Override
+    public abstract boolean syncOpen();
+
+    @Override
+    public abstract void syncClose();
+
+    @Override
+    public int syncWrite(byte[] buffer, int timeout)
+    {
+        if(!asyncMode)
+        {
+            if(buffer == null)
+                return 0;
+
+            return connection.bulkTransfer(outEndpoint, buffer, buffer.length, timeout);
+        }else
+        {
+            return -1;
+        }
+    }
+
+    @Override
+    public int syncRead(byte[] buffer, int timeout)
+    {
+        if(!asyncMode)
+        {
+            if(buffer == null)
+                return 0;
+            return connection.bulkTransfer(inEndpoint, buffer, buffer.length, timeout);
+        }else
+        {
+            return -1;
+        }
+    }
 
     // Serial port configuration
     @Override

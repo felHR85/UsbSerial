@@ -84,6 +84,8 @@ public class CH34xSerialDevice extends UsbSerialDevice
             // Pass references to the threads
             setThreadsParams(requestIN, outEndpoint);
 
+            asyncMode = true;
+
             return true;
         }else
         {
@@ -107,6 +109,7 @@ public class CH34xSerialDevice extends UsbSerialDevice
         {
             setBaudRate(DEFAULT_BAUDRATE);
             setSyncParams(inEndpoint, outEndpoint);
+            asyncMode = false;
             return true;
         }else
         {
