@@ -105,62 +105,26 @@ public class FTDISerialDevice extends UsbSerialDevice
     @Override
     public boolean open()
     {
-        if(connection.claimInterface(mInterface, true))
+        boolean ret = openFTDI();
+
+        if(ret)
         {
-            Log.i(CLASS_ID, "Interface succesfully claimed");
+            // Initialize UsbRequest
+            requestIN = new UsbRequest();
+            requestIN.initialize(connection, inEndpoint);
+
+            // Restart the working thread if it has been killed before and  get and claim interface
+            restartWorkingThread();
+            restartWriteThread();
+
+            // Pass references to the threads
+            setThreadsParams(requestIN, outEndpoint);
+
+            return true;
         }else
         {
-            Log.i(CLASS_ID, "Interface could not be claimed");
             return false;
         }
-
-        // Assign endpoints
-        int numberEndpoints = mInterface.getEndpointCount();
-        for(int i=0;i<=numberEndpoints-1;i++)
-        {
-            UsbEndpoint endpoint = mInterface.getEndpoint(i);
-            if(endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK
-                    && endpoint.getDirection() == UsbConstants.USB_DIR_IN)
-            {
-                inEndpoint = endpoint;
-            }else
-            {
-                outEndpoint = endpoint;
-            }
-        }
-
-        // Default Setup
-        firstTime = true;
-        if(setControlCommand(FTDI_SIO_RESET, 0x00, 0, null) < 0)
-            return false;
-        if(setControlCommand(FTDI_SIO_SET_DATA, FTDI_SET_DATA_DEFAULT, 0, null) < 0)
-            return false;
-        currentSioSetData = FTDI_SET_DATA_DEFAULT;
-        if(setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SET_MODEM_CTRL_DEFAULT1, 0, null) < 0)
-            return false;
-        if(setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SET_MODEM_CTRL_DEFAULT2, 0, null) < 0)
-            return false;
-        if(setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, 0, null) < 0)
-            return false;
-        if(setControlCommand(FTDI_SIO_SET_BAUD_RATE, FTDI_BAUDRATE_9600, 0, null) < 0)
-            return false;
-
-        // Flow control disabled by default
-        rtsCtsEnabled = false;
-        dtrDsrEnabled = false;
-
-        // Initialize UsbRequest
-        requestIN = new UsbRequest();
-        requestIN.initialize(connection, inEndpoint);
-
-        // Restart the working thread if it has been killed before and  get and claim interface
-        restartWorkingThread();
-        restartWriteThread();
-
-        // Pass references to the threads
-        setThreadsParams(requestIN, outEndpoint);
-
-        return true;
     }
 
     @Override
@@ -177,13 +141,24 @@ public class FTDISerialDevice extends UsbSerialDevice
     @Override
     public boolean syncOpen()
     {
-        return false;
+        boolean ret = openFTDI();
+        if(ret)
+        {
+            setSyncParams(inEndpoint, outEndpoint);
+            return true;
+        }else
+        {
+            return false;
+        }
     }
 
     @Override
     public void syncClose()
     {
-
+        setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SET_MODEM_CTRL_DEFAULT3, 0, null);
+        setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SET_MODEM_CTRL_DEFAULT4, 0, null);
+        currentSioSetData = 0x0000;
+        connection.releaseInterface(mInterface);
     }
 
     @Override
@@ -435,6 +410,55 @@ public class FTDISerialDevice extends UsbSerialDevice
     public void getParity(UsbParityCallback parityCallback)
     {
         //TODO
+    }
+
+    private boolean openFTDI()
+    {
+        if(connection.claimInterface(mInterface, true))
+        {
+            Log.i(CLASS_ID, "Interface succesfully claimed");
+        }else
+        {
+            Log.i(CLASS_ID, "Interface could not be claimed");
+            return false;
+        }
+
+        // Assign endpoints
+        int numberEndpoints = mInterface.getEndpointCount();
+        for(int i=0;i<=numberEndpoints-1;i++)
+        {
+            UsbEndpoint endpoint = mInterface.getEndpoint(i);
+            if(endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK
+                    && endpoint.getDirection() == UsbConstants.USB_DIR_IN)
+            {
+                inEndpoint = endpoint;
+            }else
+            {
+                outEndpoint = endpoint;
+            }
+        }
+
+        // Default Setup
+        firstTime = true;
+        if(setControlCommand(FTDI_SIO_RESET, 0x00, 0, null) < 0)
+            return false;
+        if(setControlCommand(FTDI_SIO_SET_DATA, FTDI_SET_DATA_DEFAULT, 0, null) < 0)
+            return false;
+        currentSioSetData = FTDI_SET_DATA_DEFAULT;
+        if(setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SET_MODEM_CTRL_DEFAULT1, 0, null) < 0)
+            return false;
+        if(setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SET_MODEM_CTRL_DEFAULT2, 0, null) < 0)
+            return false;
+        if(setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, 0, null) < 0)
+            return false;
+        if(setControlCommand(FTDI_SIO_SET_BAUD_RATE, FTDI_BAUDRATE_9600, 0, null) < 0)
+            return false;
+
+        // Flow control disabled by default
+        rtsCtsEnabled = false;
+        dtrDsrEnabled = false;
+
+        return true;
     }
 
     private int setControlCommand(int request, int value, int index, byte[] data)
