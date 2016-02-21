@@ -69,33 +69,8 @@ public class CH34xSerialDevice extends UsbSerialDevice
     @Override
     public boolean open()
     {
-        if(connection.claimInterface(mInterface, true))
-        {
-            Log.i(CLASS_ID, "Interface succesfully claimed");
-        }else
-        {
-            Log.i(CLASS_ID, "Interface could not be claimed");
-            return false;
-        }
-
-        // Assign endpoints
-        int numberEndpoints = mInterface.getEndpointCount();
-        for(int i=0;i<=numberEndpoints-1;i++)
-        {
-            UsbEndpoint endpoint = mInterface.getEndpoint(i);
-            if(endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK
-                    && endpoint.getDirection() == UsbConstants.USB_DIR_IN)
-            {
-                inEndpoint = endpoint;
-            }else if(endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK
-                    && endpoint.getDirection() == UsbConstants.USB_DIR_OUT)
-            {
-                outEndpoint = endpoint;
-            }
-        }
-
-        // Default Setup
-        if(init() == 0)
+        boolean ret = openCH34X();
+        if(ret)
         {
             setBaudRate(DEFAULT_BAUDRATE);
             // Initialize UsbRequest
@@ -127,13 +102,22 @@ public class CH34xSerialDevice extends UsbSerialDevice
     @Override
     public boolean syncOpen()
     {
-        return false;
+        boolean ret = openCH34X();
+        if(ret)
+        {
+            setBaudRate(DEFAULT_BAUDRATE);
+            setSyncParams(inEndpoint, outEndpoint);
+            return true;
+        }else
+        {
+            return false;
+        }
     }
 
     @Override
     public void syncClose()
     {
-
+        connection.releaseInterface(mInterface);
     }
 
     @Override
@@ -301,6 +285,36 @@ public class CH34xSerialDevice extends UsbSerialDevice
     public void getParity(UsbParityCallback parityCallback)
     {
         //TODO
+    }
+
+    private boolean openCH34X()
+    {
+        if(connection.claimInterface(mInterface, true))
+        {
+            Log.i(CLASS_ID, "Interface succesfully claimed");
+        }else
+        {
+            Log.i(CLASS_ID, "Interface could not be claimed");
+            return false;
+        }
+
+        // Assign endpoints
+        int numberEndpoints = mInterface.getEndpointCount();
+        for(int i=0;i<=numberEndpoints-1;i++)
+        {
+            UsbEndpoint endpoint = mInterface.getEndpoint(i);
+            if(endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK
+                    && endpoint.getDirection() == UsbConstants.USB_DIR_IN)
+            {
+                inEndpoint = endpoint;
+            }else if(endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK
+                    && endpoint.getDirection() == UsbConstants.USB_DIR_OUT)
+            {
+                outEndpoint = endpoint;
+            }
+        }
+
+        return init() == 0;
     }
 
     private int init()
