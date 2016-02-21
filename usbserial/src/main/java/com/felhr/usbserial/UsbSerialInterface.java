@@ -34,6 +34,12 @@ public interface UsbSerialInterface
     int read(UsbReadCallback mCallback);
     void close();
 
+    // Common Usb Serial Operations (I/O Synchronous)
+    boolean syncOpen();
+    int syncWrite(byte[] buffer, int timeout);
+    int syncRead(byte[] buffer, int timeout);
+    void syncClose();
+
     // Serial port configuration
     void setBaudRate(int baudRate);
     void setDataBits(int dataBits);

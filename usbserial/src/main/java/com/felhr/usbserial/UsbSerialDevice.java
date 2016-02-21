@@ -30,6 +30,10 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     protected WriteThread writeThread;
     protected ReadThread readThread;
 
+    // Endpoints for synchronous read and write operations
+    private UsbEndpoint inEndpoint;
+    private UsbEndpoint outEndpoint;
+
     // Get Android version if version < 4.3 It is not going to be asynchronous read operations
     static
     {
@@ -83,6 +87,24 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     public void write(byte[] buffer)
     {
         serialBuffer.putWriteBuffer(buffer);
+    }
+
+    // Common Usb Serial Operations (I/O Synchronous)
+    @Override
+    public int syncWrite(byte[] buffer, int timeout)
+    {
+        if(buffer == null)
+            return 0;
+
+        return connection.bulkTransfer(outEndpoint, buffer, buffer.length, timeout);
+    }
+
+    @Override
+    public int syncRead(byte[] buffer, int timeout)
+    {
+        if(buffer == null)
+            return 0;
+        return connection.bulkTransfer(inEndpoint, buffer, buffer.length, timeout);
     }
 
     @Override
@@ -322,6 +344,12 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
             if(callback != null)
                 callback.onReceivedData(data);
         }
+    }
+
+    protected void setSyncParams(UsbEndpoint inEndpoint, UsbEndpoint outEndpoint)
+    {
+        this.inEndpoint = inEndpoint;
+        this.outEndpoint = outEndpoint;
     }
 
     protected void setThreadsParams(UsbRequest request, UsbEndpoint endpoint)
