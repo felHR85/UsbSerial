@@ -144,7 +144,24 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
         {
             if(buffer == null)
                 return 0;
-            return connection.bulkTransfer(inEndpoint, buffer, buffer.length, timeout);
+            if(!isFTDIDevice())
+            {
+                return connection.bulkTransfer(inEndpoint, buffer, buffer.length, timeout);
+            }else // FTDI devices need special treatment
+            {
+                int numberBytes = connection.bulkTransfer(inEndpoint, buffer, buffer.length, timeout);
+                if(numberBytes > 2) // Data received
+                {
+                    buffer = ((FTDISerialDevice) this).ftdiUtilities.adaptArray(buffer);
+                    return numberBytes - 2;
+                }else if(numberBytes == 2) // Modem status
+                {
+                    return 0;
+                }else // No data received
+                {
+                    return 0;
+                }
+            }
         }else
         {
             return -1;
