@@ -57,77 +57,28 @@ public class PL2303SerialDevice extends UsbSerialDevice
     @Override
     public boolean open()
     {
-        // Restart the working thread and writeThread if it has been killed before and claim interface
-        restartWorkingThread();
-        restartWriteThread();
+        boolean ret = openPL2303();
 
-        if(connection.claimInterface(mInterface, true))
+        if(ret)
         {
-            Log.i(CLASS_ID, "Interface succesfully claimed");
+            // Initialize UsbRequest
+            requestIN = new UsbRequest();
+            requestIN.initialize(connection, inEndpoint);
+
+            // Restart the working thread if it has been killed before and  get and claim interface
+            restartWorkingThread();
+            restartWriteThread();
+
+            // Pass references to the threads
+            setThreadsParams(requestIN, outEndpoint);
+
+            asyncMode = true;
+
+            return true;
         }else
         {
-            Log.i(CLASS_ID, "Interface could not be claimed");
             return false;
         }
-
-        // Assign endpoints
-        int numberEndpoints = mInterface.getEndpointCount();
-        for(int i=0;i<=numberEndpoints-1;i++)
-        {
-            UsbEndpoint endpoint = mInterface.getEndpoint(i);
-            if(endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK
-                    && endpoint.getDirection() == UsbConstants.USB_DIR_IN)
-                inEndpoint = endpoint;
-            else if(endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK
-                    && endpoint.getDirection() == UsbConstants.USB_DIR_OUT)
-                outEndpoint = endpoint;
-        }
-
-        //Default Setup
-        byte[] buf = new byte[1];
-        //Specific vendor stuff that I barely understand but It is on linux drivers, So I trust :)
-        if(setControlCommand(PL2303_REQTYPE_DEVICE2HOST_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x8484, 0, buf) < 0)
-            return false;
-        if(setControlCommand(PL2303_REQTYPE_HOST2DEVICE_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x0404, 0, null) < 0)
-            return false;
-        if(setControlCommand(PL2303_REQTYPE_DEVICE2HOST_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x8484, 0, buf) < 0)
-            return false;
-        if(setControlCommand(PL2303_REQTYPE_DEVICE2HOST_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x8383, 0, buf) < 0)
-            return false;
-        if(setControlCommand(PL2303_REQTYPE_DEVICE2HOST_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x8484, 0, buf) < 0)
-            return false;
-        if(setControlCommand(PL2303_REQTYPE_HOST2DEVICE_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x0404, 1, null) < 0)
-            return false;
-        if(setControlCommand(PL2303_REQTYPE_DEVICE2HOST_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x8484, 0, buf) < 0)
-            return false;
-        if(setControlCommand(PL2303_REQTYPE_DEVICE2HOST_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x8383, 0, buf) < 0)
-            return false;
-        if(setControlCommand(PL2303_REQTYPE_HOST2DEVICE_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x0000, 1, null) < 0)
-            return false;
-        if(setControlCommand(PL2303_REQTYPE_HOST2DEVICE_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x0001, 0, null) < 0)
-            return false;
-        if(setControlCommand(PL2303_REQTYPE_HOST2DEVICE_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x0002, 0x0044, null) < 0)
-            return false;
-        // End of specific vendor stuff
-        if(setControlCommand(PL2303_REQTYPE_HOST2DEVICE, PL2303_SET_CONTROL_REQUEST, 0x0003, 0,null) < 0)
-            return false;
-        if(setControlCommand(PL2303_REQTYPE_HOST2DEVICE, PL2303_SET_LINE_CODING, 0x0000, 0, defaultSetLine) < 0)
-            return false;
-        if(setControlCommand(PL2303_REQTYPE_HOST2DEVICE_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x0505, 0x1311, null) < 0)
-            return false;
-
-        // Initialize UsbRequest
-        requestIN = new UsbRequest();
-        requestIN.initialize(connection, inEndpoint);
-
-        // Restart the working thread if it has been killed before and  get and claim interface
-        restartWorkingThread();
-        restartWriteThread();
-
-        // Pass references to the threads
-        setThreadsParams(requestIN, outEndpoint);
-
-        return true;
     }
 
     @Override
@@ -135,6 +86,27 @@ public class PL2303SerialDevice extends UsbSerialDevice
     {
         killWorkingThread();
         killWriteThread();
+        connection.releaseInterface(mInterface);
+    }
+
+    @Override
+    public boolean syncOpen()
+    {
+        boolean ret = openPL2303();
+        if(ret)
+        {
+            setSyncParams(inEndpoint, outEndpoint);
+            asyncMode = false;
+            return true;
+        }else
+        {
+            return false;
+        }
+    }
+
+    @Override
+    public void syncClose()
+    {
         connection.releaseInterface(mInterface);
     }
 
@@ -326,6 +298,66 @@ public class PL2303SerialDevice extends UsbSerialDevice
     public void getParity(UsbParityCallback parityCallback)
     {
         //TODO
+    }
+
+    private boolean openPL2303()
+    {
+        if(connection.claimInterface(mInterface, true))
+        {
+            Log.i(CLASS_ID, "Interface succesfully claimed");
+        }else
+        {
+            Log.i(CLASS_ID, "Interface could not be claimed");
+            return false;
+        }
+
+        // Assign endpoints
+        int numberEndpoints = mInterface.getEndpointCount();
+        for(int i=0;i<=numberEndpoints-1;i++)
+        {
+            UsbEndpoint endpoint = mInterface.getEndpoint(i);
+            if(endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK
+                    && endpoint.getDirection() == UsbConstants.USB_DIR_IN)
+                inEndpoint = endpoint;
+            else if(endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK
+                    && endpoint.getDirection() == UsbConstants.USB_DIR_OUT)
+                outEndpoint = endpoint;
+        }
+
+        //Default Setup
+        byte[] buf = new byte[1];
+        //Specific vendor stuff that I barely understand but It is on linux drivers, So I trust :)
+        if(setControlCommand(PL2303_REQTYPE_DEVICE2HOST_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x8484, 0, buf) < 0)
+            return false;
+        if(setControlCommand(PL2303_REQTYPE_HOST2DEVICE_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x0404, 0, null) < 0)
+            return false;
+        if(setControlCommand(PL2303_REQTYPE_DEVICE2HOST_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x8484, 0, buf) < 0)
+            return false;
+        if(setControlCommand(PL2303_REQTYPE_DEVICE2HOST_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x8383, 0, buf) < 0)
+            return false;
+        if(setControlCommand(PL2303_REQTYPE_DEVICE2HOST_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x8484, 0, buf) < 0)
+            return false;
+        if(setControlCommand(PL2303_REQTYPE_HOST2DEVICE_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x0404, 1, null) < 0)
+            return false;
+        if(setControlCommand(PL2303_REQTYPE_DEVICE2HOST_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x8484, 0, buf) < 0)
+            return false;
+        if(setControlCommand(PL2303_REQTYPE_DEVICE2HOST_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x8383, 0, buf) < 0)
+            return false;
+        if(setControlCommand(PL2303_REQTYPE_HOST2DEVICE_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x0000, 1, null) < 0)
+            return false;
+        if(setControlCommand(PL2303_REQTYPE_HOST2DEVICE_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x0001, 0, null) < 0)
+            return false;
+        if(setControlCommand(PL2303_REQTYPE_HOST2DEVICE_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x0002, 0x0044, null) < 0)
+            return false;
+        // End of specific vendor stuff
+        if(setControlCommand(PL2303_REQTYPE_HOST2DEVICE, PL2303_SET_CONTROL_REQUEST, 0x0003, 0,null) < 0)
+            return false;
+        if(setControlCommand(PL2303_REQTYPE_HOST2DEVICE, PL2303_SET_LINE_CODING, 0x0000, 0, defaultSetLine) < 0)
+            return false;
+        if(setControlCommand(PL2303_REQTYPE_HOST2DEVICE_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x0505, 0x1311, null) < 0)
+            return false;
+
+        return true;
     }
 
     private int setControlCommand(int reqType , int request, int value, int index, byte[] data)

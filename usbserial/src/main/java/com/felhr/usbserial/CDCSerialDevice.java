@@ -59,53 +59,28 @@ public class CDCSerialDevice extends UsbSerialDevice
     @Override
     public boolean open()
     {
-        if(connection.claimInterface(mInterface, true))
+        boolean ret = openCDC();
+
+        if(ret)
         {
-            Log.i(CLASS_ID, "Interface succesfully claimed");
+            // Initialize UsbRequest
+            requestIN = new UsbRequest();
+            requestIN.initialize(connection, inEndpoint);
+
+            // Restart the working thread if it has been killed before and  get and claim interface
+            restartWorkingThread();
+            restartWriteThread();
+
+            // Pass references to the threads
+            setThreadsParams(requestIN, outEndpoint);
+
+            asyncMode = true;
+
+            return true;
         }else
         {
-            Log.i(CLASS_ID, "Interface could not be claimed");
             return false;
         }
-
-        // Assign endpoints
-        int numberEndpoints = mInterface.getEndpointCount();
-        for(int i=0;i<=numberEndpoints-1;i++)
-        {
-            UsbEndpoint endpoint = mInterface.getEndpoint(i);
-            if(endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK
-                    && endpoint.getDirection() == UsbConstants.USB_DIR_IN)
-            {
-                inEndpoint = endpoint;
-            }else if(endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK
-                    && endpoint.getDirection() == UsbConstants.USB_DIR_OUT)
-            {
-                outEndpoint = endpoint;
-            }
-        }
-
-        if(outEndpoint == null || inEndpoint == null)
-        {
-            Log.i(CLASS_ID, "Interface does not have an IN or OUT interface");
-            return false;
-        }
-
-        // Default Setup
-        setControlCommand(CDC_SET_LINE_CODING, 0, CDC_DEFAULT_LINE_CODING);
-        setControlCommand(CDC_SET_CONTROL_LINE_STATE, CDC_CONTROL_LINE_ON, null);
-
-        // Initialize UsbRequest
-        requestIN = new UsbRequest();
-        requestIN.initialize(connection, inEndpoint);
-
-        // Restart the working thread if it has been killed before and  get and claim interface
-        restartWorkingThread();
-        restartWriteThread();
-
-        // Pass references to the threads
-        setThreadsParams(requestIN, outEndpoint);
-
-        return true;
     }
 
     @Override
@@ -114,6 +89,29 @@ public class CDCSerialDevice extends UsbSerialDevice
         setControlCommand(CDC_SET_CONTROL_LINE_STATE, CDC_CONTROL_LINE_OFF, null);
         killWorkingThread();
         killWriteThread();
+        connection.releaseInterface(mInterface);
+        connection.close();
+    }
+
+    @Override
+    public boolean syncOpen()
+    {
+        boolean ret = openCDC();
+        if(ret)
+        {
+            setSyncParams(inEndpoint, outEndpoint);
+            asyncMode = false;
+            return true;
+        }else
+        {
+            return false;
+        }
+    }
+
+    @Override
+    public void syncClose()
+    {
+        setControlCommand(CDC_SET_CONTROL_LINE_STATE, CDC_CONTROL_LINE_OFF, null);
         connection.releaseInterface(mInterface);
         connection.close();
     }
@@ -263,6 +261,46 @@ public class CDCSerialDevice extends UsbSerialDevice
     public void getParity(UsbParityCallback parityCallback)
     {
         //TODO
+    }
+
+    private boolean openCDC()
+    {
+        if(connection.claimInterface(mInterface, true))
+        {
+            Log.i(CLASS_ID, "Interface succesfully claimed");
+        }else
+        {
+            Log.i(CLASS_ID, "Interface could not be claimed");
+            return false;
+        }
+
+        // Assign endpoints
+        int numberEndpoints = mInterface.getEndpointCount();
+        for(int i=0;i<=numberEndpoints-1;i++)
+        {
+            UsbEndpoint endpoint = mInterface.getEndpoint(i);
+            if(endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK
+                    && endpoint.getDirection() == UsbConstants.USB_DIR_IN)
+            {
+                inEndpoint = endpoint;
+            }else if(endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK
+                    && endpoint.getDirection() == UsbConstants.USB_DIR_OUT)
+            {
+                outEndpoint = endpoint;
+            }
+        }
+
+        if(outEndpoint == null || inEndpoint == null)
+        {
+            Log.i(CLASS_ID, "Interface does not have an IN or OUT interface");
+            return false;
+        }
+
+        // Default Setup
+        setControlCommand(CDC_SET_LINE_CODING, 0, CDC_DEFAULT_LINE_CODING);
+        setControlCommand(CDC_SET_CONTROL_LINE_STATE, CDC_CONTROL_LINE_ON, null);
+
+        return true;
     }
 
     private int setControlCommand(int request, int value, byte[] data)

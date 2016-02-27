@@ -30,6 +30,12 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     protected WriteThread writeThread;
     protected ReadThread readThread;
 
+    // Endpoints for synchronous read and write operations
+    private UsbEndpoint inEndpoint;
+    private UsbEndpoint outEndpoint;
+
+    protected boolean asyncMode;
+
     // Get Android version if version < 4.3 It is not going to be asynchronous read operations
     static
     {
@@ -43,6 +49,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     {
         this.device = device;
         this.connection = connection;
+        this.asyncMode = true;
         serialBuffer = new SerialBuffer(mr1Version);
     }
 
@@ -82,12 +89,16 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     @Override
     public void write(byte[] buffer)
     {
-        serialBuffer.putWriteBuffer(buffer);
+        if(asyncMode)
+            serialBuffer.putWriteBuffer(buffer);
     }
 
     @Override
     public int read(UsbReadCallback mCallback)
     {
+        if(!asyncMode)
+            return -1;
+
         if(mr1Version)
         {
             workerThread.setCallback(mCallback);
@@ -103,6 +114,67 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 
     @Override
     public abstract void close();
+
+    // Common Usb Serial Operations (I/O Synchronous)
+    @Override
+    public abstract boolean syncOpen();
+
+    @Override
+    public abstract void syncClose();
+
+    @Override
+    public int syncWrite(byte[] buffer, int timeout)
+    {
+        if(!asyncMode)
+        {
+            if(buffer == null)
+                return 0;
+
+            return connection.bulkTransfer(outEndpoint, buffer, buffer.length, timeout);
+        }else
+        {
+            return -1;
+        }
+    }
+
+    @Override
+    public int syncRead(byte[] buffer, int timeout)
+    {
+        if(!asyncMode)
+        {
+            if(buffer == null)
+                return 0;
+            if(!isFTDIDevice())
+            {
+                return connection.bulkTransfer(inEndpoint, buffer, buffer.length, timeout);
+            }else // FTDI devices need special treatment
+            {
+                int n = buffer.length / 62;
+                if(buffer.length % 62 != 0)
+                    n++;
+
+                byte[] tempBuffer = new byte[buffer.length + n * 2];
+                int numberBytes = connection.bulkTransfer(inEndpoint, tempBuffer, tempBuffer.length, timeout);
+
+                if(numberBytes > 2) // Data received
+                {
+                    byte[] newBuffer = ((FTDISerialDevice) this).ftdiUtilities.adaptArray(tempBuffer);
+                    System.arraycopy(newBuffer, 0, buffer, 0, buffer.length);
+
+                    int p = numberBytes / 64;
+                    if(numberBytes % 64 != 0)
+                        p++;
+                    return numberBytes - p * 2;
+                }else
+                {
+                    return 0;
+                }
+            }
+        }else
+        {
+            return -1;
+        }
+    }
 
     // Serial port configuration
     @Override
@@ -322,6 +394,12 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
             if(callback != null)
                 callback.onReceivedData(data);
         }
+    }
+
+    protected void setSyncParams(UsbEndpoint inEndpoint, UsbEndpoint outEndpoint)
+    {
+        this.inEndpoint = inEndpoint;
+        this.outEndpoint = outEndpoint;
     }
 
     protected void setThreadsParams(UsbRequest request, UsbEndpoint endpoint)

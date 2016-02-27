@@ -90,56 +90,31 @@ public class CP2102SerialDevice extends UsbSerialDevice
     @Override
     public boolean open()
     {
-        if(connection.claimInterface(mInterface, true))
+        boolean ret = openCP2102();
+
+        if(ret)
         {
-            Log.i(CLASS_ID, "Interface succesfully claimed");
+            // Initialize UsbRequest
+            requestIN = new UsbRequest();
+            requestIN.initialize(connection, inEndpoint);
+
+            // Restart the working thread if it has been killed before and  get and claim interface
+            restartWorkingThread();
+            restartWriteThread();
+
+            // Create Flow control thread but it will only be started if necessary
+            createFlowControlThread();
+
+            // Pass references to the threads
+            setThreadsParams(requestIN, outEndpoint);
+
+            asyncMode = true;
+
+            return true;
         }else
         {
-            Log.i(CLASS_ID, "Interface could not be claimed");
             return false;
         }
-
-        // Assign endpoints
-        int numberEndpoints = mInterface.getEndpointCount();
-        for(int i=0;i<=numberEndpoints-1;i++)
-        {
-            UsbEndpoint endpoint = mInterface.getEndpoint(i);
-            if(endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK
-                    && endpoint.getDirection() == UsbConstants.USB_DIR_IN)
-            {
-                inEndpoint = endpoint;
-            }else
-            {
-                outEndpoint = endpoint;
-            }
-        }
-
-
-        // Default Setup
-        if(setControlCommand(CP210x_IFC_ENABLE, CP210x_UART_ENABLE, null) < 0)
-            return false;
-        setBaudRate(DEFAULT_BAUDRATE);
-        if(setControlCommand(CP210x_SET_LINE_CTL, CP210x_LINE_CTL_DEFAULT,null) < 0)
-            return false;
-        setFlowControl(UsbSerialInterface.FLOW_CONTROL_OFF);
-        if(setControlCommand(CP210x_SET_MHS, CP210x_MHS_DEFAULT, null) < 0)
-            return false;
-
-        // Initialize UsbRequest
-        requestIN = new UsbRequest();
-        requestIN.initialize(connection, inEndpoint);
-
-        // Restart the working thread if it has been killed before and  get and claim interface
-        restartWorkingThread();
-        restartWriteThread();
-
-        // Create Flow control thread but it will only be started if necessary
-        createFlowControlThread();
-
-        // Pass references to the threads
-        setThreadsParams(requestIN, outEndpoint);
-
-        return true;
     }
 
     @Override
@@ -148,6 +123,31 @@ public class CP2102SerialDevice extends UsbSerialDevice
         setControlCommand(CP210x_IFC_ENABLE, CP210x_UART_DISABLE, null);
         killWorkingThread();
         killWriteThread();
+        stopFlowControlThread();
+        connection.releaseInterface(mInterface);
+    }
+
+    @Override
+    public boolean syncOpen()
+    {
+        boolean ret = openCP2102();
+        if(ret)
+        {
+            // Create Flow control thread but it will only be started if necessary
+            createFlowControlThread();
+            setSyncParams(inEndpoint, outEndpoint);
+            asyncMode = false;
+            return true;
+        }else
+        {
+            return false;
+        }
+    }
+
+    @Override
+    public void syncClose()
+    {
+        setControlCommand(CP210x_IFC_ENABLE, CP210x_UART_DISABLE, null);
         stopFlowControlThread();
         connection.releaseInterface(mInterface);
     }
@@ -464,6 +464,46 @@ public class CP2102SerialDevice extends UsbSerialDevice
 
             return getModemState();
         }
+    }
+
+    private boolean openCP2102()
+    {
+        if(connection.claimInterface(mInterface, true))
+        {
+            Log.i(CLASS_ID, "Interface succesfully claimed");
+        }else
+        {
+            Log.i(CLASS_ID, "Interface could not be claimed");
+            return false;
+        }
+
+        // Assign endpoints
+        int numberEndpoints = mInterface.getEndpointCount();
+        for(int i=0;i<=numberEndpoints-1;i++)
+        {
+            UsbEndpoint endpoint = mInterface.getEndpoint(i);
+            if(endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK
+                    && endpoint.getDirection() == UsbConstants.USB_DIR_IN)
+            {
+                inEndpoint = endpoint;
+            }else
+            {
+                outEndpoint = endpoint;
+            }
+        }
+
+
+        // Default Setup
+        if(setControlCommand(CP210x_IFC_ENABLE, CP210x_UART_ENABLE, null) < 0)
+            return false;
+        setBaudRate(DEFAULT_BAUDRATE);
+        if(setControlCommand(CP210x_SET_LINE_CTL, CP210x_LINE_CTL_DEFAULT,null) < 0)
+            return false;
+        setFlowControl(UsbSerialInterface.FLOW_CONTROL_OFF);
+        if(setControlCommand(CP210x_SET_MHS, CP210x_MHS_DEFAULT, null) < 0)
+            return false;
+
+        return true;
     }
 
     private void createFlowControlThread()

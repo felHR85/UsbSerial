@@ -129,6 +129,18 @@ public class XdcVcpSerialDevice extends UsbSerialDevice
     }
 
     @Override
+    public boolean syncOpen()
+    {
+        return false;
+    }
+
+    @Override
+    public void syncClose()
+    {
+
+    }
+
+    @Override
     public void setBaudRate(int baudRate)
     {
         byte[] data = new byte[] {
