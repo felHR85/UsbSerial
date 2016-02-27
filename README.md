@@ -103,6 +103,15 @@ Close the device:
 serial.close();
 ~~~
 
+I recommend using UsbSerial as shown above but if you want to perform write and read operations in synchronous way it is possible using these methods:
+~~~
+public boolean syncOpen();
+public int syncWrite(byte[] buffer, int timeout)
+public int syncRead(byte[] buffer, int timeout)
+public void syncClose();
+~~~
+
+
 In Android usb api, when a usb device has been close it must be reopened
 ~~~
 UsbDevice device;
