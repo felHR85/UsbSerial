@@ -139,7 +139,7 @@ Then add the dependency to your module's build.gradle:
 
 /app/build.gradle
 ```groovy
-compile 'com.github.felHR85:UsbSerial:4.1'
+compile 'com.github.felHR85:UsbSerial:4.1.1'
 ```
 
 TO-DO
