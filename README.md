@@ -26,16 +26,16 @@ UsbSerialDevice serial = UsbSerialDevice.createUsbSerialDevice(device, usbConnec
 ~~~
 
 Open the device and set it up as desired
-~~~~
+```java
 serial.open();
 serial.setBaudRate(115200);
 serial.setDataBits(UsbSerialInterface.DATA_BITS_8);
 serial.setParity(UsbSerialInterface.PARITY_ODD);
 serial.setFlowControl(UsbSerialInterface.FLOW_CONTROL_OFF); 
-~~~~
+```
 
 If flow control is needed (currently only supported in CP201x and FTDI devices)
-~~~
+```java
 /**
 Values:
     UsbSerialInterface.FLOW_CONTROL_OFF
@@ -43,10 +43,10 @@ Values:
     UsbSerialInterface.FLOW_CONTROL_DSR_DTR
 **/
 serial.setFlowControl(UsbSerialInterface.FLOW_CONTROL_RTS_CTS);
-~~~
+```
 
 There is no need to be polling if you want to perform a bulk transaction to a IN endpoint. Define a simply callback
-~~~
+```java
 private UsbSerialInterface.UsbReadCallback mCallback = new UsbSerialInterface.UsbReadCallback() {
 
 		@Override
@@ -56,15 +56,15 @@ private UsbSerialInterface.UsbReadCallback mCallback = new UsbSerialInterface.Us
 		}
 		
 };
-~~~
+```
 
 And pass a reference of it
-~~~
+```java
 serial.read(mCallback);
-~~~
+```
 
 Changes in the CTS and DSR lines will be received in the same manner. Define a callback and pass a reference of it.
-~~~
+```java
 private UsbSerialInterface.UsbCTSCallback ctsCallback = new UsbSerialInterface.UsbCTSCallback() {
         @Override
         public void onCTSChanged(boolean state) {
@@ -81,44 +81,44 @@ private UsbSerialInterface.UsbDSRCallback dsrCallback = new UsbSerialInterface.U
     
 serial.getCTS(ctsCallback);
 //serial.getDSR(dsrCallback);
-~~~
+```
 
 
 
 Write something
-~~~
+```java
 serial.write("DATA".getBytes()); // Async-like operation now! :)
-~~~
+```
 
 Raise the state of the RTS or DTR lines
-~~~
+```java
 serial.setRTS(true); // Raised
 serial.setRTS(false); // Not Raised
 serial.setDTR(true); // Raised
 serial.setDTR(false); // Not Raised
-~~~
+```
 
 Close the device:
-~~~
+```java
 serial.close();
-~~~
+```
 
 I recommend using UsbSerial as shown above but if you want to perform write and read operations in synchronous way it is possible using these methods:
-~~~
+```java
 public boolean syncOpen();
 public int syncWrite(byte[] buffer, int timeout)
 public int syncRead(byte[] buffer, int timeout)
 public void syncClose();
-~~~
+```
 
 
 In Android usb api, when a usb device has been close it must be reopened
-~~~
+```java
 UsbDevice device;
 ...
 UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
 manager.openDevice(UsbDevice device)
-~~~
+```
 
 
 Gradle
