@@ -140,7 +140,8 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     @Override
     public int syncRead(byte[] buffer, int timeout)
     {
-        if (asyncMode) {
+        if(asyncMode)
+        {
             return -1;
         }
 
