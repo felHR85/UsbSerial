@@ -3,6 +3,8 @@ UsbSerial
 
 Usb serial controller for Android. For more information, there is [a more complete description](http://felhr85.net/2014/11/11/usbserial-a-serial-port-driver-library-for-android-v2-0/).
 
+[A brief list of Apps and projects using UsbSerial](http://felhr85.net/2016/03/19/apps-and-projects-using-usbserial/)
+
 Devices Supported
 --------------------------------------
 [CP210X devices](http://www.silabs.com/products/mcu/pages/usbtouartbridgevcpdrivers.aspx) Default: 9600,8,1,None,flow off
