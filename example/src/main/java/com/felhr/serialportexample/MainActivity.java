@@ -80,7 +80,6 @@ public class MainActivity extends AppCompatActivity {
                 if (!editText.getText().toString().equals("")) {
                     String data = editText.getText().toString();
                     if (usbService != null) { // if UsbService was correctly binded, Send data
-                        display.append(data);
                         usbService.write(data.getBytes());
                     }
                 }
