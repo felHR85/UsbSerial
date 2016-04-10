@@ -1,5 +1,6 @@
 /*
  * Thanks to Paul Alcock for provide me with one of those Arduino nano clones!!!
+ * Also thanks to Lex Wernars for send me a CH340 that didnt work with the former version of this code!!
  * */
 
 package com.felhr.usbserial;
@@ -62,6 +63,12 @@ public class CH34xSerialDevice extends UsbSerialDevice
 
     private static final int CH34X_921600_1312 = 0xf387;
 
+    // Parity values
+    private static final int CH34X_PARITY_NONE = 0xc3;
+    private static final int CH34X_PARITY_ODD = 0xcb;
+    private static final int CH34X_PARITY_EVEN = 0xdb;
+    private static final int CH34X_PARITY_MARK = 0xeb;
+    private static final int CH34X_PARITY_SPACE = 0xfb;
 
 
     private UsbInterface mInterface;
@@ -228,8 +235,26 @@ public class CH34xSerialDevice extends UsbSerialDevice
     @Override
     public void setParity(int parity)
     {
-        // TODO Auto-generated method stub
-
+        switch(parity)
+        {
+            case UsbSerialInterface.PARITY_NONE:
+                setCh340xParity(CH34X_PARITY_NONE);
+                break;
+            case UsbSerialInterface.PARITY_ODD:
+                setCh340xParity(CH34X_PARITY_ODD);
+                break;
+            case UsbSerialInterface.PARITY_EVEN:
+                setCh340xParity(CH34X_PARITY_EVEN);
+                break;
+            case UsbSerialInterface.PARITY_MARK:
+                setCh340xParity(CH34X_PARITY_MARK);
+                break;
+            case UsbSerialInterface.PARITY_SPACE:
+                setCh340xParity(CH34X_PARITY_SPACE);
+                break;
+            default:
+                break;
+        }
     }
 
     @Override
@@ -387,6 +412,17 @@ public class CH34xSerialDevice extends UsbSerialDevice
         if(setControlCommandOut(CH341_REQ_WRITE_REG, 0x0f2c, index0f2c, null) < 0)
             return -1;
         if(checkState("set_baud_rate", 0x95, 0x0706, new int[]{0x9f, 0xee}) == -1)
+            return -1;
+        if(setControlCommandOut(CH341_REQ_WRITE_REG, 0x2727, 0, null) < 0)
+            return -1;
+        return 0;
+    }
+
+    private int setCh340xParity(int indexParity)
+    {
+        if(setControlCommandOut(CH341_REQ_WRITE_REG, 0x2518, indexParity, null) < 0)
+            return -1;
+        if(checkState("set_parity", 0x95, 0x0706, new int[]{0x9f, 0xee}) == -1)
             return -1;
         if(setControlCommandOut(CH341_REQ_WRITE_REG, 0x2727, 0, null) < 0)
             return -1;
