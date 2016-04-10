@@ -70,6 +70,12 @@ public class CH34xSerialDevice extends UsbSerialDevice
     private static final int CH34X_PARITY_MARK = 0xeb;
     private static final int CH34X_PARITY_SPACE = 0xfb;
 
+    //Flow control values
+    private static final int CH34X_FLOW_CONTROL_NONE = 0x0000;
+    private static final int CH34X_FLOW_CONTROL_RTS_CTS = 0x0101;
+    private static final int CH34X_FLOW_CONTROL_DSR_DTR = 0x0202;
+    // XON/XOFF doesnt appear to be supported directly from hardware
+
 
     private UsbInterface mInterface;
     private UsbEndpoint inEndpoint;
@@ -260,8 +266,20 @@ public class CH34xSerialDevice extends UsbSerialDevice
     @Override
     public void setFlowControl(int flowControl)
     {
-        // TODO Auto-generated method stub
-
+        switch(flowControl)
+        {
+            case UsbSerialInterface.FLOW_CONTROL_OFF:
+                setCh340xFlow(CH34X_FLOW_CONTROL_NONE);
+                break;
+            case UsbSerialInterface.FLOW_CONTROL_RTS_CTS:
+                setCh340xFlow(CH34X_FLOW_CONTROL_RTS_CTS);
+                break;
+            case UsbSerialInterface.FLOW_CONTROL_DSR_DTR:
+                setCh340xFlow(CH34X_FLOW_CONTROL_DSR_DTR);
+                break;
+            default:
+                break;
+        }
     }
 
     @Override
@@ -425,6 +443,15 @@ public class CH34xSerialDevice extends UsbSerialDevice
         if(checkState("set_parity", 0x95, 0x0706, new int[]{0x9f, 0xee}) == -1)
             return -1;
         if(setControlCommandOut(CH341_REQ_WRITE_REG, 0x2727, 0, null) < 0)
+            return -1;
+        return 0;
+    }
+
+    private int setCh340xFlow(int flowControl)
+    {
+        if(checkState("set_flow_control", 0x95, 0x0706, new int[]{0x9f, 0xee}) == -1)
+            return -1;
+        if(setControlCommandOut(CH341_REQ_WRITE_REG, 0x2727, flowControl, null) == -1)
             return -1;
         return 0;
     }
