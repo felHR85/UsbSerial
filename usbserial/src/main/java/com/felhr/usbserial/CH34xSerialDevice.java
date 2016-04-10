@@ -72,7 +72,6 @@ public class CH34xSerialDevice extends UsbSerialDevice
         boolean ret = openCH34X();
         if(ret)
         {
-            setBaudRate(DEFAULT_BAUDRATE);
             // Initialize UsbRequest
             requestIN = new UsbRequest();
             requestIN.initialize(connection, inEndpoint);
@@ -322,6 +321,10 @@ public class CH34xSerialDevice extends UsbSerialDevice
 
     private int init()
     {
+        /*
+            Init the device at 9600 bauds
+         */
+
         if(setControlCommandOut(0xa1, 0xc29c, 0xb2b9, null) < 0)
         {
             Log.i(CLASS_ID, "init failed! #1");
