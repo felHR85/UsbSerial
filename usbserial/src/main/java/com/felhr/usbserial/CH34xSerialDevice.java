@@ -470,20 +470,8 @@ public class CH34xSerialDevice extends UsbSerialDevice
             return -1;
         }else
         {
-            for (int i = 0; i < expected.length; i++)
-            {
-                if (expected[i] == -1)
-                {
-                    continue;
-                }
-
-                int current = buffer[i] & 0xff;
-                if (expected[i] != current)
-                {
-                    Log.i(CLASS_ID, "Expected 0x" + Integer.toHexString(expected[i]) + " bytes, but get 0x" + Integer.toHexString(current) + " [" + msg + "]");
-                    return -1;
-                }
-            }
+            // We are not really doing anything with the returned array. if we got the
+            // expected length just return OK.
             return 0;
         }
     }
