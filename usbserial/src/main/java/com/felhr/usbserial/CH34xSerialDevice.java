@@ -19,7 +19,7 @@ public class CH34xSerialDevice extends UsbSerialDevice
     private static final int DEFAULT_BAUDRATE = 9600;
 
     private static final int REQTYPE_HOST_FROM_DEVICE = UsbConstants.USB_TYPE_VENDOR | UsbConstants.USB_DIR_IN;
-    private static final int REQTYPE_HOST_TO_DEVICE = 0x41;
+    private static final int REQTYPE_HOST_TO_DEVICE = 0x40;
 
     private static final int CH341_REQ_WRITE_REG = 0x9A;
     private static final int CH341_REQ_READ_REG = 0x95;
