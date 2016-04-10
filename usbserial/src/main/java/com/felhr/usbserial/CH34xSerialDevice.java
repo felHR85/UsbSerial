@@ -286,13 +286,15 @@ public class CH34xSerialDevice extends UsbSerialDevice
     @Override
     public void setRTS(boolean state)
     {
-        //TODO
+        rts = state;
+        writeHandshakeByte();
     }
 
     @Override
     public void setDTR(boolean state)
     {
-        //TODO
+        dtr = state;
+        writeHandshakeByte();
     }
 
     @Override
