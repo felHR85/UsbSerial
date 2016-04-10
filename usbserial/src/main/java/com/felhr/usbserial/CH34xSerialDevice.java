@@ -1,8 +1,4 @@
 /*
- * Heavily based on a pull-request made by Andreas Butti to https://github.com/mik3y/usb-serial-for-android
- * https://github.com/mik3y/usb-serial-for-android/pull/92
- * 
- * Update May 9 2015: First tests appear to be working. No error messages are received when config the chip
  * Thanks to Paul Alcock for provide me with one of those Arduino nano clones!!!
  * */
 
@@ -32,18 +28,40 @@ public class CH34xSerialDevice extends UsbSerialDevice
     private static final int CH341_NBREAK_BITS_REG1 = 0x01;
     private static final int CH341_NBREAK_BITS_REG2 = 0x40;
 
-    private static final int CH34X_2400_1 = 0xd901;
-    private static final int CH34X_2400_2 = 0x0038;
-    private static final int CH34X_4800_1 = 0x6402;
-    private static final int CH34X_4800_2 = 0x001f;
-    private static final int CH34X_9600_1 = 0xb202;
-    private static final int CH34X_9600_2 = 0x0013;
-    private static final int CH34X_19200_1 = 0xd902;
-    private static final int CH34X_19200_2 = 0x000d;
-    private static final int CH34X_38400_1 = 0x6403;
-    private static final int CH34X_38400_2 = 0x000a;
-    private static final int CH34X_115200_1 = 0xcc03;
-    private static final int CH34X_115200_2 = 0x0008;
+    // Baud rates values
+    private static final int CH34X_300_1312 = 0xd980;
+    private static final int CH34X_300_0f2c = 0xeb;
+
+    private static final int CH34X_600_1312 = 0x6481;
+    private static final int CH34X_600_0f2c = 0x76;
+
+    private static final int CH34X_1200_1312 = 0xb281;
+    private static final int CH34X_1200_0f2c = 0x3b;
+
+    private static final int CH34X_2400_1312 = 0xd981;
+    private static final int CH34X_2400_0f2c = 0x1e;
+
+    private static final int CH34X_4800_1312 = 0x6482;
+    private static final int CH34X_4800_0f2c = 0x0f;
+
+    private static final int CH34X_9600_1312 = 0xb282;
+    private static final int CH34X_9600_0f2c = 0x08;
+
+    private static final int CH34X_19200_1312 = 0xd982;
+    private static final int CH34X_19200_0f2c_rest = 0x07;
+
+    private static final int CH34X_38400_1312 = 0x6483;
+
+    private static final int CH34X_57600_1312 = 0x9883;
+
+    private static final int CH34X_115200_1312 = 0xcc83;
+
+    private static final int CH34X_230400_1312 = 0xe683;
+
+    private static final int CH34X_460800_1312 = 0xf383;
+
+    private static final int CH34X_921600_1312 = 0xf387;
+
 
 
     private UsbInterface mInterface;
@@ -106,7 +124,6 @@ public class CH34xSerialDevice extends UsbSerialDevice
         boolean ret = openCH34X();
         if(ret)
         {
-            setBaudRate(DEFAULT_BAUDRATE);
             setSyncParams(inEndpoint, outEndpoint);
             asyncMode = false;
             return true;
@@ -125,91 +142,72 @@ public class CH34xSerialDevice extends UsbSerialDevice
     @Override
     public void setBaudRate(int baudRate)
     {
-        if(baudRate <= 2400)
+        if(baudRate <= 300)
         {
-            int ret = setControlCommandOut(CH341_REQ_WRITE_REG, 0x1312, CH34X_2400_1, null);
-            if(ret < 0)
-            {
-                Log.i(CLASS_ID, "Error setting baudRate");
-            }else
-            {
-                ret = setControlCommandOut(CH341_REQ_WRITE_REG, 0x0f2c, CH34X_2400_2, null);
-                if(ret < 0)
-                    Log.i(CLASS_ID, "Error setting baudRate");
-                else
-                    Log.i(CLASS_ID, "BaudRate set correctly");
-            }
+            int ret = setBaudRate(CH34X_300_1312, CH34X_300_0f2c); //300
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
+        }else if(baudRate > 300  && baudRate <= 600)
+        {
+            int ret = setBaudRate(CH34X_600_1312, CH34X_600_0f2c); //600
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
 
+        }else if(baudRate > 600 && baudRate <= 1200)
+        {
+            int ret = setBaudRate(CH34X_1200_1312, CH34X_1200_0f2c); //1200
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
+        }else if(baudRate > 1200 && baudRate <=2400)
+        {
+            int ret = setBaudRate(CH34X_2400_1312, CH34X_2400_0f2c); //2400
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
         }else if(baudRate > 2400 && baudRate <= 4800)
         {
-            int ret = setControlCommandOut(CH341_REQ_WRITE_REG, 0x1312, CH34X_4800_1, null);
-            if(ret < 0)
-            {
-                Log.i(CLASS_ID, "Error setting baudRate");
-            }else
-            {
-                ret = setControlCommandOut(CH341_REQ_WRITE_REG, 0x0f2c, CH34X_4800_2, null);
-                if(ret < 0)
-                    Log.i(CLASS_ID, "Error setting baudRate");
-                else
-                    Log.i(CLASS_ID, "BaudRate set correctly");
-            }
+            int ret = setBaudRate(CH34X_4800_1312, CH34X_4800_0f2c); //4800
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
         }else if(baudRate > 4800 && baudRate <= 9600)
         {
-            int ret = setControlCommandOut(CH341_REQ_WRITE_REG, 0x1312, CH34X_9600_1, null);
-            if(ret < 0)
-            {
-                Log.i(CLASS_ID, "Error setting baudRate");
-            }else
-            {
-                ret = setControlCommandOut(CH341_REQ_WRITE_REG, 0x0f2c, CH34X_9600_2, null);
-                if(ret < 0)
-                    Log.i(CLASS_ID, "Error setting baudRate");
-                else
-                    Log.i(CLASS_ID, "BaudRate set correctly");
-            }
+            int ret = setBaudRate(CH34X_9600_1312, CH34X_9600_0f2c); //9600
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
         }else if(baudRate > 9600 && baudRate <= 19200)
         {
-            int ret = setControlCommandOut(CH341_REQ_WRITE_REG, 0x1312, CH34X_19200_1, null);
-            if(ret < 0)
-            {
-                Log.i(CLASS_ID, "Error setting baudRate");
-            }else
-            {
-                ret = setControlCommandOut(CH341_REQ_WRITE_REG, 0x0f2c, CH34X_19200_2, null);
-                if(ret < 0)
-                    Log.i(CLASS_ID, "Error setting baudRate");
-                else
-                    Log.i(CLASS_ID, "BaudRate set correctly");
-            }
+            int ret = setBaudRate(CH34X_19200_1312, CH34X_19200_0f2c_rest); //19200
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
         }else if(baudRate > 19200 && baudRate <= 38400)
         {
-            int ret = setControlCommandOut(CH341_REQ_WRITE_REG, 0x1312, CH34X_38400_1, null);
-            if(ret < 0)
-            {
-                Log.i(CLASS_ID, "Error setting baudRate");
-            }else
-            {
-                ret = setControlCommandOut(CH341_REQ_WRITE_REG, 0x0f2c, CH34X_38400_2, null);
-                if(ret < 0)
-                    Log.i(CLASS_ID, "Error setting baudRate");
-                else
-                    Log.i(CLASS_ID, "BaudRate set correctly");
-            }
-        }else if(baudRate > 38400)
+            int ret = setBaudRate(CH34X_38400_1312, CH34X_19200_0f2c_rest); //38400
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
+        }else if(baudRate > 38400 && baudRate <= 57600)
         {
-            int ret = setControlCommandOut(CH341_REQ_WRITE_REG, 0x1312, CH34X_115200_1, null);
-            if(ret < 0)
-            {
-                Log.i(CLASS_ID, "Error setting baudRate");
-            }else
-            {
-                ret = setControlCommandOut(CH341_REQ_WRITE_REG, 0x0f2c, CH34X_115200_2, null);
-                if(ret < 0)
-                    Log.i(CLASS_ID, "Error setting baudRate");
-                else
-                    Log.i(CLASS_ID, "BaudRate set correctly");
-            }
+            int ret = setBaudRate(CH34X_57600_1312, CH34X_19200_0f2c_rest); //57600
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
+        }else if(baudRate > 57600 && baudRate <= 115200) //115200
+        {
+            int ret = setBaudRate(CH34X_115200_1312, CH34X_19200_0f2c_rest);
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
+        }else if(baudRate > 115200 && baudRate <= 230400) //230400
+        {
+            int ret = setBaudRate(CH34X_230400_1312, CH34X_19200_0f2c_rest);
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
+        }else if(baudRate > 230400 && baudRate <= 460800) //460800
+        {
+            int ret = setBaudRate(CH34X_460800_1312, CH34X_19200_0f2c_rest);
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
+        }else if(baudRate > 460800 && baudRate <= 921600)
+        {
+            int ret = setBaudRate(CH34X_921600_1312, CH34X_19200_0f2c_rest);
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
         }
     }
 
@@ -379,6 +377,19 @@ public class CH34xSerialDevice extends UsbSerialDevice
             return -1;
         }
 
+        return 0;
+    }
+
+    private int setBaudRate(int index1312, int index0f2c)
+    {
+        if(setControlCommandOut(CH341_REQ_WRITE_REG, 0x1312, index1312, null) < 0)
+            return -1;
+        if(setControlCommandOut(CH341_REQ_WRITE_REG, 0x0f2c, index0f2c, null) < 0)
+            return -1;
+        if(checkState("set_baud_rate", 0x95, 0x0706, new int[]{0x9f, 0xee}) == -1)
+            return -1;
+        if(setControlCommandOut(CH341_REQ_WRITE_REG, 0x2727, 0, null) < 0)
+            return -1;
         return 0;
     }
 
