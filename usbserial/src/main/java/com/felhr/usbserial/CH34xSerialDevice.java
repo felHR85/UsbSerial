@@ -322,47 +322,61 @@ public class CH34xSerialDevice extends UsbSerialDevice
 
     private int init()
     {
-        if(checkState("init #1", 0x5f, 0, new int[]{-1 /* 0x27, 0x30 */, 0x00}) == -1)
+        if(setControlCommandOut(0xa1, 0xc29c, 0xb2b9, null) < 0)
         {
+            Log.i(CLASS_ID, "init failed! #1");
             return -1;
         }
 
-        if(setControlCommandOut(0xa1, 0, 0, null) < 0)
+        if(setControlCommandOut(0xa4, 0xdf, 0, null) < 0)
         {
             Log.i(CLASS_ID, "init failed! #2");
             return -1;
         }
 
-        setBaudRate(DEFAULT_BAUDRATE);
+        if(setControlCommandOut(0xa4, 0x9f, 0, null) < 0)
+        {
+            Log.i(CLASS_ID, "init failed! #3");
+            return -1;
+        }
 
-        if(checkState("init #4", 0x95, 0x2518, new int[]{-1 /* 0x56, c3*/, 0x00}) == -1)
+        if(checkState("init #4", 0x95, 0x0706, new int[]{0x9f, 0xee}) == -1)
             return -1;
 
-        if(setControlCommandOut(0x9a, 0x2518, 0x0050, null) < 0)
+        if(setControlCommandOut(0x9a, 0x2727, 0x0000, null) < 0)
         {
             Log.i(CLASS_ID, "init failed! #5");
             return -1;
         }
 
-
-        if(checkState("init #6", 0x95, 0x0706, new int[]{0xff, 0xee}) == -1)
+        if(setControlCommandOut(0x9a, 0x1312, 0xb282, null) < 0)
+        {
+            Log.i(CLASS_ID, "init failed! #6");
             return -1;
+        }
 
-        if(setControlCommandOut(0xa1, 0x501f, 0xd90a, null) < 0)
+        if(setControlCommandOut(0x9a, 0x0f2c, 0x0008, null) < 0)
         {
             Log.i(CLASS_ID, "init failed! #7");
             return -1;
         }
 
-        setBaudRate(DEFAULT_BAUDRATE);
+        if(setControlCommandOut(0x9a, 0x2518, 0x00c3, null) < 0)
+        {
+            Log.i(CLASS_ID, "init failed! #8");
+            return -1;
+        }
 
-        if(writeHandshakeByte() == -1)
+        if(checkState("init #9", 0x95, 0x0706, new int[]{0x9f, 0xee}) == -1)
             return -1;
 
-        if(checkState("init #10", 0x95, 0x0706, new int[]{-1/* 0x9f, 0xff*/, 0xee}) == -1)
+        if(setControlCommandOut(0x9a, 0x2727, 0x0000, null) < 0)
+        {
+            Log.i(CLASS_ID, "init failed! #10");
             return -1;
-        else
-            return 0;
+        }
+
+        return 0;
     }
 
     private int checkState(String msg, int request, int value, int[] expected)
