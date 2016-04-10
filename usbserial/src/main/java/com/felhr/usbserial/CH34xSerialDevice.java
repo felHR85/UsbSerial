@@ -1,4 +1,5 @@
 /*
+ * Based in the CH340x driver made by Andreas Butti (https://github.com/mik3y/usb-serial-for-android/blob/master/usbSerialForAndroid/src/main/java/com/hoho/android/usbserial/driver/Ch34xSerialDriver.java)
  * Thanks to Paul Alcock for provide me with one of those Arduino nano clones!!!
  * Also thanks to Lex Wernars for send me a CH340 that didnt work with the former version of this code!!
  * */
@@ -489,11 +490,8 @@ public class CH34xSerialDevice extends UsbSerialDevice
     {
         if(setControlCommandOut(0xa4, ~((dtr ? 1 << 5 : 0) | (rts ? 1 << 6 : 0)), 0, null) < 0)
         {
-            Log.i(CLASS_ID, "Faild to set handshake byte");
+            Log.i(CLASS_ID, "Failed to set handshake byte");
             return -1;
-        }else if(setControlCommandOut(0xa4, ~((dtr ? 1 << 5 : 0) | (rts ? 1 << 6 : 0)), 0, null) > 0)
-        {
-            return 0;
         }
         return 0;
     }
