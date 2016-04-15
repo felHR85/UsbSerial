@@ -123,6 +123,9 @@ public class CH34xSerialDevice extends UsbSerialDevice
             restartWorkingThread();
             restartWriteThread();
 
+            // Create Flow control thread but it will only be started if necessary
+            createFlowControlThread();
+
             // Pass references to the threads
             setThreadsParams(requestIN, outEndpoint);
 
@@ -140,6 +143,7 @@ public class CH34xSerialDevice extends UsbSerialDevice
     {
         killWorkingThread();
         killWriteThread();
+        stopFlowControlThread();
         connection.releaseInterface(mInterface);
     }
 
@@ -149,6 +153,8 @@ public class CH34xSerialDevice extends UsbSerialDevice
         boolean ret = openCH34X();
         if(ret)
         {
+            // Create Flow control thread but it will only be started if necessary
+            createFlowControlThread();
             setSyncParams(inEndpoint, outEndpoint);
             asyncMode = false;
             return true;
@@ -161,6 +167,7 @@ public class CH34xSerialDevice extends UsbSerialDevice
     @Override
     public void syncClose()
     {
+        stopFlowControlThread();
         connection.releaseInterface(mInterface);
     }
 
@@ -281,13 +288,23 @@ public class CH34xSerialDevice extends UsbSerialDevice
         switch(flowControl)
         {
             case UsbSerialInterface.FLOW_CONTROL_OFF:
+                rtsCtsEnabled = false;
+                dtrDsrEnabled = false;
                 setCh340xFlow(CH34X_FLOW_CONTROL_NONE);
                 break;
             case UsbSerialInterface.FLOW_CONTROL_RTS_CTS:
+                rtsCtsEnabled = true;
+                dtrDsrEnabled = false;
                 setCh340xFlow(CH34X_FLOW_CONTROL_RTS_CTS);
+                ctsState = checkCTS();
+                startFlowControlThread();
                 break;
             case UsbSerialInterface.FLOW_CONTROL_DSR_DTR:
+                rtsCtsEnabled = false;
+                dtrDsrEnabled = true;
                 setCh340xFlow(CH34X_FLOW_CONTROL_DSR_DTR);
+                dsrState = checkDSR();
+                startFlowControlThread();
                 break;
             default:
                 break;
@@ -311,13 +328,13 @@ public class CH34xSerialDevice extends UsbSerialDevice
     @Override
     public void getCTS(UsbCTSCallback ctsCallback)
     {
-        //TODO
+        this.ctsCallback = ctsCallback;
     }
 
     @Override
     public void getDSR(UsbDSRCallback dsrCallback)
     {
-        //TODO
+        this.dsrCallback = dsrCallback;
     }
 
     @Override
@@ -516,7 +533,7 @@ public class CH34xSerialDevice extends UsbSerialDevice
             return false;
         }
 
-        if((buffer[1] & 0x01) == 0x00) //DSR ON
+        if((buffer[0] & 0x02) == 0x00) //DSR ON
         {
             return true;
         }else // DSR OFF
@@ -557,6 +574,11 @@ public class CH34xSerialDevice extends UsbSerialDevice
         int response = connection.controlTransfer(REQTYPE_HOST_FROM_DEVICE, request, value, index, data, dataLength, USB_TIMEOUT);
         Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
         return response;
+    }
+
+    private void createFlowControlThread()
+    {
+        flowControlThread = new FlowControlThread();
     }
 
     private void startFlowControlThread()
