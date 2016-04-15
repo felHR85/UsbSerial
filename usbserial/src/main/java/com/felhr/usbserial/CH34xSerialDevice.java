@@ -14,6 +14,8 @@ import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbRequest;
 import android.util.Log;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class CH34xSerialDevice extends UsbSerialDevice
 {
     private static final String CLASS_ID = CH34xSerialDevice.class.getSimpleName();
@@ -83,8 +85,15 @@ public class CH34xSerialDevice extends UsbSerialDevice
     private UsbEndpoint outEndpoint;
     private UsbRequest requestIN;
 
+    private FlowControlThread flowControlThread;
+    private UsbCTSCallback ctsCallback;
+    private UsbDSRCallback dsrCallback;
+    private boolean rtsCtsEnabled;
+    private boolean dtrDsrEnabled;
     private boolean dtr = false;
     private boolean rts = false;
+    private boolean ctsState = false;
+    private boolean dsrState = false;
 
 
     public CH34xSerialDevice(UsbDevice device, UsbDeviceConnection connection)
@@ -95,6 +104,8 @@ public class CH34xSerialDevice extends UsbSerialDevice
     public CH34xSerialDevice(UsbDevice device, UsbDeviceConnection connection, int iface)
     {
         super(device, connection);
+        rtsCtsEnabled = false;
+        dtrDsrEnabled = false;
         mInterface = device.getInterface(iface >= 0 ? iface : 0);
     }
 
@@ -470,9 +481,47 @@ public class CH34xSerialDevice extends UsbSerialDevice
             return -1;
         }else
         {
-            // We are not really doing anything with the returned array. if we got the
-            // expected length just return OK.
             return 0;
+        }
+    }
+
+    private boolean checkCTS()
+    {
+        byte[] buffer = new byte[2];
+        int ret = setControlCommandIn(CH341_REQ_READ_REG, 0x0706, 0, buffer);
+
+        if(ret != 2)
+        {
+            Log.i(CLASS_ID, ("Expected " + "2" + " bytes, but get " + ret));
+            return false;
+        }
+
+        if((buffer[0] & 0x01) == 0x00) //CTS ON
+        {
+            return true;
+        }else // CTS OFF
+        {
+            return false;
+        }
+    }
+
+    private boolean checkDSR()
+    {
+        byte[] buffer = new byte[2];
+        int ret = setControlCommandIn(CH341_REQ_READ_REG, 0x0706, 0, buffer);
+
+        if(ret != 2)
+        {
+            Log.i(CLASS_ID, ("Expected " + "2" + " bytes, but get " + ret));
+            return false;
+        }
+
+        if((buffer[1] & 0x01) == 0x00) //DSR ON
+        {
+            return true;
+        }else // DSR OFF
+        {
+            return false;
         }
     }
 
@@ -510,4 +559,109 @@ public class CH34xSerialDevice extends UsbSerialDevice
         return response;
     }
 
+    private void startFlowControlThread()
+    {
+        flowControlThread.start();
+    }
+
+    private void stopFlowControlThread()
+    {
+        flowControlThread.stopThread();
+        flowControlThread = null;
+    }
+
+    private class FlowControlThread extends Thread
+    {
+        private long time = 100; // 100ms
+
+        private boolean firstTime;
+
+        private AtomicBoolean keep;
+
+        public FlowControlThread()
+        {
+            keep = new AtomicBoolean(true);
+            firstTime = true;
+        }
+
+        @Override
+        public void run()
+        {
+            while(keep.get())
+            {
+                if(!firstTime)
+                {
+                    // Check CTS status
+                    if(rtsCtsEnabled)
+                    {
+                        boolean cts = pollForCTS();
+                        if(ctsState != cts)
+                        {
+                            ctsState = !ctsState;
+                            if (ctsCallback != null)
+                                ctsCallback.onCTSChanged(ctsState);
+                        }
+                    }
+
+                    // Check DSR status
+                    if(dtrDsrEnabled)
+                    {
+                        boolean dsr = pollForDSR();
+                        if(dsrState != dsr)
+                        {
+                            dsrState = !dsrState;
+                            if (dsrCallback != null)
+                                dsrCallback.onDSRChanged(dsrState);
+                        }
+                    }
+                }else
+                {
+                    if(rtsCtsEnabled && ctsCallback != null)
+                        ctsCallback.onCTSChanged(ctsState);
+
+                    if(dtrDsrEnabled && dsrCallback != null)
+                        dsrCallback.onDSRChanged(dsrState);
+
+                    firstTime = false;
+                }
+            }
+        }
+
+        public void stopThread()
+        {
+            keep.set(false);
+        }
+
+        public boolean pollForCTS()
+        {
+            synchronized(this)
+            {
+                try
+                {
+                    wait(time);
+                } catch(InterruptedException e)
+                {
+                    e.printStackTrace();
+                }
+            }
+
+            return checkCTS();
+        }
+
+        public boolean pollForDSR()
+        {
+            synchronized(this)
+            {
+                try
+                {
+                    wait(time);
+                } catch(InterruptedException e)
+                {
+                    e.printStackTrace();
+                }
+            }
+
+            return checkDSR();
+        }
+    }
 }
