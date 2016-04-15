@@ -583,7 +583,8 @@ public class CH34xSerialDevice extends UsbSerialDevice
 
     private void startFlowControlThread()
     {
-        flowControlThread.start();
+        if(!flowControlThread.isAlive())
+            flowControlThread.start();
     }
 
     private void stopFlowControlThread()
