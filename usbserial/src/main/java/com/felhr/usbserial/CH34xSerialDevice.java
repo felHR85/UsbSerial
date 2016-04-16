@@ -1,9 +1,7 @@
 /*
- * Heavily based on a pull-request made by Andreas Butti to https://github.com/mik3y/usb-serial-for-android
- * https://github.com/mik3y/usb-serial-for-android/pull/92
- * 
- * Update May 9 2015: First tests appear to be working. No error messages are received when config the chip
+ * Based in the CH340x driver made by Andreas Butti (https://github.com/mik3y/usb-serial-for-android/blob/master/usbSerialForAndroid/src/main/java/com/hoho/android/usbserial/driver/Ch34xSerialDriver.java)
  * Thanks to Paul Alcock for provide me with one of those Arduino nano clones!!!
+ * Also thanks to Lex Wernars for send me a CH340 that didnt work with the former version of this code!!
  * */
 
 package com.felhr.usbserial;
@@ -16,6 +14,8 @@ import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbRequest;
 import android.util.Log;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class CH34xSerialDevice extends UsbSerialDevice
 {
     private static final String CLASS_ID = CH34xSerialDevice.class.getSimpleName();
@@ -23,7 +23,7 @@ public class CH34xSerialDevice extends UsbSerialDevice
     private static final int DEFAULT_BAUDRATE = 9600;
 
     private static final int REQTYPE_HOST_FROM_DEVICE = UsbConstants.USB_TYPE_VENDOR | UsbConstants.USB_DIR_IN;
-    private static final int REQTYPE_HOST_TO_DEVICE = 0x41;
+    private static final int REQTYPE_HOST_TO_DEVICE = 0x40;
 
     private static final int CH341_REQ_WRITE_REG = 0x9A;
     private static final int CH341_REQ_READ_REG = 0x95;
@@ -32,18 +32,52 @@ public class CH34xSerialDevice extends UsbSerialDevice
     private static final int CH341_NBREAK_BITS_REG1 = 0x01;
     private static final int CH341_NBREAK_BITS_REG2 = 0x40;
 
-    private static final int CH34X_2400_1 = 0xd901;
-    private static final int CH34X_2400_2 = 0x0038;
-    private static final int CH34X_4800_1 = 0x6402;
-    private static final int CH34X_4800_2 = 0x001f;
-    private static final int CH34X_9600_1 = 0xb202;
-    private static final int CH34X_9600_2 = 0x0013;
-    private static final int CH34X_19200_1 = 0xd902;
-    private static final int CH34X_19200_2 = 0x000d;
-    private static final int CH34X_38400_1 = 0x6403;
-    private static final int CH34X_38400_2 = 0x000a;
-    private static final int CH34X_115200_1 = 0xcc03;
-    private static final int CH34X_115200_2 = 0x0008;
+    // Baud rates values
+    private static final int CH34X_300_1312 = 0xd980;
+    private static final int CH34X_300_0f2c = 0xeb;
+
+    private static final int CH34X_600_1312 = 0x6481;
+    private static final int CH34X_600_0f2c = 0x76;
+
+    private static final int CH34X_1200_1312 = 0xb281;
+    private static final int CH34X_1200_0f2c = 0x3b;
+
+    private static final int CH34X_2400_1312 = 0xd981;
+    private static final int CH34X_2400_0f2c = 0x1e;
+
+    private static final int CH34X_4800_1312 = 0x6482;
+    private static final int CH34X_4800_0f2c = 0x0f;
+
+    private static final int CH34X_9600_1312 = 0xb282;
+    private static final int CH34X_9600_0f2c = 0x08;
+
+    private static final int CH34X_19200_1312 = 0xd982;
+    private static final int CH34X_19200_0f2c_rest = 0x07;
+
+    private static final int CH34X_38400_1312 = 0x6483;
+
+    private static final int CH34X_57600_1312 = 0x9883;
+
+    private static final int CH34X_115200_1312 = 0xcc83;
+
+    private static final int CH34X_230400_1312 = 0xe683;
+
+    private static final int CH34X_460800_1312 = 0xf383;
+
+    private static final int CH34X_921600_1312 = 0xf387;
+
+    // Parity values
+    private static final int CH34X_PARITY_NONE = 0xc3;
+    private static final int CH34X_PARITY_ODD = 0xcb;
+    private static final int CH34X_PARITY_EVEN = 0xdb;
+    private static final int CH34X_PARITY_MARK = 0xeb;
+    private static final int CH34X_PARITY_SPACE = 0xfb;
+
+    //Flow control values
+    private static final int CH34X_FLOW_CONTROL_NONE = 0x0000;
+    private static final int CH34X_FLOW_CONTROL_RTS_CTS = 0x0101;
+    private static final int CH34X_FLOW_CONTROL_DSR_DTR = 0x0202;
+    // XON/XOFF doesnt appear to be supported directly from hardware
 
 
     private UsbInterface mInterface;
@@ -51,8 +85,15 @@ public class CH34xSerialDevice extends UsbSerialDevice
     private UsbEndpoint outEndpoint;
     private UsbRequest requestIN;
 
+    private FlowControlThread flowControlThread;
+    private UsbCTSCallback ctsCallback;
+    private UsbDSRCallback dsrCallback;
+    private boolean rtsCtsEnabled;
+    private boolean dtrDsrEnabled;
     private boolean dtr = false;
     private boolean rts = false;
+    private boolean ctsState = false;
+    private boolean dsrState = false;
 
 
     public CH34xSerialDevice(UsbDevice device, UsbDeviceConnection connection)
@@ -63,6 +104,8 @@ public class CH34xSerialDevice extends UsbSerialDevice
     public CH34xSerialDevice(UsbDevice device, UsbDeviceConnection connection, int iface)
     {
         super(device, connection);
+        rtsCtsEnabled = false;
+        dtrDsrEnabled = false;
         mInterface = device.getInterface(iface >= 0 ? iface : 0);
     }
 
@@ -72,7 +115,6 @@ public class CH34xSerialDevice extends UsbSerialDevice
         boolean ret = openCH34X();
         if(ret)
         {
-            setBaudRate(DEFAULT_BAUDRATE);
             // Initialize UsbRequest
             requestIN = new UsbRequest();
             requestIN.initialize(connection, inEndpoint);
@@ -80,6 +122,9 @@ public class CH34xSerialDevice extends UsbSerialDevice
             // Restart the working thread if it has been killed before and  get and claim interface
             restartWorkingThread();
             restartWriteThread();
+
+            // Create Flow control thread but it will only be started if necessary
+            createFlowControlThread();
 
             // Pass references to the threads
             setThreadsParams(requestIN, outEndpoint);
@@ -98,6 +143,7 @@ public class CH34xSerialDevice extends UsbSerialDevice
     {
         killWorkingThread();
         killWriteThread();
+        stopFlowControlThread();
         connection.releaseInterface(mInterface);
     }
 
@@ -107,7 +153,8 @@ public class CH34xSerialDevice extends UsbSerialDevice
         boolean ret = openCH34X();
         if(ret)
         {
-            setBaudRate(DEFAULT_BAUDRATE);
+            // Create Flow control thread but it will only be started if necessary
+            createFlowControlThread();
             setSyncParams(inEndpoint, outEndpoint);
             asyncMode = false;
             return true;
@@ -120,97 +167,79 @@ public class CH34xSerialDevice extends UsbSerialDevice
     @Override
     public void syncClose()
     {
+        stopFlowControlThread();
         connection.releaseInterface(mInterface);
     }
 
     @Override
     public void setBaudRate(int baudRate)
     {
-        if(baudRate <= 2400)
+        if(baudRate <= 300)
         {
-            int ret = setControlCommandOut(CH341_REQ_WRITE_REG, 0x1312, CH34X_2400_1, null);
-            if(ret < 0)
-            {
-                Log.i(CLASS_ID, "Error setting baudRate");
-            }else
-            {
-                ret = setControlCommandOut(CH341_REQ_WRITE_REG, 0x0f2c, CH34X_2400_2, null);
-                if(ret < 0)
-                    Log.i(CLASS_ID, "Error setting baudRate");
-                else
-                    Log.i(CLASS_ID, "BaudRate set correctly");
-            }
+            int ret = setBaudRate(CH34X_300_1312, CH34X_300_0f2c); //300
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
+        }else if(baudRate > 300  && baudRate <= 600)
+        {
+            int ret = setBaudRate(CH34X_600_1312, CH34X_600_0f2c); //600
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
 
+        }else if(baudRate > 600 && baudRate <= 1200)
+        {
+            int ret = setBaudRate(CH34X_1200_1312, CH34X_1200_0f2c); //1200
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
+        }else if(baudRate > 1200 && baudRate <=2400)
+        {
+            int ret = setBaudRate(CH34X_2400_1312, CH34X_2400_0f2c); //2400
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
         }else if(baudRate > 2400 && baudRate <= 4800)
         {
-            int ret = setControlCommandOut(CH341_REQ_WRITE_REG, 0x1312, CH34X_4800_1, null);
-            if(ret < 0)
-            {
-                Log.i(CLASS_ID, "Error setting baudRate");
-            }else
-            {
-                ret = setControlCommandOut(CH341_REQ_WRITE_REG, 0x0f2c, CH34X_4800_2, null);
-                if(ret < 0)
-                    Log.i(CLASS_ID, "Error setting baudRate");
-                else
-                    Log.i(CLASS_ID, "BaudRate set correctly");
-            }
+            int ret = setBaudRate(CH34X_4800_1312, CH34X_4800_0f2c); //4800
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
         }else if(baudRate > 4800 && baudRate <= 9600)
         {
-            int ret = setControlCommandOut(CH341_REQ_WRITE_REG, 0x1312, CH34X_9600_1, null);
-            if(ret < 0)
-            {
-                Log.i(CLASS_ID, "Error setting baudRate");
-            }else
-            {
-                ret = setControlCommandOut(CH341_REQ_WRITE_REG, 0x0f2c, CH34X_9600_2, null);
-                if(ret < 0)
-                    Log.i(CLASS_ID, "Error setting baudRate");
-                else
-                    Log.i(CLASS_ID, "BaudRate set correctly");
-            }
+            int ret = setBaudRate(CH34X_9600_1312, CH34X_9600_0f2c); //9600
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
         }else if(baudRate > 9600 && baudRate <= 19200)
         {
-            int ret = setControlCommandOut(CH341_REQ_WRITE_REG, 0x1312, CH34X_19200_1, null);
-            if(ret < 0)
-            {
-                Log.i(CLASS_ID, "Error setting baudRate");
-            }else
-            {
-                ret = setControlCommandOut(CH341_REQ_WRITE_REG, 0x0f2c, CH34X_19200_2, null);
-                if(ret < 0)
-                    Log.i(CLASS_ID, "Error setting baudRate");
-                else
-                    Log.i(CLASS_ID, "BaudRate set correctly");
-            }
+            int ret = setBaudRate(CH34X_19200_1312, CH34X_19200_0f2c_rest); //19200
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
         }else if(baudRate > 19200 && baudRate <= 38400)
         {
-            int ret = setControlCommandOut(CH341_REQ_WRITE_REG, 0x1312, CH34X_38400_1, null);
-            if(ret < 0)
-            {
-                Log.i(CLASS_ID, "Error setting baudRate");
-            }else
-            {
-                ret = setControlCommandOut(CH341_REQ_WRITE_REG, 0x0f2c, CH34X_38400_2, null);
-                if(ret < 0)
-                    Log.i(CLASS_ID, "Error setting baudRate");
-                else
-                    Log.i(CLASS_ID, "BaudRate set correctly");
-            }
-        }else if(baudRate > 38400)
+            int ret = setBaudRate(CH34X_38400_1312, CH34X_19200_0f2c_rest); //38400
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
+        }else if(baudRate > 38400 && baudRate <= 57600)
         {
-            int ret = setControlCommandOut(CH341_REQ_WRITE_REG, 0x1312, CH34X_115200_1, null);
-            if(ret < 0)
-            {
-                Log.i(CLASS_ID, "Error setting baudRate");
-            }else
-            {
-                ret = setControlCommandOut(CH341_REQ_WRITE_REG, 0x0f2c, CH34X_115200_2, null);
-                if(ret < 0)
-                    Log.i(CLASS_ID, "Error setting baudRate");
-                else
-                    Log.i(CLASS_ID, "BaudRate set correctly");
-            }
+            int ret = setBaudRate(CH34X_57600_1312, CH34X_19200_0f2c_rest); //57600
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
+        }else if(baudRate > 57600 && baudRate <= 115200) //115200
+        {
+            int ret = setBaudRate(CH34X_115200_1312, CH34X_19200_0f2c_rest);
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
+        }else if(baudRate > 115200 && baudRate <= 230400) //230400
+        {
+            int ret = setBaudRate(CH34X_230400_1312, CH34X_19200_0f2c_rest);
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
+        }else if(baudRate > 230400 && baudRate <= 460800) //460800
+        {
+            int ret = setBaudRate(CH34X_460800_1312, CH34X_19200_0f2c_rest);
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
+        }else if(baudRate > 460800 && baudRate <= 921600)
+        {
+            int ret = setBaudRate(CH34X_921600_1312, CH34X_19200_0f2c_rest);
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
         }
     }
 
@@ -231,39 +260,81 @@ public class CH34xSerialDevice extends UsbSerialDevice
     @Override
     public void setParity(int parity)
     {
-        // TODO Auto-generated method stub
-
+        switch(parity)
+        {
+            case UsbSerialInterface.PARITY_NONE:
+                setCh340xParity(CH34X_PARITY_NONE);
+                break;
+            case UsbSerialInterface.PARITY_ODD:
+                setCh340xParity(CH34X_PARITY_ODD);
+                break;
+            case UsbSerialInterface.PARITY_EVEN:
+                setCh340xParity(CH34X_PARITY_EVEN);
+                break;
+            case UsbSerialInterface.PARITY_MARK:
+                setCh340xParity(CH34X_PARITY_MARK);
+                break;
+            case UsbSerialInterface.PARITY_SPACE:
+                setCh340xParity(CH34X_PARITY_SPACE);
+                break;
+            default:
+                break;
+        }
     }
 
     @Override
     public void setFlowControl(int flowControl)
     {
-        // TODO Auto-generated method stub
-
+        switch(flowControl)
+        {
+            case UsbSerialInterface.FLOW_CONTROL_OFF:
+                rtsCtsEnabled = false;
+                dtrDsrEnabled = false;
+                setCh340xFlow(CH34X_FLOW_CONTROL_NONE);
+                break;
+            case UsbSerialInterface.FLOW_CONTROL_RTS_CTS:
+                rtsCtsEnabled = true;
+                dtrDsrEnabled = false;
+                setCh340xFlow(CH34X_FLOW_CONTROL_RTS_CTS);
+                ctsState = checkCTS();
+                startFlowControlThread();
+                break;
+            case UsbSerialInterface.FLOW_CONTROL_DSR_DTR:
+                rtsCtsEnabled = false;
+                dtrDsrEnabled = true;
+                setCh340xFlow(CH34X_FLOW_CONTROL_DSR_DTR);
+                dsrState = checkDSR();
+                startFlowControlThread();
+                break;
+            default:
+                break;
+        }
     }
 
     @Override
     public void setRTS(boolean state)
     {
-        //TODO
+        rts = state;
+        writeHandshakeByte();
     }
 
     @Override
     public void setDTR(boolean state)
     {
-        //TODO
+        dtr = state;
+        writeHandshakeByte();
     }
 
     @Override
     public void getCTS(UsbCTSCallback ctsCallback)
     {
-        //TODO
+        this.ctsCallback = ctsCallback;
     }
 
     @Override
     public void getDSR(UsbDSRCallback dsrCallback)
     {
-        //TODO
+        this.dsrCallback = dsrCallback;
     }
 
     @Override
@@ -322,47 +393,98 @@ public class CH34xSerialDevice extends UsbSerialDevice
 
     private int init()
     {
-        if(checkState("init #1", 0x5f, 0, new int[]{-1 /* 0x27, 0x30 */, 0x00}) == -1)
+        /*
+            Init the device at 9600 bauds
+         */
+
+        if(setControlCommandOut(0xa1, 0xc29c, 0xb2b9, null) < 0)
         {
+            Log.i(CLASS_ID, "init failed! #1");
             return -1;
         }
 
-        if(setControlCommandOut(0xa1, 0, 0, null) < 0)
+        if(setControlCommandOut(0xa4, 0xdf, 0, null) < 0)
         {
             Log.i(CLASS_ID, "init failed! #2");
             return -1;
         }
 
-        setBaudRate(DEFAULT_BAUDRATE);
+        if(setControlCommandOut(0xa4, 0x9f, 0, null) < 0)
+        {
+            Log.i(CLASS_ID, "init failed! #3");
+            return -1;
+        }
 
-        if(checkState("init #4", 0x95, 0x2518, new int[]{-1 /* 0x56, c3*/, 0x00}) == -1)
+        if(checkState("init #4", 0x95, 0x0706, new int[]{0x9f, 0xee}) == -1)
             return -1;
 
-        if(setControlCommandOut(0x9a, 0x2518, 0x0050, null) < 0)
+        if(setControlCommandOut(0x9a, 0x2727, 0x0000, null) < 0)
         {
             Log.i(CLASS_ID, "init failed! #5");
             return -1;
         }
 
-
-        if(checkState("init #6", 0x95, 0x0706, new int[]{0xff, 0xee}) == -1)
+        if(setControlCommandOut(0x9a, 0x1312, 0xb282, null) < 0)
+        {
+            Log.i(CLASS_ID, "init failed! #6");
             return -1;
+        }
 
-        if(setControlCommandOut(0xa1, 0x501f, 0xd90a, null) < 0)
+        if(setControlCommandOut(0x9a, 0x0f2c, 0x0008, null) < 0)
         {
             Log.i(CLASS_ID, "init failed! #7");
             return -1;
         }
 
-        setBaudRate(DEFAULT_BAUDRATE);
+        if(setControlCommandOut(0x9a, 0x2518, 0x00c3, null) < 0)
+        {
+            Log.i(CLASS_ID, "init failed! #8");
+            return -1;
+        }
 
-        if(writeHandshakeByte() == -1)
+        if(checkState("init #9", 0x95, 0x0706, new int[]{0x9f, 0xee}) == -1)
             return -1;
 
-        if(checkState("init #10", 0x95, 0x0706, new int[]{-1/* 0x9f, 0xff*/, 0xee}) == -1)
+        if(setControlCommandOut(0x9a, 0x2727, 0x0000, null) < 0)
+        {
+            Log.i(CLASS_ID, "init failed! #10");
             return -1;
-        else
-            return 0;
+        }
+
+        return 0;
+    }
+
+    private int setBaudRate(int index1312, int index0f2c)
+    {
+        if(setControlCommandOut(CH341_REQ_WRITE_REG, 0x1312, index1312, null) < 0)
+            return -1;
+        if(setControlCommandOut(CH341_REQ_WRITE_REG, 0x0f2c, index0f2c, null) < 0)
+            return -1;
+        if(checkState("set_baud_rate", 0x95, 0x0706, new int[]{0x9f, 0xee}) == -1)
+            return -1;
+        if(setControlCommandOut(CH341_REQ_WRITE_REG, 0x2727, 0, null) < 0)
+            return -1;
+        return 0;
+    }
+
+    private int setCh340xParity(int indexParity)
+    {
+        if(setControlCommandOut(CH341_REQ_WRITE_REG, 0x2518, indexParity, null) < 0)
+            return -1;
+        if(checkState("set_parity", 0x95, 0x0706, new int[]{0x9f, 0xee}) == -1)
+            return -1;
+        if(setControlCommandOut(CH341_REQ_WRITE_REG, 0x2727, 0, null) < 0)
+            return -1;
+        return 0;
+    }
+
+    private int setCh340xFlow(int flowControl)
+    {
+        if(checkState("set_flow_control", 0x95, 0x0706, new int[]{0x9f, 0xee}) == -1)
+            return -1;
+        if(setControlCommandOut(CH341_REQ_WRITE_REG, 0x2727, flowControl, null) == -1)
+            return -1;
+        return 0;
     }
 
     private int checkState(String msg, int request, int value, int[] expected)
@@ -376,21 +498,47 @@ public class CH34xSerialDevice extends UsbSerialDevice
             return -1;
         }else
         {
-            for (int i = 0; i < expected.length; i++)
-            {
-                if (expected[i] == -1)
-                {
-                    continue;
-                }
-
-                int current = buffer[i] & 0xff;
-                if (expected[i] != current)
-                {
-                    Log.i(CLASS_ID, "Expected 0x" + Integer.toHexString(expected[i]) + " bytes, but get 0x" + Integer.toHexString(current) + " [" + msg + "]");
-                    return -1;
-                }
-            }
             return 0;
+        }
+    }
+
+    private boolean checkCTS()
+    {
+        byte[] buffer = new byte[2];
+        int ret = setControlCommandIn(CH341_REQ_READ_REG, 0x0706, 0, buffer);
+
+        if(ret != 2)
+        {
+            Log.i(CLASS_ID, ("Expected " + "2" + " bytes, but get " + ret));
+            return false;
+        }
+
+        if((buffer[0] & 0x01) == 0x00) //CTS ON
+        {
+            return true;
+        }else // CTS OFF
+        {
+            return false;
+        }
+    }
+
+    private boolean checkDSR()
+    {
+        byte[] buffer = new byte[2];
+        int ret = setControlCommandIn(CH341_REQ_READ_REG, 0x0706, 0, buffer);
+
+        if(ret != 2)
+        {
+            Log.i(CLASS_ID, ("Expected " + "2" + " bytes, but get " + ret));
+            return false;
+        }
+
+        if((buffer[0] & 0x02) == 0x00) //DSR ON
+        {
+            return true;
+        }else // DSR OFF
+        {
+            return false;
         }
     }
 
@@ -398,11 +546,8 @@ public class CH34xSerialDevice extends UsbSerialDevice
     {
         if(setControlCommandOut(0xa4, ~((dtr ? 1 << 5 : 0) | (rts ? 1 << 6 : 0)), 0, null) < 0)
         {
-            Log.i(CLASS_ID, "Faild to set handshake byte");
+            Log.i(CLASS_ID, "Failed to set handshake byte");
             return -1;
-        }else if(setControlCommandOut(0xa4, ~((dtr ? 1 << 5 : 0) | (rts ? 1 << 6 : 0)), 0, null) > 0)
-        {
-            return 0;
         }
         return 0;
     }
@@ -431,4 +576,115 @@ public class CH34xSerialDevice extends UsbSerialDevice
         return response;
     }
 
+    private void createFlowControlThread()
+    {
+        flowControlThread = new FlowControlThread();
+    }
+
+    private void startFlowControlThread()
+    {
+        if(!flowControlThread.isAlive())
+            flowControlThread.start();
+    }
+
+    private void stopFlowControlThread()
+    {
+        flowControlThread.stopThread();
+        flowControlThread = null;
+    }
+
+    private class FlowControlThread extends Thread
+    {
+        private long time = 100; // 100ms
+
+        private boolean firstTime;
+
+        private AtomicBoolean keep;
+
+        public FlowControlThread()
+        {
+            keep = new AtomicBoolean(true);
+            firstTime = true;
+        }
+
+        @Override
+        public void run()
+        {
+            while(keep.get())
+            {
+                if(!firstTime)
+                {
+                    // Check CTS status
+                    if(rtsCtsEnabled)
+                    {
+                        boolean cts = pollForCTS();
+                        if(ctsState != cts)
+                        {
+                            ctsState = !ctsState;
+                            if (ctsCallback != null)
+                                ctsCallback.onCTSChanged(ctsState);
+                        }
+                    }
+
+                    // Check DSR status
+                    if(dtrDsrEnabled)
+                    {
+                        boolean dsr = pollForDSR();
+                        if(dsrState != dsr)
+                        {
+                            dsrState = !dsrState;
+                            if (dsrCallback != null)
+                                dsrCallback.onDSRChanged(dsrState);
+                        }
+                    }
+                }else
+                {
+                    if(rtsCtsEnabled && ctsCallback != null)
+                        ctsCallback.onCTSChanged(ctsState);
+
+                    if(dtrDsrEnabled && dsrCallback != null)
+                        dsrCallback.onDSRChanged(dsrState);
+
+                    firstTime = false;
+                }
+            }
+        }
+
+        public void stopThread()
+        {
+            keep.set(false);
+        }
+
+        public boolean pollForCTS()
+        {
+            synchronized(this)
+            {
+                try
+                {
+                    wait(time);
+                } catch(InterruptedException e)
+                {
+                    e.printStackTrace();
+                }
+            }
+
+            return checkCTS();
+        }
+
+        public boolean pollForDSR()
+        {
+            synchronized(this)
+            {
+                try
+                {
+                    wait(time);
+                } catch(InterruptedException e)
+                {
+                    e.printStackTrace();
+                }
+            }
+
+            return checkDSR();
+        }
+    }
 }

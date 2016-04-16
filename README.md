@@ -141,12 +141,12 @@ Then add the dependency to your module's build.gradle:
 
 /app/build.gradle
 ```groovy
-compile 'com.github.felHR85:UsbSerial:4.1.1'
+compile 'com.github.felHR85:UsbSerial:4.2'
 ```
 
 TO-DO
 --------------------------------------
-- RTS/CTS and DSR/DTR implementations for PL2303, CDC and CH430/431
+- RTS/CTS and DSR/DTR implementations for PL2303 and CDC
 
 
 

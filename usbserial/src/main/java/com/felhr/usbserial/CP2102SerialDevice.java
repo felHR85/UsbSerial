@@ -513,7 +513,8 @@ public class CP2102SerialDevice extends UsbSerialDevice
 
     private void startFlowControlThread()
     {
-        flowControlThread.start();
+        if(!flowControlThread.isAlive())
+            flowControlThread.start();
     }
 
     private void stopFlowControlThread()
