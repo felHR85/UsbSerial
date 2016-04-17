@@ -84,6 +84,11 @@ public class FTDISerialDevice extends UsbSerialDevice
 
     public FTDIUtilities ftdiUtilities;
 
+    private UsbSerialInterface.UsbParityCallback parityCallback;
+    private UsbSerialInterface.UsbFrameCallback frameCallback;
+    private UsbSerialInterface.UsbOverrunCallback overrunCallback;
+    private UsbSerialInterface.UsbBreakCallback breakCallback;
+
 
     public FTDISerialDevice(UsbDevice device, UsbDeviceConnection connection)
     {
@@ -394,25 +399,25 @@ public class FTDISerialDevice extends UsbSerialDevice
     @Override
     public void getBreak(UsbBreakCallback breakCallback)
     {
-        //TODO
+        this.breakCallback = breakCallback;
     }
 
     @Override
     public void getFrame(UsbFrameCallback frameCallback)
     {
-        //TODO
+        this.frameCallback = frameCallback;
     }
 
     @Override
     public void getOverrun(UsbOverrunCallback overrunCallback)
     {
-        //TODO
+        this.overrunCallback = overrunCallback;
     }
 
     @Override
     public void getParity(UsbParityCallback parityCallback)
     {
-        //TODO
+        this.parityCallback = parityCallback;
     }
 
     private boolean openFTDI()
@@ -537,6 +542,38 @@ public class FTDISerialDevice extends UsbSerialDevice
             {
                 dsrState = !dsrState;
                 dsrCallback.onDSRChanged(dsrState);
+            }
+
+            if(parityCallback != null) // Parity error checking
+            {
+                if((data[1] & 0x04) == 0x04)
+                {
+                    parityCallback.onParityError();
+                }
+            }
+
+            if(frameCallback != null) // Frame error checking
+            {
+                if((data[1] & 0x08) == 0x08)
+                {
+                    frameCallback.onFramingError();
+                }
+            }
+
+            if(overrunCallback != null) // Overrun error checking
+            {
+                if((data[1] & 0x02) == 0x02)
+                {
+                    overrunCallback.onOverrunError();
+                }
+            }
+
+            if(breakCallback != null) // Break interrupt checking
+            {
+                if((data[1] & 0x10) == 0x10)
+                {
+                    breakCallback.onBreakInterrupt();
+                }
             }
         }
 
