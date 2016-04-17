@@ -8,6 +8,8 @@ import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbRequest;
 import android.util.Log;
 
+import com.felhr.utils.SafeUsbRequest;
+
 public class PL2303SerialDevice extends UsbSerialDevice
 {
     private static final String CLASS_ID = PL2303SerialDevice.class.getSimpleName();
@@ -62,7 +64,7 @@ public class PL2303SerialDevice extends UsbSerialDevice
         if(ret)
         {
             // Initialize UsbRequest
-            requestIN = new UsbRequest();
+            requestIN = new SafeUsbRequest();
             requestIN.initialize(connection, inEndpoint);
 
             // Restart the working thread if it has been killed before and  get and claim interface
