@@ -72,6 +72,12 @@ public class CP2102SerialDevice extends UsbSerialDevice
 
     private FlowControlThread flowControlThread;
 
+    // COMM_STATUS callbacks
+    private UsbSerialInterface.UsbParityCallback parityCallback;
+    private UsbSerialInterface.UsbBreakCallback breakCallback;
+    private UsbSerialInterface.UsbFrameCallback frameCallback;
+    private UsbSerialInterface.UsbOverrunCallback overrunCallback;
+
     public CP2102SerialDevice(UsbDevice device, UsbDeviceConnection connection)
     {
         this(device, connection, -1);
@@ -363,25 +369,25 @@ public class CP2102SerialDevice extends UsbSerialDevice
     @Override
     public void getBreak(UsbBreakCallback breakCallback)
     {
-        //TODO
+        this.breakCallback = breakCallback;
     }
 
     @Override
     public void getFrame(UsbFrameCallback frameCallback)
     {
-        //TODO
+        this.frameCallback = frameCallback;
     }
 
     @Override
     public void getOverrun(UsbOverrunCallback overrunCallback)
     {
-        //TODO
+        this.overrunCallback = overrunCallback;
     }
 
     @Override
     public void getParity(UsbParityCallback parityCallback)
     {
-        //TODO
+        this.parityCallback = parityCallback;
     }
 
     /*
@@ -409,6 +415,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
                 if(!firstTime) // Only execute the callback when the status change
                 {
                     byte[] modemState = pollLines();
+                    byte[] commStatus = getCommStatus();
 
                     // Check CTS status
                     if(rtsCtsEnabled)
@@ -430,6 +437,45 @@ public class CP2102SerialDevice extends UsbSerialDevice
                             if (dsrCallback != null)
                                 dsrCallback.onDSRChanged(dsrState);
                         }
+                    }
+
+                    //Check Parity Errors
+                    if(parityCallback != null)
+                    {
+                        if((commStatus[0] & 0x10) == 0x10)
+                        {
+                            parityCallback.onParityError();
+                        }
+                    }
+
+                    // Check frame error
+                    if(frameCallback != null)
+                    {
+                        if((commStatus[0] & 0x02) == 0x02)
+                        {
+                            frameCallback.onFramingError();
+                        }
+                    }
+
+                    // Check break interrupt
+                    if(breakCallback != null)
+                    {
+                        if((commStatus[0] & 0x01) == 0x01)
+                        {
+                            breakCallback.onBreakInterrupt();
+                        }
+                    }
+
+                    // Check Overrun error
+
+                    if(overrunCallback != null)
+                    {
+                        if((commStatus[0] & 0x04) == 0x04
+                                || (commStatus[0] & 0x8) == 0x08)
+                        {
+                            overrunCallback.onOverrunError();
+                        }
+
                     }
                 }else // Execute the callback always the first time
                 {
