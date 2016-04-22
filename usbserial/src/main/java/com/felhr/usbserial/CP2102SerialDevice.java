@@ -388,6 +388,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
     public void getParity(UsbParityCallback parityCallback)
     {
         this.parityCallback = parityCallback;
+        startFlowControlThread();
     }
 
     /*
