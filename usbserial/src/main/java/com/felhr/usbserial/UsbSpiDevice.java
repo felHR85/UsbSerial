@@ -36,7 +36,7 @@ public abstract class UsbSpiDevice implements UsbSpiInterface
 
 
     @Override
-    public abstract void connectSPI();
+    public abstract boolean connectSPI();
 
     @Override
     public abstract void writeMOSI(byte[] buffer);
@@ -149,10 +149,13 @@ public abstract class UsbSpiDevice implements UsbSpiInterface
         }
     }
 
-    protected void setThreadsParams(UsbRequest request, UsbEndpoint endpoint)
+    protected void setThreadsParams(UsbEndpoint inEndpoint, UsbEndpoint outEndpoint)
     {
-        readThread.setUsbEndpoint(request.getEndpoint());
-        writeThread.setUsbEndpoint(endpoint);
+        if(writeThread != null)
+            writeThread.setUsbEndpoint(outEndpoint);
+
+        if(readThread != null)
+            readThread.setUsbEndpoint(inEndpoint);
     }
 
     /*

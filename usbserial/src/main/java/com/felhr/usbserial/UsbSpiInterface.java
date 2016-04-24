@@ -13,7 +13,7 @@ public interface UsbSpiInterface
     int DIVIDER_128 = 128;
 
     // Common SPI operations
-    void connectSPI();
+    boolean connectSPI();
     void writeMOSI(byte[] buffer);
     void readMISO(int lengthBuffer);
     void setClock(int clockDivider);
