@@ -26,6 +26,7 @@ public class CP2130SpiDevice extends UsbSpiDevice
     private static final int BM_REQ_HOST_2_DEVICE = 0x40;
 
     private static final int SET_SPI_WORD = 0x31;
+    private static final int SET_GPIO_CHIP_SELECT = 0x25;
 
     private UsbInterface mInterface;
     private UsbEndpoint inEndpoint;
@@ -172,6 +173,31 @@ public class CP2130SpiDevice extends UsbSpiDevice
         payload[1] = (byte) (payload[1] | (1 << 3)); // Push pull chip select pin mode
 
         setControlCommandOut(SET_SPI_WORD, 0, 0, payload);
+
+    }
+
+    private void setGpioChipSelect(int channel, boolean othersDisabled)
+    {
+        byte[] payload = new byte[2];
+
+        if(channel >= 0 && channel <= 10)
+        {
+            payload[0] = (byte) channel;
+        }else
+        {
+            Log.i(CLASS_ID, "Channel not valid");
+            return;
+        }
+
+        byte control;
+        if(othersDisabled)
+            control = 0x02;
+        else
+            control = 0x01;
+
+        payload[1] = control;
+
+        setControlCommandOut(SET_GPIO_CHIP_SELECT, 0x00, 0x00, payload);
 
     }
 
