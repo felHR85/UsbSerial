@@ -27,6 +27,7 @@ public class CP2130SpiDevice extends UsbSpiDevice
 
     private static final int SET_SPI_WORD = 0x31;
     private static final int SET_GPIO_CHIP_SELECT = 0x25;
+    private static final int GET_SPI_WORD = 0x30;
 
     private UsbInterface mInterface;
     private UsbEndpoint inEndpoint;
@@ -69,7 +70,7 @@ public class CP2130SpiDevice extends UsbSpiDevice
     @Override
     public int getSelectedSlave()
     {
-        return 0;
+        return currentChannel;
     }
 
     @Override
@@ -119,13 +120,20 @@ public class CP2130SpiDevice extends UsbSpiDevice
     @Override
     public void selectSlave(int nSlave)
     {
+        if(nSlave > 10 || nSlave < 0)
+        {
+            Log.i(CLASS_ID, "selected slave must be in 0-10 range");
+            return;
+        }
 
+        setGpioChipSelect(nSlave, true);
     }
 
     @Override
     public int getClockDivider()
     {
-        return 0;
+        byte[] data = getSpiWord();
+        return data[currentChannel] & 0x07;
     }
 
     private boolean openCP2130()
@@ -197,8 +205,16 @@ public class CP2130SpiDevice extends UsbSpiDevice
 
         payload[1] = control;
 
-        setControlCommandOut(SET_GPIO_CHIP_SELECT, 0x00, 0x00, payload);
+        int ret = setControlCommandOut(SET_GPIO_CHIP_SELECT, 0x00, 0x00, payload);
 
+        if(ret != -1)
+            currentChannel = channel;
+
+    }
+
+    private byte[] getSpiWord()
+    {
+        return setControlCommandIn(GET_SPI_WORD, 0x00, 0x00, 2);
     }
 
     private int setControlCommandOut(int request, int value, int index, byte[] data)
