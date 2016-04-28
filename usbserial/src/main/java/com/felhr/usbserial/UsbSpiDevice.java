@@ -3,7 +3,8 @@ package com.felhr.usbserial;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
-import android.hardware.usb.UsbRequest;
+
+import com.felhr.deviceids.CP2130Ids;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -32,7 +33,21 @@ public abstract class UsbSpiDevice implements UsbSpiInterface
         this.serialBuffer = new SerialBuffer(false);
     }
 
-    //TODO: Factory methods
+    public static UsbSpiDevice createUsbSerialDevice(UsbDevice device, UsbDeviceConnection connection)
+    {
+        return createUsbSerialDevice(device, connection, -1);
+    }
+
+    public static UsbSpiDevice createUsbSerialDevice(UsbDevice device, UsbDeviceConnection connection, int iface)
+    {
+        int vid = device.getVendorId();
+        int pid = device.getProductId();
+
+        if(CP2130Ids.isDeviceSupported(vid, pid))
+            return new CP2130SpiDevice(device, connection, iface);
+        else
+            return null;
+    }
 
 
     @Override
@@ -61,6 +76,9 @@ public abstract class UsbSpiDevice implements UsbSpiInterface
 
     @Override
     public abstract int getSelectedSlave();
+
+    @Override
+    public abstract void closeSPI();
 
     protected class WriteThread extends Thread
     {

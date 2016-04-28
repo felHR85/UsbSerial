@@ -19,6 +19,7 @@ public interface UsbSpiInterface
     void setClock(int clockDivider);
     void selectSlave(int nSlave);
     void setMISOCallback(UsbMISOCallback misoCallback);
+    void closeSPI();
 
     // Status information
     int getClockDivider();

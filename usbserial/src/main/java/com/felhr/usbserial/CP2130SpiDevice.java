@@ -158,6 +158,14 @@ public class CP2130SpiDevice extends UsbSpiDevice
         return data[currentChannel] & 0x07;
     }
 
+    @Override
+    public void closeSPI()
+    {
+        killWorkingThread();
+        killWriteThread();
+        connection.releaseInterface(mInterface);
+    }
+
     private boolean openCP2130()
     {
         if(connection.claimInterface(mInterface, true))
