@@ -8,6 +8,8 @@ import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbRequest;
 import android.util.Log;
 
+import java.util.Arrays;
+
 
 public class CP2130SpiDevice extends UsbSpiDevice
 {
@@ -76,7 +78,19 @@ public class CP2130SpiDevice extends UsbSpiDevice
     @Override
     public void writeMOSI(byte[] buffer)
     {
+        byte[] buffCommand = new byte[buffer.length + 8];
+        buffCommand[0] = 0x00;
+        buffCommand[1] = 0x00;
+        buffCommand[2] = 0x01;
+        buffCommand[3] = (byte) 0x80;
+        buffCommand[4] = (byte) (buffer.length & 0xff);
+        buffCommand[5] = (byte) ((buffer.length >> 8) & 0xff);
+        buffCommand[6] = (byte) ((buffer.length >> 16) & 0xff);
+        buffCommand[7] = (byte) ((buffer.length >> 24) & 0xff);
 
+        System.arraycopy(buffer, 0, buffCommand, 8, buffer.length);
+
+        connection.bulkTransfer(outEndpoint, buffCommand, buffCommand.length, USB_TIMEOUT);
     }
 
     @Override
