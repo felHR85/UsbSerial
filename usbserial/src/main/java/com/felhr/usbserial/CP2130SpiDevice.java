@@ -8,8 +8,6 @@ import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbRequest;
 import android.util.Log;
 
-import java.util.Arrays;
-
 
 public class CP2130SpiDevice extends UsbSpiDevice
 {
@@ -128,7 +126,17 @@ public class CP2130SpiDevice extends UsbSpiDevice
     @Override
     public void readMISO(int lengthBuffer)
     {
+        byte[] buffCommand = new byte[8];
+        buffCommand[0] = 0x00;
+        buffCommand[1] = 0x00;
+        buffCommand[2] = 0x00;
+        buffCommand[3] = (byte) 0x80;
+        buffCommand[4] = (byte) (lengthBuffer & 0xff);
+        buffCommand[5] = (byte) ((lengthBuffer >> 8) & 0xff);
+        buffCommand[6] = (byte) ((lengthBuffer >> 16) & 0xff);
+        buffCommand[7] = (byte) ((lengthBuffer >> 24) & 0xff);
 
+        connection.bulkTransfer(outEndpoint, buffCommand, buffCommand.length, USB_TIMEOUT);
     }
 
     @Override
