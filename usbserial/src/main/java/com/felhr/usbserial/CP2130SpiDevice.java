@@ -140,6 +140,24 @@ public class CP2130SpiDevice extends UsbSpiDevice
     }
 
     @Override
+    public void writeRead(byte[] buffer, int lengthRead)
+    {
+        byte[] buffCommand = new byte[8 + buffer.length];
+        buffCommand[0] = 0x00;
+        buffCommand[1] = 0x00;
+        buffCommand[2] = 0x02;
+        buffCommand[3] = (byte) 0x80;
+        buffCommand[4] = (byte) (lengthRead & 0xff);
+        buffCommand[5] = (byte) ((lengthRead >> 8) & 0xff);
+        buffCommand[6] = (byte) ((lengthRead >> 16) & 0xff);
+        buffCommand[7] = (byte) ((lengthRead >> 24) & 0xff);
+
+        System.arraycopy(buffer, 0, buffCommand, 8, buffer.length);
+
+        connection.bulkTransfer(outEndpoint, buffCommand, buffCommand.length, USB_TIMEOUT);
+    }
+
+    @Override
     public void selectSlave(int nSlave)
     {
         if(nSlave > 10 || nSlave < 0)

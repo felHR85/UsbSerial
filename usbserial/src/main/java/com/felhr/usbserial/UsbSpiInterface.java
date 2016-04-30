@@ -16,6 +16,7 @@ public interface UsbSpiInterface
     boolean connectSPI();
     void writeMOSI(byte[] buffer);
     void readMISO(int lengthBuffer);
+    void writeRead(byte[] buffer, int lenghtRead);
     void setClock(int clockDivider);
     void selectSlave(int nSlave);
     void setMISOCallback(UsbMISOCallback misoCallback);

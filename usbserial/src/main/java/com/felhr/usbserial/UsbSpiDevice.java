@@ -60,6 +60,9 @@ public abstract class UsbSpiDevice implements UsbSpiInterface
     public abstract void readMISO(int lengthBuffer);
 
     @Override
+    public abstract void writeRead(byte[] buffer, int lengthRead);
+
+    @Override
     public abstract void setClock(int clockDivider);
 
     @Override
