@@ -88,7 +88,7 @@ public class CP2130SpiDevice extends UsbSpiDevice
 
         System.arraycopy(buffer, 0, buffCommand, 8, buffer.length);
 
-        connection.bulkTransfer(outEndpoint, buffCommand, buffCommand.length, USB_TIMEOUT);
+        serialBuffer.putWriteBuffer(buffCommand);
     }
 
     @Override
@@ -136,7 +136,7 @@ public class CP2130SpiDevice extends UsbSpiDevice
         buffCommand[6] = (byte) ((lengthBuffer >> 16) & 0xff);
         buffCommand[7] = (byte) ((lengthBuffer >> 24) & 0xff);
 
-        connection.bulkTransfer(outEndpoint, buffCommand, buffCommand.length, USB_TIMEOUT);
+        serialBuffer.putWriteBuffer(buffCommand);
     }
 
     @Override
@@ -154,7 +154,7 @@ public class CP2130SpiDevice extends UsbSpiDevice
 
         System.arraycopy(buffer, 0, buffCommand, 8, buffer.length);
 
-        connection.bulkTransfer(outEndpoint, buffCommand, buffCommand.length, USB_TIMEOUT);
+        serialBuffer.putWriteBuffer(buffCommand);
     }
 
     @Override
