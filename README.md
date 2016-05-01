@@ -17,15 +17,17 @@ Devices Supported
 
 [CH34x devices](https://www.olimex.com/Products/Breadboarding/BB-CH340T/resources/CH340DS1.PDF) Default 9600,8,1,None,flow off
 
+[CP2130 SPI-USB](http://www.silabs.com/products/interface/usb-bridges/classic-usb-bridges/Pages/usb-to-spi-bridge.aspx)
+
 How to use it?
 --------------------------------------
 Instantiate a new object of the UsbSerialDevice class
-~~~
+```java
 UsbDevice device;
 UsbDeviceConnection usbConnection;
 ...
 UsbSerialDevice serial = UsbSerialDevice.createUsbSerialDevice(device, usbConnection); 
-~~~
+```
 
 Open the device and set it up as desired
 ```java
@@ -121,7 +123,41 @@ UsbDevice device;
 UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
 manager.openDevice(UsbDevice device)
 ```
+How to use the SPI interface (BETA)
+--------------------------------------
+Support for USB to SPI devices was added recently but it is still in beta. Although I tried to keep the api as close to standard UsbSerial api as possible, be aware because the beta nature of this feature this api may change in the future. Only CP2130 chipset is supported at the moment.
 
+```java
+UsbSpiDevice spi = UsbSpiDevice.createUsbSerialDevice(device, connection);
+spi.connectSPI();
+spi.selectSlave(0);
+spi.setClock(CP2130SpiDevice.CLOCK_3MHz);
+```
+Define the usual callback
+
+```java
+private UsbSpiInterface.UsbMISOCallback misoCallback = new UsbSpiInterface.UsbMISOCallback()
+    {
+        @Override
+        public int onReceivedData(byte[] data) {
+             // Your code here :)
+        }
+    };
+//...
+spi.setMISOCallback(misoCallback);
+```
+
+```java
+spi.writeMOSI("Hola!".getBytes()); // Write "Hola!" to the selected slave through MOSI (MASTER OUTPUT SLAVE INPUT)
+spi.readMISO(5); // Read 5 bytes from the MISO (MASTER INPUT SLAVE OUTPUT) line. Data will be received through UsbMISOCallback
+spi.writeRead("Hola!".getBytes(), 15); // Write "Hola!" and read 15 bytes synchronously
+```
+
+Close the device when done
+
+```java
+spi.closeSPI();
+```
 
 Gradle
 --------------------------------------
