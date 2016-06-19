@@ -103,7 +103,6 @@ public class UsbService extends Service {
                     Intent intent = new Intent(ACTION_USB_PERMISSION_GRANTED);
                     arg0.sendBroadcast(intent);
                     connection = usbManager.openDevice(device);
-                    serialPortConnected = true;
                     new ConnectionThread().run();
                 } else // User not accepted our USB connection. Send an Intent to the Main Activity
                 {
@@ -117,8 +116,10 @@ public class UsbService extends Service {
                 // Usb device was disconnected. send an intent to the Main Activity
                 Intent intent = new Intent(ACTION_USB_DISCONNECTED);
                 arg0.sendBroadcast(intent);
+                if (serialPortConnected) {
+                    serialPort.close();
+                }
                 serialPortConnected = false;
-                serialPort.close();
             }
         }
     };
@@ -235,6 +236,7 @@ public class UsbService extends Service {
             serialPort = UsbSerialDevice.createUsbSerialDevice(device, connection);
             if (serialPort != null) {
                 if (serialPort.open()) {
+                    serialPortConnected = true;
                     serialPort.setBaudRate(BAUD_RATE);
                     serialPort.setDataBits(UsbSerialInterface.DATA_BITS_8);
                     serialPort.setStopBits(UsbSerialInterface.STOP_BITS_1);
