@@ -103,7 +103,7 @@ public class UsbService extends Service {
                     Intent intent = new Intent(ACTION_USB_PERMISSION_GRANTED);
                     arg0.sendBroadcast(intent);
                     connection = usbManager.openDevice(device);
-                    new ConnectionThread().run();
+                    new ConnectionThread().start();
                 } else // User not accepted our USB connection. Send an Intent to the Main Activity
                 {
                     Intent intent = new Intent(ACTION_USB_PERMISSION_NOT_GRANTED);
