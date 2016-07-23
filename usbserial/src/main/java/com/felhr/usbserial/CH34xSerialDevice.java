@@ -589,8 +589,11 @@ public class CH34xSerialDevice extends UsbSerialDevice
 
     private void stopFlowControlThread()
     {
-        flowControlThread.stopThread();
-        flowControlThread = null;
+        if(flowControlThread != null)
+        {
+            flowControlThread.stopThread();
+            flowControlThread = null;
+        }
     }
 
     private class FlowControlThread extends Thread

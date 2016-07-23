@@ -566,8 +566,11 @@ public class CP2102SerialDevice extends UsbSerialDevice
 
     private void stopFlowControlThread()
     {
-        flowControlThread.stopThread();
-        flowControlThread = null;
+        if(flowControlThread != null)
+        {
+            flowControlThread.stopThread();
+            flowControlThread = null;
+        }
     }
 
     private int setControlCommand(int request, int value, byte[] data)
