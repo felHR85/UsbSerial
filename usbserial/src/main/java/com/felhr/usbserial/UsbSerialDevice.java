@@ -82,6 +82,25 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
             return null;
     }
 
+    public static boolean isSupported(UsbDevice device)
+    {
+        int vid = device.getVendorId();
+        int pid = device.getProductId();
+
+        if(FTDISioIds.isDeviceSupported(vid, pid))
+            return true;
+        else if(CP210xIds.isDeviceSupported(vid, pid))
+            return true;
+        else if(PL2303Ids.isDeviceSupported(vid, pid))
+            return true;
+        else if(CH34xIds.isDeviceSupported(vid, pid))
+            return true;
+        else if(isCdcDevice(device))
+            return true;
+        else
+            return false;
+    }
+
     // Common Usb Serial Operations (I/O Asynchronous)
     @Override
     public abstract boolean open();
