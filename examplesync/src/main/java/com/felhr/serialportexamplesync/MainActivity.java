@@ -19,12 +19,12 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.felhr.usbserial.UsbSerialDevice;
+
 import java.lang.ref.WeakReference;
 import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
-
-    private static final int SYNC_READ = 3;
 
     /*
      * Notifications from UsbService will be received here.
@@ -88,20 +88,6 @@ public class MainActivity extends AppCompatActivity {
                         usbService.write(data.getBytes());
                     }
                 }
-            }
-        });
-
-        Button readButton = (Button) findViewById(R.id.buttonRead);
-        readButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        byte[] buffer = usbService.read(10);
-                        mHandler.obtainMessage(SYNC_READ, buffer).sendToTarget();
-                    }
-                }).start();
             }
         });
 
@@ -202,7 +188,7 @@ public class MainActivity extends AppCompatActivity {
                 case UsbService.DSR_CHANGE:
                     Toast.makeText(mActivity.get(), "DSR_CHANGE",Toast.LENGTH_LONG).show();
                     break;
-                case MainActivity.SYNC_READ:
+                case UsbService.SYNC_READ:
                     byte[] buffer = (byte[]) msg.obj;
                     mActivity.get().display.append(new String(buffer));
                     break;

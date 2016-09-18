@@ -12,6 +12,8 @@ import android.hardware.usb.UsbManager;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.SystemClock;
+import android.util.Log;
 
 import com.felhr.usbserial.CDCSerialDevice;
 import com.felhr.usbserial.UsbSerialDevice;
@@ -36,6 +38,7 @@ public class UsbService extends Service {
     public static final int MESSAGE_FROM_SERIAL_PORT = 0;
     public static final int CTS_CHANGE = 1;
     public static final int DSR_CHANGE = 2;
+    public static final int SYNC_READ = 3;
     private static final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
     private static final int BAUD_RATE = 9600; // BaudRate. Change this value if you need
     public static boolean SERVICE_CONNECTED = false;
@@ -167,19 +170,6 @@ public class UsbService extends Service {
     }
 
     /*
-     * This function will be called from MainActivity to read data through serial port
-     */
-
-    public byte[] read(int nbytes){
-        if(serialPort != null){
-            byte[] buffer = new byte[nbytes];
-            serialPort.syncRead(buffer, 0);
-            return buffer;
-        }
-        return new byte[0];
-    }
-
-    /*
      * This function will be called from MainActivity to change baud rate
      */
 
@@ -274,6 +264,8 @@ public class UsbService extends Service {
                     serialPort.getCTS(ctsCallback);
                     serialPort.getDSR(dsrCallback);
 
+                    new ReadThread().start();
+
                     //
                     // Some Arduinos would need some sleep because firmware wait some time to know whether a new sketch is going
                     // to be uploaded or not
@@ -297,6 +289,21 @@ public class UsbService extends Service {
                 // No driver for given device, even generic CDC driver could not be loaded
                 Intent intent = new Intent(ACTION_USB_NOT_SUPPORTED);
                 context.sendBroadcast(intent);
+            }
+        }
+    }
+
+    private class ReadThread extends Thread {
+        @Override
+        public void run() {
+            while(true){
+                byte[] buffer = new byte[100];
+                int n = serialPort.syncRead(buffer, 0);
+                if(n > 0) {
+                    byte[] received = new byte[n];
+                    System.arraycopy(buffer, 0, received, 0, n);
+                    mHandler.obtainMessage(SYNC_READ, buffer).sendToTarget();
+                }
             }
         }
     }

@@ -50,35 +50,24 @@
         android:layout_marginTop="42dp"
         android:text="Send"/>
 
-    <Button
-        android:id="@+id/buttonRead"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Read 10 bytes"
-        android:layout_below="@+id/buttonSend"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"/>
-
     <CheckBox
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="9600"
         android:id="@+id/checkBox"
         android:checked="true"
-        android:layout_below="@+id/buttonRead"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"/>
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/buttonSend"/>
 
     <CheckBox
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="38400"
         android:id="@+id/checkBox2"
-        android:layout_below="@+id/buttonRead"
         android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"/>
+        android:layout_alignParentEnd="true"
+        android:layout_below="@+id/buttonSend"/>
 
     <Button
         android:layout_width="wrap_content"
