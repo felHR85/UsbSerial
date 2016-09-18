@@ -19,8 +19,6 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.felhr.usbserial.UsbSerialDevice;
-
 import java.lang.ref.WeakReference;
 import java.util.Set;
 
@@ -189,8 +187,8 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(mActivity.get(), "DSR_CHANGE",Toast.LENGTH_LONG).show();
                     break;
                 case UsbService.SYNC_READ:
-                    byte[] buffer = (byte[]) msg.obj;
-                    mActivity.get().display.append(new String(buffer));
+                    String buffer = (String) msg.obj;
+                    mActivity.get().display.append(buffer);
                     break;
             }
         }

@@ -631,10 +631,14 @@ public class FTDISerialDevice extends UsbSerialDevice
 
         do
         {
-            int timeLeft = (int) (stopTime - System.currentTimeMillis());
-            if(timeLeft <= 0)
+            int timeLeft = 0;
+            if(timeout > 0)
             {
-                break;
+                timeLeft = (int) (stopTime - System.currentTimeMillis());
+                if (timeLeft <= 0)
+                {
+                    break;
+                }
             }
 
             int numberBytes = connection.bulkTransfer(inEndpoint, tempBuffer, tempBuffer.length, timeLeft);
