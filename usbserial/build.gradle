@@ -18,4 +18,19 @@ android {
         minSdkVersion Integer.parseInt(project.ANDROID_BUILD_MIN_SDK_VERSION)
         targetSdkVersion Integer.parseInt(project.ANDROID_BUILD_TARGET_SDK_VERSION)
     }
+
+    //noinspection GroovyAssignabilityCheck
+    task deleteJar(type: org.gradle.api.tasks.Delete){
+        delete 'eclipse_lib/usbserial.jar'
+    }
+
+    //noinspection GroovyAssignabilityCheck
+    task createJar(type: org.gradle.api.tasks.Copy){
+        from('build/intermediates/bundles/release/')
+        into('eclipse_lib/')
+        include('classes.jar')
+        rename('classes.jar', 'usbserial.jar')
+    }
+
+    createJar.dependsOn(deleteJar, build)
 }
