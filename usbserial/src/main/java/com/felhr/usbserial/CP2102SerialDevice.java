@@ -173,94 +173,79 @@ public class CP2102SerialDevice extends UsbSerialDevice
     @Override
     public void setDataBits(int dataBits)
     {
-        byte[] data = getCTL();
+        int iBitmask;
         switch(dataBits)
         {
             case UsbSerialInterface.DATA_BITS_5:
-                data[1] = 5;
+                iBitmask = 5;
                 break;
             case UsbSerialInterface.DATA_BITS_6:
-                data[1] = 6;
+                iBitmask = 6;
                 break;
             case UsbSerialInterface.DATA_BITS_7:
-                data[1] = 7;
+                iBitmask = 7;
                 break;
             case UsbSerialInterface.DATA_BITS_8:
-                data[1] = 8;
+                iBitmask = 8;
                 break;
             default:
                 return;
         }
-        byte wValue = (byte) ((data[1] << 8) | (data[0] & 0xFF));
-        setControlCommand(CP210x_SET_LINE_CTL, wValue, null);
+        byte[] data = getCTL();
+        int wValue = ((iBitmask << 8) | data[0]);
+        setControlCommand(CP210x_SET_LINE_CTL, wValue, null); // byte 1
 
     }
 
     @Override
     public void setStopBits(int stopBits)
     {
-        byte[] data = getCTL();
+        int iBitmask;
         switch(stopBits)
         {
             case UsbSerialInterface.STOP_BITS_1:
-                data[0] &= ~1;
-                data[0] &= ~(1 << 1);
+                iBitmask = 0x0; // 000
                 break;
             case UsbSerialInterface.STOP_BITS_15:
-                data[0] |= 1;
-                data[0] &= ~(1 << 1) ;
+                iBitmask = 0x1; // 001
                 break;
             case UsbSerialInterface.STOP_BITS_2:
-                data[0] &= ~1;
-                data[0] |= (1 << 1);
+                iBitmask = 0x2; // 010
                 break;
             default:
                 return;
         }
-        byte wValue = (byte) ((data[1] << 8) | (data[0] & 0xFF));
+        byte[] data = getCTL();
+        int wValue = (data[1] << 8) | ((data[0]&(~0x7)) | iBitmask); // byte 0, clear and assign (2) bits 0, 1
         setControlCommand(CP210x_SET_LINE_CTL, wValue, null);
     }
 
     @Override
     public void setParity(int parity)
     {
-        byte[] data = getCTL();
+        int iBitmask;
         switch(parity)
         {
             case UsbSerialInterface.PARITY_NONE:
-                data[0] &= ~(1 << 4);
-                data[0] &= ~(1 << 5);
-                data[0] &= ~(1 << 6);
-                data[0] &= ~(1 << 7);
+                iBitmask = 0x0; // 0000
                 break;
             case UsbSerialInterface.PARITY_ODD:
-                data[0] |= (1 << 4);
-                data[0] &= ~(1 << 5);
-                data[0] &= ~(1 << 6);
-                data[0] &= ~(1 << 7);
+                iBitmask = 0x1; // 0001
                 break;
             case UsbSerialInterface.PARITY_EVEN:
-                data[0] &= ~(1 << 4);
-                data[0] |= (1 << 5);
-                data[0] &= ~(1 << 6);
-                data[0] &= ~(1 << 7);
+                iBitmask = 0x2; // 0010
                 break;
             case UsbSerialInterface.PARITY_MARK:
-                data[0] |= (1 << 4);
-                data[0] |= (1 << 5);
-                data[0] &= ~(1 << 6);
-                data[0] &= ~(1 << 7);
+                iBitmask = 0x3; // 0011
                 break;
             case UsbSerialInterface.PARITY_SPACE:
-                data[0] &= ~(1 << 4);
-                data[0] &= ~(1 << 5);
-                data[0] |= (1 << 6);
-                data[0] &= ~(1 << 7);
+                iBitmask = 0x4; // 0100
                 break;
             default:
                 return;
         }
-        byte wValue =  (byte) ((data[1] << 8) | (data[0] & 0xFF));
+        byte[] data = getCTL();
+        int wValue = (data[1] << 8) | ((data[0]&(~(0xF << 4))) | (iBitmask << 4)); // byte 0, clear and assign (4) bits 4, 5, 6, 7
         setControlCommand(CP210x_SET_LINE_CTL, wValue, null);
     }
 

@@ -174,73 +174,52 @@ public class CH34xSerialDevice extends UsbSerialDevice
     @Override
     public void setBaudRate(int baudRate)
     {
+        int ret;
         if(baudRate <= 300)
         {
-            int ret = setBaudRate(CH34X_300_1312, CH34X_300_0f2c); //300
-            if(ret == -1)
-                Log.i(CLASS_ID, "SetBaudRate failed!");
+            ret = setBaudRate(CH34X_300_1312, CH34X_300_0f2c); //300
         }else if(baudRate > 300  && baudRate <= 600)
         {
-            int ret = setBaudRate(CH34X_600_1312, CH34X_600_0f2c); //600
-            if(ret == -1)
-                Log.i(CLASS_ID, "SetBaudRate failed!");
+            ret = setBaudRate(CH34X_600_1312, CH34X_600_0f2c); //600
 
         }else if(baudRate > 600 && baudRate <= 1200)
         {
-            int ret = setBaudRate(CH34X_1200_1312, CH34X_1200_0f2c); //1200
-            if(ret == -1)
-                Log.i(CLASS_ID, "SetBaudRate failed!");
+            ret = setBaudRate(CH34X_1200_1312, CH34X_1200_0f2c); //1200
         }else if(baudRate > 1200 && baudRate <=2400)
         {
-            int ret = setBaudRate(CH34X_2400_1312, CH34X_2400_0f2c); //2400
-            if(ret == -1)
-                Log.i(CLASS_ID, "SetBaudRate failed!");
+            ret = setBaudRate(CH34X_2400_1312, CH34X_2400_0f2c); //2400
         }else if(baudRate > 2400 && baudRate <= 4800)
         {
-            int ret = setBaudRate(CH34X_4800_1312, CH34X_4800_0f2c); //4800
-            if(ret == -1)
-                Log.i(CLASS_ID, "SetBaudRate failed!");
+            ret = setBaudRate(CH34X_4800_1312, CH34X_4800_0f2c); //4800
         }else if(baudRate > 4800 && baudRate <= 9600)
         {
-            int ret = setBaudRate(CH34X_9600_1312, CH34X_9600_0f2c); //9600
-            if(ret == -1)
-                Log.i(CLASS_ID, "SetBaudRate failed!");
+            ret = setBaudRate(CH34X_9600_1312, CH34X_9600_0f2c); //9600
         }else if(baudRate > 9600 && baudRate <= 19200)
         {
-            int ret = setBaudRate(CH34X_19200_1312, CH34X_19200_0f2c_rest); //19200
-            if(ret == -1)
-                Log.i(CLASS_ID, "SetBaudRate failed!");
+            ret = setBaudRate(CH34X_19200_1312, CH34X_19200_0f2c_rest); //19200
         }else if(baudRate > 19200 && baudRate <= 38400)
         {
-            int ret = setBaudRate(CH34X_38400_1312, CH34X_19200_0f2c_rest); //38400
-            if(ret == -1)
-                Log.i(CLASS_ID, "SetBaudRate failed!");
+            ret = setBaudRate(CH34X_38400_1312, CH34X_19200_0f2c_rest); //38400
         }else if(baudRate > 38400 && baudRate <= 57600)
         {
-            int ret = setBaudRate(CH34X_57600_1312, CH34X_19200_0f2c_rest); //57600
-            if(ret == -1)
-                Log.i(CLASS_ID, "SetBaudRate failed!");
+            ret = setBaudRate(CH34X_57600_1312, CH34X_19200_0f2c_rest); //57600
         }else if(baudRate > 57600 && baudRate <= 115200) //115200
         {
-            int ret = setBaudRate(CH34X_115200_1312, CH34X_19200_0f2c_rest);
-            if(ret == -1)
-                Log.i(CLASS_ID, "SetBaudRate failed!");
+            ret = setBaudRate(CH34X_115200_1312, CH34X_19200_0f2c_rest);
         }else if(baudRate > 115200 && baudRate <= 230400) //230400
         {
-            int ret = setBaudRate(CH34X_230400_1312, CH34X_19200_0f2c_rest);
-            if(ret == -1)
-                Log.i(CLASS_ID, "SetBaudRate failed!");
+            ret = setBaudRate(CH34X_230400_1312, CH34X_19200_0f2c_rest);
         }else if(baudRate > 230400 && baudRate <= 460800) //460800
         {
-            int ret = setBaudRate(CH34X_460800_1312, CH34X_19200_0f2c_rest);
-            if(ret == -1)
-                Log.i(CLASS_ID, "SetBaudRate failed!");
+            ret = setBaudRate(CH34X_460800_1312, CH34X_19200_0f2c_rest);
         }else if(baudRate > 460800 && baudRate <= 921600)
         {
-            int ret = setBaudRate(CH34X_921600_1312, CH34X_19200_0f2c_rest);
-            if(ret == -1)
-                Log.i(CLASS_ID, "SetBaudRate failed!");
+            ret = setBaudRate(CH34X_921600_1312, CH34X_19200_0f2c_rest);
         }
+        else
+            ret = -1;
+        if (ret == -1)
+           Log.i(CLASS_ID, "SetBaudRate failed! Baudrate:" + Integer.toString(baudRate));
     }
 
     @Override
@@ -260,26 +239,28 @@ public class CH34xSerialDevice extends UsbSerialDevice
     @Override
     public void setParity(int parity)
     {
+        int iParity;
         switch(parity)
         {
             case UsbSerialInterface.PARITY_NONE:
-                setCh340xParity(CH34X_PARITY_NONE);
+                iParity = CH34X_PARITY_NONE;
                 break;
             case UsbSerialInterface.PARITY_ODD:
-                setCh340xParity(CH34X_PARITY_ODD);
+                iParity = CH34X_PARITY_ODD;
                 break;
             case UsbSerialInterface.PARITY_EVEN:
-                setCh340xParity(CH34X_PARITY_EVEN);
+                iParity = CH34X_PARITY_EVEN;
                 break;
             case UsbSerialInterface.PARITY_MARK:
-                setCh340xParity(CH34X_PARITY_MARK);
+                iParity = CH34X_PARITY_MARK;
                 break;
             case UsbSerialInterface.PARITY_SPACE:
-                setCh340xParity(CH34X_PARITY_SPACE);
+                iParity = CH34X_PARITY_SPACE;
                 break;
             default:
-                break;
+                return;
         }
+        setCh340xParity(iParity);
     }
 
     @Override

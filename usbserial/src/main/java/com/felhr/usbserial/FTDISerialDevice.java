@@ -61,6 +61,7 @@ public class FTDISerialDevice extends UsbSerialDevice
     private static final int FTDI_SET_MODEM_CTRL_DEFAULT3 = 0x0100;
     private static final int FTDI_SET_MODEM_CTRL_DEFAULT4 = 0x0200;
     private static final int FTDI_SET_FLOW_CTRL_DEFAULT = 0x0000;
+    private static final int FTDI_SET_FLOW_CTRL_XON_XOFF = 0x1311;
 
     private int currentSioSetData = 0x0000;
 
@@ -209,179 +210,134 @@ public class FTDISerialDevice extends UsbSerialDevice
     @Override
     public void setDataBits(int dataBits)
     {
+        int iBitmask;
         switch(dataBits)
         {
             case UsbSerialInterface.DATA_BITS_5:
-                currentSioSetData |= 1;
-                currentSioSetData &= ~(1 << 1);
-                currentSioSetData |= (1 << 2);
-                currentSioSetData &= ~(1 << 3);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                iBitmask = 0x5;  // 0101
                 break;
             case UsbSerialInterface.DATA_BITS_6:
-                currentSioSetData &= ~1;
-                currentSioSetData |= (1 << 1);
-                currentSioSetData |= (1 << 2);
-                currentSioSetData &= ~(1 << 3);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                iBitmask = 0x6;  // 0110
                 break;
             case UsbSerialInterface.DATA_BITS_7:
-                currentSioSetData |= 1;
-                currentSioSetData |= (1 << 1);
-                currentSioSetData |= (1 << 2);
-                currentSioSetData &= ~(1 << 3);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                iBitmask = 0x7;  // 0111
                 break;
             case UsbSerialInterface.DATA_BITS_8:
-                currentSioSetData &= ~1;
-                currentSioSetData &= ~(1 << 1);
-                currentSioSetData &= ~(1 << 2);
-                currentSioSetData |= (1 << 3);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                iBitmask = 0x8;  // 1000
                 break;
             default:
-                currentSioSetData &= ~1;
-                currentSioSetData &= ~(1 << 1);
-                currentSioSetData &= ~(1 << 2);
-                currentSioSetData |= (1 << 3);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                iBitmask = 0x8;  // 1000
                 break;
         }
-
+        currentSioSetData = (currentSioSetData &(~0xF)) | iBitmask;  // clear and assign (4) bits 0, 1, 2, 3
+        setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
     }
 
     @Override
     public void setStopBits(int stopBits)
     {
+        int iBitmask;
         switch(stopBits)
         {
             case UsbSerialInterface.STOP_BITS_1:
-                currentSioSetData &= ~(1 << 11);
-                currentSioSetData &= ~(1 << 12);
-                currentSioSetData &= ~(1 << 13);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                iBitmask = 0x0;  // 000
                 break;
             case UsbSerialInterface.STOP_BITS_15:
-                currentSioSetData |= (1 << 11);
-                currentSioSetData &= ~(1 << 12);
-                currentSioSetData &= ~(1 << 13);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                iBitmask = 0x1;  // 001
                 break;
             case UsbSerialInterface.STOP_BITS_2:
-                currentSioSetData &= ~(1 << 11);
-                currentSioSetData |= (1 << 12);
-                currentSioSetData &= ~(1 << 13);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                iBitmask = 0x2;  // 010
                 break;
             default:
-                currentSioSetData &= ~(1 << 11);
-                currentSioSetData &= ~(1 << 12);
-                currentSioSetData &= ~(1 << 13);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                iBitmask = 0x0;  // 000
         }
-
+        currentSioSetData = (currentSioSetData&(~(0x7 << 11))) | (iBitmask << 11); // clear and assign (3) bits 11, 12, 13
+        setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
     }
 
     @Override
     public void setParity(int parity)
     {
+        int iBitmask;
         switch(parity)
         {
             case UsbSerialInterface.PARITY_NONE:
-                currentSioSetData &= ~(1 << 8);
-                currentSioSetData &= ~(1 << 9);
-                currentSioSetData &= ~(1 << 10);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                iBitmask = 0x0;  // 000
                 break;
             case UsbSerialInterface.PARITY_ODD:
-                currentSioSetData |= (1 << 8);
-                currentSioSetData &= ~(1 << 9);
-                currentSioSetData &= ~(1 << 10);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                iBitmask = 0x1;  // 001
                 break;
             case UsbSerialInterface.PARITY_EVEN:
-                currentSioSetData &= ~(1 << 8);
-                currentSioSetData |= (1 << 9);
-                currentSioSetData &= ~(1 << 10);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                iBitmask = 0x2;  // 010
                 break;
             case UsbSerialInterface.PARITY_MARK:
-                currentSioSetData |= (1 << 8);
-                currentSioSetData |= (1 << 9);
-                currentSioSetData &= ~(1 << 10);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                iBitmask = 0x3;  // 011
                 break;
             case UsbSerialInterface.PARITY_SPACE:
-                currentSioSetData &= ~(1 << 8);
-                currentSioSetData &= ~(1 << 9);
-                currentSioSetData |= (1 << 10);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                iBitmask = 0x4;  // 100
                 break;
             default:
-                currentSioSetData &= ~(1 << 8);
-                currentSioSetData &= ~(1 << 9);
-                currentSioSetData &= ~(1 << 10);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                iBitmask = 0x0;  // 000
                 break;
         }
-
+        currentSioSetData = (currentSioSetData&(~(0x7 << 8))) | (iBitmask << 8); // clear and assign (3) bits 8, 9, 10
+        setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
     }
 
     @Override
     public void setFlowControl(int flowControl)
     {
+        int iIndexCommand;
+        int iValue = FTDI_SET_FLOW_CTRL_DEFAULT;
         switch(flowControl)
         {
             case UsbSerialInterface.FLOW_CONTROL_OFF:
-                setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, 0, null);
+                iIndexCommand = 0x0; // OFF
+                setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, iIndexCommand, null);
                 rtsCtsEnabled = false;
                 dtrDsrEnabled = false;
-                break;
+                return;
             case UsbSerialInterface.FLOW_CONTROL_RTS_CTS:
                 rtsCtsEnabled = true;
                 dtrDsrEnabled = false;
-                int indexRTSCTS = 0x0001;
-                setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, indexRTSCTS, null);
+                iIndexCommand = 0x1; // RTSCTS
                 break;
             case UsbSerialInterface.FLOW_CONTROL_DSR_DTR:
                 dtrDsrEnabled = true;
                 rtsCtsEnabled = false;
-                int indexDSRDTR = 0x0002;
-                setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, indexDSRDTR , null);
+                iIndexCommand = 0x2; // DSRDTR
                 break;
             case UsbSerialInterface.FLOW_CONTROL_XON_XOFF:
-                int indexXONXOFF = 0x0004;
-                int wValue = 0x1311;
-                setControlCommand(FTDI_SIO_SET_FLOW_CTRL, wValue, indexXONXOFF , null);
+                iIndexCommand = 0x4; // XONXOFF
+                iValue = FTDI_SET_FLOW_CTRL_XON_XOFF;
                 break;
             default:
-                setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, 0, null);
+                iIndexCommand = 0x0; // OFF
                 break;
         }
+        setControlCommand(FTDI_SIO_SET_FLOW_CTRL, iValue, iIndexCommand, null);
     }
 
     @Override
     public void setRTS(boolean state)
     {
+        int iRtsState;
         if(state)
-        {
-            setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SIO_SET_RTS_HIGH, 0, null);
-        }else
-        {
-            setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SIO_SET_RTS_LOW, 0, null);
-        }
+           iRtsState = FTDI_SIO_SET_RTS_HIGH;
+        else
+           iRtsState = FTDI_SIO_SET_RTS_LOW;
+        setControlCommand(FTDI_SIO_MODEM_CTRL, iRtsState, 0, null);
     }
 
     @Override
     public void setDTR(boolean state)
     {
+        int iDtrState;
         if(state)
-        {
-            setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SIO_SET_DTR_HIGH, 0, null);
-        }else
-        {
-            setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SIO_SET_DTR_LOW, 0, null);
-        }
+           iDtrState = FTDI_SIO_SET_DTR_HIGH;
+        else
+           iDtrState = FTDI_SIO_SET_DTR_LOW;
+        setControlCommand(FTDI_SIO_MODEM_CTRL, iDtrState, 0, null);
     }
 
     @Override
@@ -471,11 +427,8 @@ public class FTDISerialDevice extends UsbSerialDevice
 
     private int setControlCommand(int request, int value, int index, byte[] data)
     {
-        int dataLength = 0;
-        if(data != null)
-        {
-            dataLength = data.length;
-        }
+        int dataLength = (data == null) ? 0 : data.length;
+
         int response = connection.controlTransfer(FTDI_REQTYPE_HOST2DEVICE, request, value, mInterface.getId() + 1 + index, data, dataLength, USB_TIMEOUT);
         Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
         return response;
