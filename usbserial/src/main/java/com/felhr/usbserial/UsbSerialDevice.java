@@ -112,6 +112,30 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
             serialBuffer.putWriteBuffer(buffer);
     }
 
+    /**
+     * <p>
+     *     Use this setter <strong>before</strong> calling {@link #open()} to override the default baud rate defined in this particular class.
+     * </p>
+     *
+     * <p>
+     *     This is a workaround for devices where calling {@link #setBaudRate(int)} has no effect once {@link #open()} has been called.
+     * </p>
+     *
+     * @param initialBaudRate baud rate to be used when initializing the serial connection
+     */
+    public void setInitialBaudRate(int initialBaudRate) {
+        // this class does not implement initialBaudRate
+    }
+
+    /**
+     * Classes that do not implement {@link #setInitialBaudRate(int)} should always return -1
+     *
+     * @return initial baud rate used when initializing the serial connection
+     */
+    public int getInitialBaudRate() {
+        return -1;
+    }
+
     @Override
     public int read(UsbReadCallback mCallback)
     {
