@@ -14,6 +14,8 @@ import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbRequest;
 import android.util.Log;
 
+import com.felhr.utils.SafeUsbRequest;
+
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CH34xSerialDevice extends UsbSerialDevice
@@ -116,7 +118,7 @@ public class CH34xSerialDevice extends UsbSerialDevice
         if(ret)
         {
             // Initialize UsbRequest
-            requestIN = new UsbRequest();
+            requestIN = new SafeUsbRequest();
             requestIN.initialize(connection, inEndpoint);
 
             // Restart the working thread if it has been killed before and  get and claim interface
