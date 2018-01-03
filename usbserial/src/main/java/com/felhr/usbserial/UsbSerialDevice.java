@@ -120,8 +120,10 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 
         if(mr1Version)
         {
-            workerThread.setCallback(mCallback);
-            workerThread.getUsbRequest().queue(serialBuffer.getReadBuffer(), SerialBuffer.DEFAULT_READ_BUFFER_SIZE);
+            if (workerThread != null) {
+                workerThread.setCallback(mCallback);
+                workerThread.getUsbRequest().queue(serialBuffer.getReadBuffer(), SerialBuffer.DEFAULT_READ_BUFFER_SIZE);
+            }
         }else
         {
             readThread.setCallback(mCallback);
