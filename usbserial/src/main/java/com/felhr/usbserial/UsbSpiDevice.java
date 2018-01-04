@@ -99,7 +99,8 @@ public abstract class UsbSpiDevice implements UsbSpiInterface
             while(working.get())
             {
                 byte[] data = serialBuffer.getWriteBuffer();
-                connection.bulkTransfer(outEndpoint, data, data.length, USB_TIMEOUT);
+                if(data.length > 0)
+                    connection.bulkTransfer(outEndpoint, data, data.length, USB_TIMEOUT);
             }
         }
 
