@@ -118,6 +118,7 @@ public class SerialBuffer
 
         public synchronized void put(byte[] src)
         {
+            if(src == null || src.length == 0) return;
             if(position == -1)
                 position = 0;
             if(debugging)
