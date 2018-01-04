@@ -148,8 +148,10 @@ public class SerialBuffer
                     e.printStackTrace();
                 }
             }
-            int to = position <= -1 ? 0 : position;
-            byte[] dst =  Arrays.copyOfRange(buffer, 0, to);
+            if(position <= -1 ) {
+                return new byte[DEFAULT_READ_BUFFER_SIZE];
+            }
+            byte[] dst =  Arrays.copyOfRange(buffer, 0, position);
             if(debugging)
                 UsbSerialDebugger.printLogGet(dst, true);
             position = -1;
