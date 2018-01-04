@@ -6,7 +6,6 @@ android {
     version = '1.0.0'
 
     compileSdkVersion Integer.parseInt(project.ANDROID_BUILD_SDK_VERSION)
-    buildToolsVersion project.ANDROID_BUILD_TOOLS_VERSION
 
     compileOptions {
         encoding "UTF-8"
@@ -20,12 +19,12 @@ android {
     }
 
     //noinspection GroovyAssignabilityCheck
-    task deleteJar(type: org.gradle.api.tasks.Delete){
+    task deleteJar(type: org.gradle.api.tasks.Delete) {
         delete 'eclipse_lib/usbserial.jar'
     }
 
     //noinspection GroovyAssignabilityCheck
-    task createJar(type: org.gradle.api.tasks.Copy){
+    task createJar(type: org.gradle.api.tasks.Copy) {
         from('build/intermediates/bundles/release/')
         into('eclipse_lib/')
         include('classes.jar')
