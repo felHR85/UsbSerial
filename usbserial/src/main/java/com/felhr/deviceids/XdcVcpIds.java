@@ -11,8 +11,8 @@ public class XdcVcpIds
     private static final ConcreteDevice[] xdcvcpDevices = new ConcreteDevice[]
             {
                     new ConcreteDevice(0x264D, 0x0232), // VCP (Virtual Com Port)
-                    new ConcreteDevice(0x264D, 0x0120)  // USI (Universal Sensor Interface)
-	            new ConcreteDevice(0x0483, 0x5740), //CC3D (STM)
+                    new ConcreteDevice(0x264D, 0x0120),  // USI (Universal Sensor Interface)
+                    new ConcreteDevice(0x0483, 0x5740) //CC3D (STM)
             };
 
     public static boolean isDeviceSupported(int vendorId, int productId)
