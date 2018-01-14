@@ -12,6 +12,8 @@ android:
     - android-26
 before_cache:
   - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+before_install:
+- yes | sdkmanager "platforms;android-27"
 cache:
   directories:
     - $HOME/.gradle/caches/
