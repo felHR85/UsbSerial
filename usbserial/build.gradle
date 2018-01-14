@@ -1,9 +1,11 @@
 apply plugin: 'com.android.library'
 
+def artifact = "usbserial.jar"
+
 android {
 
     group = 'com.felhr.usbserial'
-    version = '1.0.0'
+    version = project.VERSION_NAME
 
     compileSdkVersion Integer.parseInt(project.ANDROID_BUILD_SDK_VERSION)
 
@@ -16,11 +18,12 @@ android {
     defaultConfig {
         minSdkVersion Integer.parseInt(project.ANDROID_BUILD_MIN_SDK_VERSION)
         targetSdkVersion Integer.parseInt(project.ANDROID_BUILD_TARGET_SDK_VERSION)
+        archivesBaseName = "${project.name}-${project.VERSION_NAME}"
     }
 
     //noinspection GroovyAssignabilityCheck
-    task deleteJar(type: org.gradle.api.tasks.Delete) {
-        delete 'eclipse_lib/usbserial.jar'
+    task deleteJar(type: Delete) {
+        delete "eclipse_lib/${artifact}"
     }
 
     //noinspection GroovyAssignabilityCheck
@@ -28,7 +31,7 @@ android {
         from('build/intermediates/bundles/release/')
         into('eclipse_lib/')
         include('classes.jar')
-        rename('classes.jar', 'usbserial.jar')
+        rename('classes.jar', artifact)
     }
 
     createJar.dependsOn(deleteJar, build)
