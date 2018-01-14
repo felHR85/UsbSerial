@@ -555,6 +555,7 @@ public class FTDISioIds
                     new ConcreteDevice(0x05d1, 0x9006),
                     new ConcreteDevice(0x05d1, 0x9007),
                     new ConcreteDevice(0x05d1, 0x9008),
+                    new ConcreteDevice(0x0403, 0x0), //fake FTDI reprogrammed by driver
             };
 
     public static boolean isDeviceSupported(int vendorId, int productId)
