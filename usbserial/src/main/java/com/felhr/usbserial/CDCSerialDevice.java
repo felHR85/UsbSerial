@@ -45,6 +45,8 @@ public class CDCSerialDevice extends UsbSerialDevice
     private UsbEndpoint outEndpoint;
     private UsbRequest requestIN;
 
+    private int initialBaudRate = 0;
+
     public CDCSerialDevice(UsbDevice device, UsbDeviceConnection connection)
     {
         this(device, connection, -1);
@@ -54,6 +56,16 @@ public class CDCSerialDevice extends UsbSerialDevice
     {
         super(device, connection);
         mInterface = device.getInterface(iface >= 0 ? iface : findFirstCDC(device));
+    }
+
+    @Override
+    public void setInitialBaudRate(int initialBaudRate) {
+        this.initialBaudRate = initialBaudRate;
+    }
+
+    @Override
+    public int getInitialBaudRate() {
+        return initialBaudRate;
     }
 
     @Override
@@ -297,10 +309,27 @@ public class CDCSerialDevice extends UsbSerialDevice
         }
 
         // Default Setup
-        setControlCommand(CDC_SET_LINE_CODING, 0, CDC_DEFAULT_LINE_CODING);
+        setControlCommand(CDC_SET_LINE_CODING, 0, getInitialLineCoding());
         setControlCommand(CDC_SET_CONTROL_LINE_STATE, CDC_CONTROL_LINE_ON, null);
 
         return true;
+    }
+
+    protected byte[] getInitialLineCoding() {
+        byte[] lineCoding;
+
+        int initialBaudRate = getInitialBaudRate();
+
+        if(initialBaudRate > 0) {
+            lineCoding = CDC_DEFAULT_LINE_CODING.clone();
+            for (int i = 0; i < 4; i++) {
+                lineCoding[i] = (byte) (initialBaudRate >> i*8 & 0xFF);
+            }
+        } else {
+            lineCoding = CDC_DEFAULT_LINE_CODING;
+        }
+
+        return lineCoding;
     }
 
     private int setControlCommand(int request, int value, byte[] data)
