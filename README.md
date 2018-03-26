@@ -18,6 +18,10 @@ Devices Supported
 
 [CP2130 SPI-USB](http://www.silabs.com/products/interface/usb-bridges/classic-usb-bridges/Pages/usb-to-spi-bridge.aspx)
 
+Known Issue
+--------------------------------------
+Due to a bug in Android itself, it's highly recommended to **not** use it with a device running [Android 5.1.1 Lollipop](https://en.wikipedia.org/wiki/Android_version_history#Android_5.1_Lollipop_(API_22)). See issue [#142](https://github.com/felHR85/UsbSerial/issues/142) for more details.
+
 How to use it?
 --------------------------------------
 Instantiate a new object of the UsbSerialDevice class
@@ -176,7 +180,7 @@ Then add the dependency to your module's build.gradle:
 
 /app/build.gradle
 ```groovy
-compile 'com.github.felHR85:UsbSerial:4.5.1'
+compile 'com.github.felHR85:UsbSerial:4.5.2'
 ```
 
 TO-DO
