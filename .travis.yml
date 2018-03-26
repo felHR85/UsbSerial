@@ -6,6 +6,7 @@ android:
     # Note that the tools section appears twice on purpose as it’s required to get the newest Android SDK tools.
     # See: https://docs.travis-ci.com/user/languages/android/#Overview
     - tools
+    - build-tools-27.0.3
     - build-tools-27.0.2
     - build-tools-26.0.2
     - android-27
