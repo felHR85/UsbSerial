@@ -32,6 +32,61 @@ public class SerialInputStream extends InputStream implements UsbSerialInterface
         return -1;
     }
 
+	@Override
+	public int read(byte[] b)
+	{
+		return read(b, 0, b.length);
+	}
+
+	@Override
+	public int read(byte[] b, int off, int len)
+	{
+		if(b == null)
+			throw new NullPointerException();
+
+		if(off < 0 || len < 0 || off + len > b.length)
+			throw new IndexOutOfBoundsException();
+
+		Thread curThread = Thread.currentThread();
+
+		int count;
+		for(count = 0; count < len && is_open && !curThread.isInterrupted(); )
+		{
+			try
+			{
+				Integer value = (Integer)data.poll();
+
+				if(value != null)
+				{
+					if(value < 0)
+						break; // Stream closed
+
+					b[off + count] = (byte)((int)value);
+					++count;
+				}
+				else
+				{
+					// No more data is available
+
+					if(count > 0)
+						break; // We already got some data, so we can return that
+
+					// Haven't gotten anything yet, so we'll keep trying...
+					Thread.sleep(10); // Avoid thrashing the CPU
+				}
+			}
+			catch (InterruptedException e)
+			{
+				break;
+			}
+		}
+
+		if(count == 0 && !is_open)
+			return -1;
+
+		return count;
+	}
+    
     public void close()
     {
         is_open = false;
