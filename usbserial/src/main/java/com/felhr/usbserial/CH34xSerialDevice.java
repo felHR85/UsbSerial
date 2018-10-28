@@ -157,6 +157,11 @@ public class CH34xSerialDevice extends UsbSerialDevice
             createFlowControlThread();
             setSyncParams(inEndpoint, outEndpoint);
             asyncMode = false;
+
+            // Init Streams
+            inputStream = new SerialInputStream(this);
+            outputStream = new SerialOutputStream(this);
+
             return true;
         }else
         {

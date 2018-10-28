@@ -8,6 +8,7 @@ import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbRequest;
 import android.util.Log;
 
+import java.io.SequenceInputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CP2102SerialDevice extends UsbSerialDevice
@@ -143,6 +144,11 @@ public class CP2102SerialDevice extends UsbSerialDevice
             createFlowControlThread();
             setSyncParams(inEndpoint, outEndpoint);
             asyncMode = false;
+
+            // Init Streams
+            inputStream = new SerialInputStream(this);
+            outputStream = new SerialOutputStream(this);
+
             return true;
         }else
         {

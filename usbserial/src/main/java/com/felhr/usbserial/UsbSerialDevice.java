@@ -34,6 +34,10 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     private UsbEndpoint inEndpoint;
     private UsbEndpoint outEndpoint;
 
+    // InputStream and OutputStream (only for sync api)
+    protected SerialInputStream inputStream;
+    protected SerialOutputStream outputStream;
+
     protected boolean asyncMode;
 
     // Get Android version if version < 4.3 It is not going to be asynchronous read operations
@@ -207,6 +211,20 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     public abstract void setParity(int parity);
     @Override
     public abstract void setFlowControl(int flowControl);
+
+    public SerialInputStream getInputStream() {
+        if(asyncMode)
+            throw new IllegalStateException("InputStream only available in Sync mode. \n" +
+                    "Open the port with syncOpen()");
+        return inputStream;
+    }
+
+    public SerialOutputStream getOutputStream() {
+        if(asyncMode)
+            throw new IllegalStateException("OutputStream only available in Sync mode. \n" +
+                    "Open the port with syncOpen()");
+        return outputStream;
+    }
 
     //Debug options
     public void debug(boolean value)
