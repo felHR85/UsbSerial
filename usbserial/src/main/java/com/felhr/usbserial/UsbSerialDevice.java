@@ -1,7 +1,5 @@
 package com.felhr.usbserial;
 
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.felhr.deviceids.CH34xIds;
