@@ -229,8 +229,11 @@ public class UsbService extends Service {
                      */
                     serialPort.setFlowControl(UsbSerialInterface.FLOW_CONTROL_OFF);
 
-                    serialInputStream = new SerialInputStream(serialPort);
-                    serialOutputStream = new SerialOutputStream(serialPort);
+                    /**
+                     * InputStream and OutputStream will be null if you are using async api.
+                     */
+                    serialInputStream = serialPort.getInputStream();
+                    serialOutputStream = serialPort.getOutputStream();
 
                     readThread = new ReadThread();
                     readThread.start();

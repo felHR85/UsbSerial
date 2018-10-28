@@ -1,5 +1,7 @@
 package com.felhr.usbserial;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.felhr.deviceids.CH34xIds;
@@ -33,6 +35,10 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     // Endpoints for synchronous read and write operations
     private UsbEndpoint inEndpoint;
     private UsbEndpoint outEndpoint;
+
+    // InputStream and OutputStream (only for sync api)
+    protected SerialInputStream inputStream;
+    protected SerialOutputStream outputStream;
 
     protected boolean asyncMode;
 
@@ -207,6 +213,20 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     public abstract void setParity(int parity);
     @Override
     public abstract void setFlowControl(int flowControl);
+
+    public SerialInputStream getInputStream() {
+        if(asyncMode)
+            throw new IllegalStateException("InputStream only available in Sync mode. \n" +
+                    "Open the port with syncOpen()");
+        return inputStream;
+    }
+
+    public SerialOutputStream getOutputStream() {
+        if(asyncMode)
+            throw new IllegalStateException("OutputStream only available in Sync mode. \n" +
+                    "Open the port with syncOpen()");
+        return outputStream;
+    }
 
     //Debug options
     public void debug(boolean value)
