@@ -19,6 +19,10 @@ public class CDCSerialDevice extends UsbSerialDevice
     private static final int CDC_GET_LINE_CODING = 0x21;
     private static final int CDC_SET_CONTROL_LINE_STATE = 0x22;
 
+    private static final int CDC_SET_CONTROL_LINE_STATE_RTS = 0x2;
+    private static final int CDC_SET_CONTROL_LINE_STATE_DTR = 0x1;
+
+
     /***
      *  Default Serial Configuration
      *  Baud rate: 115200
@@ -46,6 +50,8 @@ public class CDCSerialDevice extends UsbSerialDevice
     private UsbRequest requestIN;
 
     private int initialBaudRate = 0;
+
+    private int controlLineState = CDC_CONTROL_LINE_ON;
 
     public CDCSerialDevice(UsbDevice device, UsbDeviceConnection connection)
     {
@@ -235,13 +241,22 @@ public class CDCSerialDevice extends UsbSerialDevice
     @Override
     public void setRTS(boolean state)
     {
-        //TODO
+        if (state)
+            controlLineState |= CDC_SET_CONTROL_LINE_STATE_RTS;
+        else
+            controlLineState &= ~CDC_SET_CONTROL_LINE_STATE_RTS;
+        setControlCommand(CDC_SET_CONTROL_LINE_STATE, controlLineState, null);
+
     }
 
     @Override
     public void setDTR(boolean state)
     {
-        //TODO
+        if (state)
+            controlLineState |= CDC_SET_CONTROL_LINE_STATE_DTR;
+        else
+            controlLineState &= ~CDC_SET_CONTROL_LINE_STATE_DTR;
+        setControlCommand(CDC_SET_CONTROL_LINE_STATE, controlLineState, null);
     }
 
     @Override
