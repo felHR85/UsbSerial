@@ -2,6 +2,9 @@
 <manifest package="com.felhr.examplestreams"
           xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <uses-feature android:name="android.hardware.usb.host"
+                  android:required="true"/>
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -16,6 +19,12 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
+        <service
+            android:name="com.felhr.examplestreams.UsbService"
+            android:enabled="true">
+        </service>
+
     </application>
 
 </manifest>
