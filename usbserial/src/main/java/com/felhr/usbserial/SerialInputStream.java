@@ -1,5 +1,6 @@
 package com.felhr.usbserial;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.ArrayBlockingQueue;
 
@@ -30,6 +31,11 @@ public class SerialInputStream extends InputStream implements UsbSerialInterface
             }
         }
         return -1;
+    }
+
+    @Override
+    public int available() throws IOException {
+        return data.size();
     }
 
     public void close()
