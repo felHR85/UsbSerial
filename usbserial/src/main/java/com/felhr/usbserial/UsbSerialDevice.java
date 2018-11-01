@@ -1,7 +1,11 @@
 package com.felhr.usbserial;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
+import com.annimon.stream.Stream;
 import com.felhr.deviceids.CH34xIds;
 import com.felhr.deviceids.CP210xIds;
 import com.felhr.deviceids.FTDISioIds;
@@ -12,11 +16,13 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
+import android.hardware.usb.UsbManager;
 import android.hardware.usb.UsbRequest;
 
 public abstract class UsbSerialDevice implements UsbSerialInterface
 {
     private static final String CLASS_ID = UsbSerialDevice.class.getSimpleName();
+    private static final String COM_PORT = "COM ";
 
     private static boolean mr1Version;
     protected final UsbDevice device;
@@ -84,6 +90,19 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
             return new CDCSerialDevice(device, connection, iface);
         else
             return null;
+    }
+
+    public static List<UsbDevice> getSerialPorts(UsbManager usbManager){
+        List<UsbSerialDevice> serialPorts = null;
+        HashMap<String, UsbDevice> allDevices = usbManager.getDeviceList();
+
+        return Stream.of(allDevices.values()).filter(
+                        p -> isSupported(p))
+                        .toList();
+    }
+
+    public static void requestPermissionsForAllPorts(List<UsbDevice> devices){
+        //TODO!!
     }
 
     public static boolean isSupported(UsbDevice device)
