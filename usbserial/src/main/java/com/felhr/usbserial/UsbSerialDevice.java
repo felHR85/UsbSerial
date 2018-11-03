@@ -40,6 +40,8 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 
     protected boolean asyncMode;
 
+    protected boolean isOpen;
+
     // Get Android version if version < 4.3 It is not going to be asynchronous read operations
     static
     {
@@ -231,6 +233,10 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     {
         if(serialBuffer != null)
             serialBuffer.debug(value);
+    }
+
+    public boolean isOpen(){
+        return isOpen;
     }
 
     private boolean isFTDIDevice()

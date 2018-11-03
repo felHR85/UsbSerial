@@ -73,10 +73,12 @@ public class PL2303SerialDevice extends UsbSerialDevice
             setThreadsParams(requestIN, outEndpoint);
 
             asyncMode = true;
+            isOpen = true;
 
             return true;
         }else
         {
+            isOpen = false;
             return false;
         }
     }
@@ -87,6 +89,7 @@ public class PL2303SerialDevice extends UsbSerialDevice
         killWorkingThread();
         killWriteThread();
         connection.releaseInterface(mInterface);
+        isOpen = false;
     }
 
     @Override
@@ -97,6 +100,7 @@ public class PL2303SerialDevice extends UsbSerialDevice
         {
             setSyncParams(inEndpoint, outEndpoint);
             asyncMode = false;
+            isOpen = true;
 
             // Init Streams
             inputStream = new SerialInputStream(this);
@@ -105,6 +109,7 @@ public class PL2303SerialDevice extends UsbSerialDevice
             return true;
         }else
         {
+            isOpen = false;
             return false;
         }
     }
@@ -113,6 +118,7 @@ public class PL2303SerialDevice extends UsbSerialDevice
     public void syncClose()
     {
         connection.releaseInterface(mInterface);
+        isOpen = false;
     }
 
     @Override
