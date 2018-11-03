@@ -22,7 +22,7 @@ import android.hardware.usb.UsbRequest;
 public abstract class UsbSerialDevice implements UsbSerialInterface
 {
     private static final String CLASS_ID = UsbSerialDevice.class.getSimpleName();
-    private static final String COM_PORT = "COM ";
+    protected static final String COM_PORT = "COM ";
 
     private static boolean mr1Version;
     protected final UsbDevice device;
@@ -45,6 +45,8 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     protected SerialOutputStream outputStream;
 
     protected boolean asyncMode;
+
+    private String portName = "";
 
     // Get Android version if version < 4.3 It is not going to be asynchronous read operations
     static
@@ -250,6 +252,10 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     {
         if(serialBuffer != null)
             serialBuffer.debug(value);
+    }
+
+    public void setPortName(String portName) {
+        this.portName = portName;
     }
 
     private boolean isFTDIDevice()

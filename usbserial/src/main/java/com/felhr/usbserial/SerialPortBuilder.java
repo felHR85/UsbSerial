@@ -152,6 +152,7 @@ public class SerialPortBuilder {
 
         @Override
         public void run() {
+            int n =1;
             for (UsbSerialDevice usbSerialDevice : usbSerialDevices) {
                 if (usbSerialDevice.syncOpen()) {
                     usbSerialDevice.setBaudRate(baudRate);
@@ -159,6 +160,8 @@ public class SerialPortBuilder {
                     usbSerialDevice.setStopBits(stopBits);
                     usbSerialDevice.setParity(parity);
                     usbSerialDevice.setFlowControl(flowControl);
+                    usbSerialDevice.setPortName(UsbSerialDevice.COM_PORT + String.valueOf(n));
+                    n++;
                 }
             }
             serialPortCallback.onSerialPortsDetected(serialDevices, true);
