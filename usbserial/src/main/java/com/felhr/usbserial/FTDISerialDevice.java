@@ -126,10 +126,12 @@ public class FTDISerialDevice extends UsbSerialDevice
             setThreadsParams(requestIN, outEndpoint);
 
             asyncMode = true;
+            isOpen = true;
 
             return true;
         }else
         {
+            isOpen = false;
             return false;
         }
     }
@@ -143,6 +145,7 @@ public class FTDISerialDevice extends UsbSerialDevice
         killWorkingThread();
         killWriteThread();
         connection.releaseInterface(mInterface);
+        isOpen = false;
     }
 
     @Override
@@ -158,9 +161,12 @@ public class FTDISerialDevice extends UsbSerialDevice
             inputStream = new SerialInputStream(this);
             outputStream = new SerialOutputStream(this);
 
+            isOpen = true;
+
             return true;
         }else
         {
+            isOpen = false;
             return false;
         }
     }
@@ -172,6 +178,7 @@ public class FTDISerialDevice extends UsbSerialDevice
         setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SET_MODEM_CTRL_DEFAULT4, 0, null);
         currentSioSetData = 0x0000;
         connection.releaseInterface(mInterface);
+        isOpen = false;
     }
 
     @Override

@@ -93,10 +93,12 @@ public class CDCSerialDevice extends UsbSerialDevice
             setThreadsParams(requestIN, outEndpoint);
 
             asyncMode = true;
+            isOpen = true;
 
             return true;
         }else
         {
+            isOpen = false;
             return false;
         }
     }
@@ -109,6 +111,7 @@ public class CDCSerialDevice extends UsbSerialDevice
         killWriteThread();
         connection.releaseInterface(mInterface);
         connection.close();
+        isOpen = false;
     }
 
     @Override
@@ -119,6 +122,7 @@ public class CDCSerialDevice extends UsbSerialDevice
         {
             setSyncParams(inEndpoint, outEndpoint);
             asyncMode = false;
+            isOpen = true;
 
             // Init Streams
             inputStream = new SerialInputStream(this);
@@ -127,6 +131,7 @@ public class CDCSerialDevice extends UsbSerialDevice
             return true;
         }else
         {
+            isOpen = false;
             return false;
         }
     }
@@ -137,6 +142,7 @@ public class CDCSerialDevice extends UsbSerialDevice
         setControlCommand(CDC_SET_CONTROL_LINE_STATE, CDC_CONTROL_LINE_OFF, null);
         connection.releaseInterface(mInterface);
         connection.close();
+        isOpen = false;
     }
 
     @Override
