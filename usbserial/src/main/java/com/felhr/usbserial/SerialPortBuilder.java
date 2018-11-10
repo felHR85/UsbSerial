@@ -7,8 +7,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
-import android.os.Handler;
 
 import com.annimon.stream.Stream;
 
@@ -23,7 +23,7 @@ public class SerialPortBuilder {
 
     private static SerialPortBuilder SerialPortBuilder;
 
-    private List<UsbDevice> devices;
+    private List<UsbDeviceStatus> devices;
     private List<UsbSerialDevice> serialDevices = new ArrayList<>();
 
     private int index = 0;
@@ -53,14 +53,23 @@ public class SerialPortBuilder {
 
     public List<UsbDevice> getPossibleSerialPorts(){
         HashMap<String, UsbDevice> allDevices = usbManager.getDeviceList();
-
-        return Stream.of(allDevices.values()).filter(
-                p -> UsbSerialDevice.isSupported(p))
+        return Stream.of(allDevices.values())
+                .filter(UsbSerialDevice::isSupported)
                 .toList();
     }
 
     public boolean getSerialPorts(Context context){
-        devices = getPossibleSerialPorts();
+
+        if(devices == null) {
+            devices = Stream.of(getPossibleSerialPorts())
+                    .map(UsbDeviceStatus::new)
+                    .toList();
+        }else{
+            devices.addAll(Stream.of(getPossibleSerialPorts())
+                    .map(UsbDeviceStatus::new)
+                    .filter(p -> !devices.contains(p))
+                    .toList());
+        }
 
         if(devices == null || devices.size() == 0)
             return false;
@@ -84,9 +93,18 @@ public class SerialPortBuilder {
         return getSerialPorts(context);
     }
 
-    private void requestPermission(Context context){
-        PendingIntent mPendingIntent = PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0);
-        usbManager.requestPermission(devices.get(index), mPendingIntent);
+    private boolean requestPermission(Context context){
+        if(!devices.get(index).open) {
+            PendingIntent mPendingIntent = PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0);
+            usbManager.requestPermission(devices.get(index).usbDevice, mPendingIntent);
+            return true;
+        }else{
+            index++;
+            if(index <= devices.size()-1)
+                return requestPermission(context);
+            else
+                return false;
+        }
     }
 
     private void initReceiver(Context context){
@@ -95,12 +113,16 @@ public class SerialPortBuilder {
         context.registerReceiver(usbReceiver, filter);
     }
 
-    private void createAllPorts(UsbDevice usbDevice){
-        int interfaceCount = usbDevice.getInterfaceCount();
+    private void createAllPorts(UsbDeviceStatus usbDeviceStatus){
+        int interfaceCount = usbDeviceStatus.usbDevice.getInterfaceCount();
         for(int i=0;i<=interfaceCount-1;i++) {
-            //TODO: Maybe opening the same device more than once causes troubles!!!
-            UsbSerialDevice usbSerialDevice = UsbSerialDevice.createUsbSerialDevice(usbDevice,
-                    usbManager.openDevice(usbDevice),
+            if(usbDeviceStatus.usbDeviceConnection == null) {
+                usbDeviceStatus.usbDeviceConnection = usbManager.openDevice(usbDeviceStatus.usbDevice);
+            }
+
+            UsbSerialDevice usbSerialDevice = UsbSerialDevice.createUsbSerialDevice(
+                    usbDeviceStatus.usbDevice,
+                    usbDeviceStatus.usbDeviceConnection,
                     i);
 
             serialDevices.add(usbSerialDevice);
@@ -113,6 +135,7 @@ public class SerialPortBuilder {
             if (intent.getAction().equals(ACTION_USB_PERMISSION)) {
                 boolean granted = intent.getExtras().getBoolean(UsbManager.EXTRA_PERMISSION_GRANTED);
                 if (granted) {
+                    devices.get(index).open = true;
                     createAllPorts(devices.get(index));
                     index++;
                     if(index < devices.size()){
@@ -165,6 +188,24 @@ public class SerialPortBuilder {
                 }
             }
             serialPortCallback.onSerialPortsDetected(serialDevices, true);
+        }
+    }
+
+    private class UsbDeviceStatus {
+        public UsbDevice usbDevice;
+        public UsbDeviceConnection usbDeviceConnection;
+        public boolean open;
+
+        public UsbDeviceStatus(UsbDevice usbDevice) {
+            this.usbDevice = usbDevice;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            UsbDevice objDevice = (UsbDevice) obj;
+            return (objDevice.getVendorId() ==  usbDevice.getVendorId())
+                    && (objDevice.getProductId() == usbDevice.getProductId());
+
         }
     }
 }

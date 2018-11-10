@@ -1,0 +1,94 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:context="com.felhr.examplemultipleports.MainActivity">
+
+    <TextView
+        android:id="@+id/textViewTitle1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:text="Multiple Serial Ports"
+        android:textAppearance="?android:attr/textAppearanceLarge"/>
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="34dp"
+        android:background="#000000"
+        android:textColor="#FFFFFF"
+        android:scrollbars="vertical"
+        android:text="COM1: "
+        android:gravity="bottom" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="10dp"
+        android:background="#000000"
+        android:layout_below="@+id/textView1"
+        android:textColor="#FFFFFF"
+        android:text="COM2: "
+        android:scrollbars="vertical"
+        android:gravity="bottom" />
+
+    <EditText
+        android:id="@+id/editText1"
+        android:layout_width="227dp"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/textView1"
+        android:layout_alignRight="@+id/textView1"
+        android:layout_below="@+id/textView2"
+        android:layout_marginRight="184dp"
+        android:layout_marginTop="28dp"
+        android:ems="10">
+    </EditText>
+
+    <Button
+        android:id="@+id/buttonSend1"
+        style="?borderlessButtonStyle"
+        android:layout_width="178dp"
+        android:layout_height="48dp"
+        android:layout_alignLeft="@+id/editText1"
+        android:layout_alignRight="@+id/editText1"
+        android:layout_below="@+id/editText1"
+        android:layout_marginLeft="227dp"
+        android:layout_marginRight="-175dp"
+        android:layout_marginTop="-48dp"
+        android:textSize="10sp"
+        android:background="@color/colorAccent"
+        android:text="Send through COM1"/>
+
+    <EditText
+        android:id="@+id/editText2"
+        android:layout_width="227dp"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/textView1"
+        android:layout_alignRight="@+id/textView1"
+        android:layout_below="@+id/editText1"
+        android:layout_marginRight="184dp"
+        android:layout_marginTop="28dp"
+        android:ems="10">
+    </EditText>
+
+    <Button
+        android:id="@+id/buttonSend2"
+        style="?borderlessButtonStyle"
+        android:layout_width="178dp"
+        android:layout_height="48dp"
+        android:layout_alignLeft="@+id/editText2"
+        android:layout_alignRight="@+id/editText2"
+        android:layout_below="@+id/editText2"
+        android:layout_marginLeft="227dp"
+        android:layout_marginRight="-175dp"
+        android:layout_marginTop="-48dp"
+        android:textSize="10sp"
+        android:background="@color/colorAccent"
+        android:text="Send through COM2"/>
+</RelativeLayout>
