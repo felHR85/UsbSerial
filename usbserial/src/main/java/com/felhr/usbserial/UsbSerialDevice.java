@@ -20,6 +20,12 @@ import android.hardware.usb.UsbRequest;
 
 public abstract class UsbSerialDevice implements UsbSerialInterface
 {
+    public static final String CDC = "cdc";
+    public static final String CH34x = "ch34x";
+    public static final String CP210x = "cp210x";
+    public static final String FTDI = "ftdi";
+    public static final String PL2303 = "pl2303";
+
     private static final String CLASS_ID = UsbSerialDevice.class.getSimpleName();
     protected static final String COM_PORT = "COM ";
 
@@ -46,6 +52,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     protected boolean asyncMode;
 
     private String portName = "";
+    protected boolean isOpen;
 
     // Get Android version if version < 4.3 It is not going to be asynchronous read operations
     static
@@ -93,17 +100,20 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
             return null;
     }
 
-    public static List<UsbDevice> getSerialPorts(UsbManager usbManager){
-        List<UsbSerialDevice> serialPorts = null;
-        HashMap<String, UsbDevice> allDevices = usbManager.getDeviceList();
-
-        return Stream.of(allDevices.values()).filter(
-                        p -> isSupported(p))
-                        .toList();
-    }
-
-    public static void requestPermissionsForAllPorts(List<UsbDevice> devices){
-        //TODO!!
+    public static UsbSerialDevice createUsbSerialDevice(String type, UsbDevice device, UsbDeviceConnection connection, int iface){
+        if(type.equals(FTDI)){
+            return new FTDISerialDevice(device, connection, iface);
+        }else if(type.equals(CP210x)){
+            return new CP2102SerialDevice(device, connection, iface);
+        }else if(type.equals(PL2303)){
+            return new PL2303SerialDevice(device, connection, iface);
+        }else if(type.equals(CH34x)){
+            return new CH34xSerialDevice(device, connection, iface);
+        }else if(type.equals(CDC)){
+            return new CDCSerialDevice(device, connection, iface);
+        }else{
+            throw new IllegalArgumentException("Invalid type argument. Must be:cdc, ch34x, cp210x, ftdi or pl2303");
+        }
     }
 
     public static boolean isSupported(UsbDevice device)
@@ -267,6 +277,11 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 
     public void setPortName(String portName) {
         this.portName = portName;
+    }
+
+
+    public boolean isOpen(){
+        return isOpen;
     }
 
     private boolean isFTDIDevice()

@@ -116,10 +116,12 @@ public class CP2102SerialDevice extends UsbSerialDevice
             setThreadsParams(requestIN, outEndpoint);
 
             asyncMode = true;
+            isOpen = true;
 
             return true;
         }else
         {
+            isOpen = false;
             return false;
         }
     }
@@ -132,6 +134,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
         killWriteThread();
         stopFlowControlThread();
         connection.releaseInterface(mInterface);
+        isOpen = false;
     }
 
     @Override
@@ -144,6 +147,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
             createFlowControlThread();
             setSyncParams(inEndpoint, outEndpoint);
             asyncMode = false;
+            isOpen = true;
 
             // Init Streams
             inputStream = new SerialInputStream(this);
@@ -152,6 +156,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
             return true;
         }else
         {
+            isOpen = false;
             return false;
         }
     }
@@ -162,6 +167,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
         setControlCommand(CP210x_IFC_ENABLE, CP210x_UART_DISABLE, null);
         stopFlowControlThread();
         connection.releaseInterface(mInterface);
+        isOpen = false;
     }
 
     @Override
