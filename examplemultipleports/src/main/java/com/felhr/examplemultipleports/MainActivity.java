@@ -13,8 +13,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -55,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
     private EditText editText1, editText2;
     private Button button1, button2;
     private MyHandler mHandler;
+
     private final ServiceConnection usbConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName arg0, IBinder arg1) {
@@ -82,18 +81,15 @@ public class MainActivity extends AppCompatActivity {
         button1 = findViewById(R.id.buttonSend1);
         button2 = findViewById(R.id.buttonSend2);
 
-        button1.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //TODO!!
-            }
+        button1.setOnClickListener((View v) -> {
+            byte[] data = editText1.getText().toString().getBytes();
+            usbService.write(data, 0);
+
         });
 
-        button2.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //TODO!!
-            }
+        button2.setOnClickListener((View v) -> {
+            byte[] data = editText2.getText().toString().getBytes();
+            usbService.write(data, 1);
         });
 
         mHandler = new MyHandler(this);
@@ -152,19 +148,14 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case UsbService.MESSAGE_FROM_SERIAL_PORT:
-                    String data = (String) msg.obj;
-                    //mActivity.get().display.append(data);
-                    break;
-                case UsbService.CTS_CHANGE:
-                    Toast.makeText(mActivity.get(), "CTS_CHANGE",Toast.LENGTH_LONG).show();
-                    break;
-                case UsbService.DSR_CHANGE:
-                    Toast.makeText(mActivity.get(), "DSR_CHANGE",Toast.LENGTH_LONG).show();
-                    break;
                 case UsbService.SYNC_READ:
                     String buffer = (String) msg.obj;
-                    //mActivity.get().display.append(buffer);
+                    if(msg.arg1 == 0){
+                        mActivity.get().display1.append(buffer);
+                    }else if(msg.arg1 == 1){
+                        mActivity.get().display2.append(buffer);
+                    }
+
                     break;
             }
         }

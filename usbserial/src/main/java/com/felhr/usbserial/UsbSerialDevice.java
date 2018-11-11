@@ -1,10 +1,7 @@
 package com.felhr.usbserial;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.annimon.stream.Stream;
 import com.felhr.deviceids.CH34xIds;
 import com.felhr.deviceids.CP210xIds;
 import com.felhr.deviceids.FTDISioIds;
@@ -15,7 +12,6 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
-import android.hardware.usb.UsbManager;
 import android.hardware.usb.UsbRequest;
 
 public abstract class UsbSerialDevice implements UsbSerialInterface
@@ -279,6 +275,9 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
         this.portName = portName;
     }
 
+    public String getPortName(){
+        return this.portName;
+    }
 
     public boolean isOpen(){
         return isOpen;

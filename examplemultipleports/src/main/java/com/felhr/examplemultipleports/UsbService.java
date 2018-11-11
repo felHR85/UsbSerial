@@ -1,5 +1,6 @@
 package com.felhr.examplemultipleports;
 
+import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -10,21 +11,24 @@ import android.hardware.usb.UsbManager;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
+import android.os.Message;
 import android.support.annotation.Nullable;
 import android.widget.Toast;
 
-import com.annimon.stream.Stream;
+import com.felhr.usbserial.SerialInputStream;
 import com.felhr.usbserial.SerialPortBuilder;
 import com.felhr.usbserial.SerialPortCallback;
 import com.felhr.usbserial.UsbSerialDevice;
 import com.felhr.usbserial.UsbSerialInterface;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Created by Felipe Herranz(felhr85@gmail.com) on 09/11/2018.
  */
-public class UsbService extends Service {
+public class UsbService extends Service implements SerialPortCallback {
 
     public static final String ACTION_USB_READY = "com.felhr.connectivityservices.USB_READY";
     public static final String ACTION_USB_ATTACHED = "android.hardware.usb.action.USB_DEVICE_ATTACHED";
@@ -50,6 +54,11 @@ public class UsbService extends Service {
     private UsbManager usbManager;
     private SerialPortBuilder builder;
 
+    private Handler writeHandler;
+    private WriteThread writeThread;
+
+    private ReadThreadCOM readThreadCOM1, readThreadCOM2;
+
     private IBinder binder = new UsbBinder();
 
     private Handler mHandler;
@@ -71,15 +80,12 @@ public class UsbService extends Service {
                    Toast.makeText(context, "Couldnt open the device", Toast.LENGTH_SHORT).show();
             } else if (arg1.getAction().equals(ACTION_USB_DETACHED)) {
                 UsbDevice usbDevice = arg1.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                boolean ret = builder.disconnectDevice(usbDevice);
 
-                List<UsbSerialDevice> filteredDevice = Stream.of(serialPorts)
-                        .filter(p -> usbDevice.getDeviceId() == p.getDeviceId())
-                        .toList();
-
-                if(filteredDevice.size() == 1){
-                    UsbSerialDevice disconnectedDevice = filteredDevice.get(0);
-                    disconnectedDevice.syncClose();
-                }
+                if(ret)
+                    Toast.makeText(context, "Usb device disconnected", Toast.LENGTH_SHORT).show();
+                else
+                    Toast.makeText(context, "Usb device wasnt a serial port", Toast.LENGTH_SHORT).show();
 
                 Intent intent = new Intent(ACTION_USB_DISCONNECTED);
                 arg0.sendBroadcast(intent);
@@ -88,12 +94,25 @@ public class UsbService extends Service {
         }
     };
 
-    private final SerialPortCallback serialPortCallback = new SerialPortCallback() {
-        @Override
-        public void onSerialPortsDetected(List<UsbSerialDevice> serialPorts, boolean opened) {
-            //TODO!!
+    @Override
+    public void onSerialPortsDetected(List<UsbSerialDevice> serialPorts, boolean opened) {
+        if(opened) {
+            this.serialPorts = serialPorts;
+            if (writeThread == null) {
+                writeThread = new WriteThread();
+                writeThread.start();
+            }
+
+            if (readThreadCOM1 == null) {
+                readThreadCOM1 = new ReadThreadCOM(0,
+                        serialPorts.get(0).getInputStream());
+
+            }else if(readThreadCOM2 == null){
+                readThreadCOM2 = new ReadThreadCOM(1,
+                        serialPorts.get(1).getInputStream());
+            }
         }
-    };
+    }
 
     @Override
     public void onCreate() {
@@ -101,7 +120,7 @@ public class UsbService extends Service {
         UsbService.SERVICE_CONNECTED = true;
         setFilter();
         usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
-        builder = SerialPortBuilder.createSerialPortBuilder(serialPortCallback);
+        builder = SerialPortBuilder.createSerialPortBuilder(this);
 
         boolean ret = builder.openSerialPorts(context, BAUD_RATE,
                 UsbSerialInterface.DATA_BITS_8,
@@ -117,6 +136,22 @@ public class UsbService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return binder;
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        return Service.START_NOT_STICKY;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        UsbService.SERVICE_CONNECTED = false;
+    }
+
+    public void write(byte[] data, int port){
+        if(writeThread != null)
+            writeHandler.obtainMessage(0, port, 0, data).sendToTarget();
     }
 
     public void setHandler(Handler mHandler) {
@@ -135,6 +170,62 @@ public class UsbService extends Service {
     public class UsbBinder extends Binder {
         public UsbService getService() {
             return UsbService.this;
+        }
+    }
+
+    private class ReadThreadCOM extends Thread {
+        private int port;
+        private AtomicBoolean keep = new AtomicBoolean(true);
+        private SerialInputStream inputStream;
+
+        public ReadThreadCOM(int port, SerialInputStream serialInputStream){
+            this.port = port;
+            this.inputStream = serialInputStream;
+        }
+
+        @Override
+        public void run() {
+            while(keep.get()){
+                if(inputStream == null)
+                    return;
+                int value = inputStream.read();
+                if(value != -1) {
+                    String str = toASCII(value);
+                    mHandler.obtainMessage(SYNC_READ, port, 0, str).sendToTarget();
+                }
+            }
+        }
+
+        public void setKeep(boolean keep){
+            this.keep.set(keep);
+        }
+    }
+
+    private static String toASCII(int value) {
+        int length = 4;
+        StringBuilder builder = new StringBuilder(length);
+        for (int i = length - 1; i >= 0; i--) {
+            builder.append((char) ((value >> (8 * i)) & 0xFF));
+        }
+        return builder.toString();
+    }
+
+    private class WriteThread extends Thread{
+
+        @Override
+        @SuppressLint("HandlerLeak")
+        public void run() {
+            Looper.prepare();
+            writeHandler = new Handler(){
+                @Override
+                public void handleMessage(Message msg) {
+                    int port = msg.arg1;
+                    byte[] data = (byte[]) msg.obj;
+                    UsbSerialDevice serialDevice = serialPorts.get(port);
+                    serialDevice.getOutputStream().write(data);
+                }
+            };
+            Looper.loop();
         }
     }
 }

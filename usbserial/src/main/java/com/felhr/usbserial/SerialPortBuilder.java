@@ -10,7 +10,9 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
 
+import com.annimon.stream.Optional;
 import com.annimon.stream.Stream;
+import com.felhr.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -93,15 +95,24 @@ public class SerialPortBuilder {
         return getSerialPorts(context);
     }
 
-    public void disconnectDevice(UsbDevice usbDevice){
-        List<UsbSerialDevice> filteredDevice = Stream.of(serialDevices)
-                .filter(p -> usbDevice.getDeviceId() == p.getDeviceId())
-                .toList();
+    public boolean disconnectDevice(UsbSerialDevice usbSerialDevice){
+        usbSerialDevice.syncClose();
+        serialDevices = Utils.removeIf(serialDevices, p -> usbSerialDevice.getDeviceId() == p.getDeviceId());
+        return true;
+    }
 
-        if(filteredDevice.size() == 1){
-            UsbSerialDevice disconnectedDevice = filteredDevice.get(0);
+    public boolean disconnectDevice(UsbDevice usbDevice){
+        Optional<UsbSerialDevice> optionalDevice = Stream.of(serialDevices)
+                .filter(p -> usbDevice.getDeviceId() == p.getDeviceId())
+                .findSingle();
+
+        if(optionalDevice.isPresent()){
+            UsbSerialDevice disconnectedDevice = optionalDevice.get();
             disconnectedDevice.syncClose();
+            serialDevices = Utils.removeIf(serialDevices, p -> usbDevice.getDeviceId() == p.getDeviceId());
+            return true;
         }
+        return false;
     }
 
     private boolean requestPermission(Context context){
@@ -188,14 +199,16 @@ public class SerialPortBuilder {
         public void run() {
             int n =1;
             for (UsbSerialDevice usbSerialDevice : usbSerialDevices) {
-                if (usbSerialDevice.syncOpen()) {
-                    usbSerialDevice.setBaudRate(baudRate);
-                    usbSerialDevice.setDataBits(dataBits);
-                    usbSerialDevice.setStopBits(stopBits);
-                    usbSerialDevice.setParity(parity);
-                    usbSerialDevice.setFlowControl(flowControl);
-                    usbSerialDevice.setPortName(UsbSerialDevice.COM_PORT + String.valueOf(n));
-                    n++;
+                if (!usbSerialDevice.isOpen) {
+                    if (usbSerialDevice.syncOpen()) {
+                        usbSerialDevice.setBaudRate(baudRate);
+                        usbSerialDevice.setDataBits(dataBits);
+                        usbSerialDevice.setStopBits(stopBits);
+                        usbSerialDevice.setParity(parity);
+                        usbSerialDevice.setFlowControl(flowControl);
+                        usbSerialDevice.setPortName(UsbSerialDevice.COM_PORT + String.valueOf(n));
+                        n++;
+                    }
                 }
             }
             serialPortCallback.onSerialPortsDetected(serialDevices, true);
