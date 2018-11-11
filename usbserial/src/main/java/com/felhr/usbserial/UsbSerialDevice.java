@@ -3,7 +3,6 @@ package com.felhr.usbserial;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 
 import com.annimon.stream.Stream;
 import com.felhr.deviceids.CH34xIds;
@@ -245,6 +244,18 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
             throw new IllegalStateException("OutputStream only available in Sync mode. \n" +
                     "Open the port with syncOpen()");
         return outputStream;
+    }
+
+    public int getVid(){
+        return device.getVendorId();
+    }
+
+    public int getPid(){
+        return device.getProductId();
+    }
+
+    public int getDeviceId(){
+        return device.getDeviceId();
     }
 
     //Debug options

@@ -93,6 +93,17 @@ public class SerialPortBuilder {
         return getSerialPorts(context);
     }
 
+    public void disconnectDevice(UsbDevice usbDevice){
+        List<UsbSerialDevice> filteredDevice = Stream.of(serialDevices)
+                .filter(p -> usbDevice.getDeviceId() == p.getDeviceId())
+                .toList();
+
+        if(filteredDevice.size() == 1){
+            UsbSerialDevice disconnectedDevice = filteredDevice.get(0);
+            disconnectedDevice.syncClose();
+        }
+    }
+
     private boolean requestPermission(Context context){
         if(!devices.get(index).open) {
             PendingIntent mPendingIntent = PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0);
