@@ -106,10 +106,12 @@ public class UsbService extends Service implements SerialPortCallback {
             if (readThreadCOM1 == null) {
                 readThreadCOM1 = new ReadThreadCOM(0,
                         serialPorts.get(0).getInputStream());
+                readThreadCOM1.start();
 
             }else if(readThreadCOM2 == null){
                 readThreadCOM2 = new ReadThreadCOM(1,
                         serialPorts.get(1).getInputStream());
+                readThreadCOM2.start();
             }
         }
     }

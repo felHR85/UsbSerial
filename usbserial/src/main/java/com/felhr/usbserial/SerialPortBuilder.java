@@ -53,7 +53,10 @@ public class SerialPortBuilder {
     }
 
 
-    public List<UsbDevice> getPossibleSerialPorts(){
+    public List<UsbDevice> getPossibleSerialPorts(Context context){
+
+        usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
+
         HashMap<String, UsbDevice> allDevices = usbManager.getDeviceList();
         return Stream.of(allDevices.values())
                 .filter(UsbSerialDevice::isSupported)
@@ -63,11 +66,11 @@ public class SerialPortBuilder {
     public boolean getSerialPorts(Context context){
 
         if(devices == null) {
-            devices = Stream.of(getPossibleSerialPorts())
+            devices = Stream.of(getPossibleSerialPorts(context))
                     .map(UsbDeviceStatus::new)
                     .toList();
         }else{
-            devices.addAll(Stream.of(getPossibleSerialPorts())
+            devices.addAll(Stream.of(getPossibleSerialPorts(context))
                     .map(UsbDeviceStatus::new)
                     .filter(p -> !devices.contains(p))
                     .toList());
@@ -78,7 +81,6 @@ public class SerialPortBuilder {
 
         initReceiver(context);
 
-        usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
         requestPermission(context);
 
         return true;
