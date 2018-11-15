@@ -71,8 +71,8 @@ public class SerialPortBuilder {
                     .toList();
         }else{
             devices.addAll(Stream.of(getPossibleSerialPorts(context))
-                    .map(UsbDeviceStatus::new)
                     .filter(p -> !devices.contains(p))
+                    .map(UsbDeviceStatus::new)
                     .toList());
         }
 

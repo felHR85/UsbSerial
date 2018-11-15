@@ -17,6 +17,8 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.felhr.utils.HexData;
+
 import java.lang.ref.WeakReference;
 import java.util.Set;
 

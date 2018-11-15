@@ -76,7 +76,7 @@ public class UsbService extends Service implements SerialPortCallback {
                         UsbSerialInterface.STOP_BITS_1,
                         UsbSerialInterface.PARITY_NONE,
                         UsbSerialInterface.FLOW_CONTROL_OFF);
-               if(ret)
+               if(!ret)
                    Toast.makeText(context, "Couldnt open the device", Toast.LENGTH_SHORT).show();
             } else if (arg1.getAction().equals(ACTION_USB_DETACHED)) {
                 UsbDevice usbDevice = arg1.getParcelableExtra(UsbManager.EXTRA_DEVICE);
@@ -107,8 +107,9 @@ public class UsbService extends Service implements SerialPortCallback {
                 readThreadCOM1 = new ReadThreadCOM(0,
                         serialPorts.get(0).getInputStream());
                 readThreadCOM1.start();
+            }
 
-            }else if(readThreadCOM2 == null){
+            if(readThreadCOM2 == null){
                 readThreadCOM2 = new ReadThreadCOM(1,
                         serialPorts.get(1).getInputStream());
                 readThreadCOM2.start();
