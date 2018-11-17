@@ -79,6 +79,7 @@ public class UsbService extends Service implements SerialPortCallback {
                if(!ret)
                    Toast.makeText(context, "Couldnt open the device", Toast.LENGTH_SHORT).show();
             } else if (arg1.getAction().equals(ACTION_USB_DETACHED)) {
+
                 UsbDevice usbDevice = arg1.getParcelableExtra(UsbManager.EXTRA_DEVICE);
                 boolean ret = builder.disconnectDevice(usbDevice);
 
@@ -95,25 +96,32 @@ public class UsbService extends Service implements SerialPortCallback {
     };
 
     @Override
-    public void onSerialPortsDetected(List<UsbSerialDevice> serialPorts, boolean opened) {
-        if(opened) {
-            this.serialPorts = serialPorts;
-            if (writeThread == null) {
-                writeThread = new WriteThread();
-                writeThread.start();
-            }
+    public void onSerialPortsDetected(List<UsbSerialDevice> serialPorts) {
+        this.serialPorts = serialPorts;
 
-            if (readThreadCOM1 == null) {
-                readThreadCOM1 = new ReadThreadCOM(0,
-                        serialPorts.get(0).getInputStream());
-                readThreadCOM1.start();
-            }
+        if(serialPorts.size() == 0)
+            return;
 
-            if(readThreadCOM2 == null){
-                readThreadCOM2 = new ReadThreadCOM(1,
-                        serialPorts.get(1).getInputStream());
-                readThreadCOM2.start();
-            }
+        if (writeThread == null) {
+            writeThread = new WriteThread();
+            writeThread.start();
+        }
+
+        int index = 0;
+
+        if (readThreadCOM1 == null && index <= serialPorts.size()-1
+                && serialPorts.get(index).isOpen()) {
+            readThreadCOM1 = new ReadThreadCOM(index,
+                    serialPorts.get(index).getInputStream());
+            readThreadCOM1.start();
+        }
+
+        index++;
+        if(readThreadCOM2 == null && index <= serialPorts.size()-1
+                && serialPorts.get(index).isOpen()){
+            readThreadCOM2 = new ReadThreadCOM(index,
+                    serialPorts.get(index).getInputStream());
+            readThreadCOM2.start();
         }
     }
 
