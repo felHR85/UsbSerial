@@ -5,7 +5,7 @@ android {
     compileSdkVersion Integer.parseInt(project.ANDROID_BUILD_SDK_VERSION)
 
     defaultConfig {
-        applicationId "com.felhr.examplestreams"
+        applicationId "com.felhr.examplemultipleports"
         minSdkVersion Integer.parseInt(project.ANDROID_BUILD_MIN_SDK_VERSION)
         targetSdkVersion Integer.parseInt(project.ANDROID_BUILD_TARGET_SDK_VERSION)
         versionName project.VERSION_NAME
@@ -17,6 +17,14 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
 }
 
 dependencies {
@@ -33,4 +41,5 @@ dependencies {
     testImplementation 'junit:junit:4.12'
 
     implementation project(':usbserial')
+    implementation 'com.annimon:stream:1.2.1'
 }
