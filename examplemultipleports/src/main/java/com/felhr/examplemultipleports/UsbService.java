@@ -157,6 +157,8 @@ public class UsbService extends Service implements SerialPortCallback {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        if(builder != null)
+            builder.unregisterListeners(context);
         UsbService.SERVICE_CONNECTED = false;
     }
 
@@ -232,8 +234,10 @@ public class UsbService extends Service implements SerialPortCallback {
                 public void handleMessage(Message msg) {
                     int port = msg.arg1;
                     byte[] data = (byte[]) msg.obj;
-                    UsbSerialDevice serialDevice = serialPorts.get(port);
-                    serialDevice.getOutputStream().write(data);
+                    if(port <= serialPorts.size()-1) {
+                        UsbSerialDevice serialDevice = serialPorts.get(port);
+                        serialDevice.getOutputStream().write(data);
+                    }
                 }
             };
             Looper.loop();

@@ -146,6 +146,13 @@ public class SerialPortBuilder {
         return false;
     }
 
+    public void unregisterListeners(Context context){
+        if(broadcastRegistered){
+            context.unregisterReceiver(usbReceiver);
+            broadcastRegistered = false;
+        }
+    }
+
     private PendingUsbPermission createUsbPermission(Context context, UsbDeviceStatus usbDeviceStatus){
         PendingIntent mPendingIntent = PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0);
         PendingUsbPermission pendingUsbPermission = new PendingUsbPermission();
