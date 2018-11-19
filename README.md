@@ -1,10 +1,18 @@
 UsbSerial [![Build Status](https://travis-ci.org/felHR85/UsbSerial.svg?branch=master)](https://travis-ci.org/felHR85/UsbSerial) [![](https://jitpack.io/v/felHR85/UsbSerial.svg)](https://jitpack.io/#felHR85/UsbSerial) [![AndroidArsenal](https://img.shields.io/badge/Android%20Arsenal-UsbSerial-green.svg?style=true)](https://android-arsenal.com/details/1/4162) [![Join the chat at https://gitter.im/UsbSerial/Lobby](https://badges.gitter.im/UsbSerial/Lobby.svg)](https://gitter.im/UsbSerial/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) 
 =========
-Usb serial controller for Android. For more information, there is [a more complete description](http://felhr85.net/2014/11/11/usbserial-a-serial-port-driver-library-for-android-v2-0/).
+
+UsbSerial wiki available. Read it first
+--------------------------------------
+[**Getting started**](https://github.com/felHR85/UsbSerial/wiki/2.-Getting-Started)\
+[**Create UsbSerialDevice objects**](https://github.com/felHR85/UsbSerial/wiki/3.-Create-UsbSerialDevice)\
+[**Asynchronous api**](https://github.com/felHR85/UsbSerial/wiki/4.-Asynchronous-api)\
+[**Synchronous api**](https://github.com/felHR85/UsbSerial/wiki/5.-Synchronous-api)\
+[**InputStream and OutputStream I/O**](https://github.com/felHR85/UsbSerial/wiki/6.-InputStream-and-OutputStream-I-O)\
+[**Multiple Serial ports**](https://github.com/felHR85/UsbSerial/wiki/7.-Multiple-Serial-ports)\
+[**Projects using UsbSerial**](https://github.com/felHR85/UsbSerial/wiki/8.-Projects-using-UsbSerial)
+
 
 [If UsbSerial helped you with your projects please consider donating a little sum :)](https://www.paypal.me/felhr)
-
-[A brief list of Apps and projects using UsbSerial](http://felhr85.net/2016/03/19/apps-and-projects-using-usbserial/)
 
 Devices Supported
 --------------------------------------
