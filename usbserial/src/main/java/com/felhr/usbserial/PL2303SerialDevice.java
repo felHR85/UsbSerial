@@ -8,6 +8,9 @@ import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbRequest;
 import android.util.Log;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class PL2303SerialDevice extends UsbSerialDevice
 {
     private static final String CLASS_ID = PL2303SerialDevice.class.getSimpleName();
@@ -30,6 +33,7 @@ public class PL2303SerialDevice extends UsbSerialDevice
             (byte) 0x08  // [6] Data Bits (5=5, 6=6, 7=7, 8=8)
     };
 
+    private Map<Integer, Integer> gpioModes = new HashMap<>();
 
     private UsbInterface mInterface;
     private UsbEndpoint inEndpoint;
@@ -311,6 +315,68 @@ public class PL2303SerialDevice extends UsbSerialDevice
         //TODO
     }
 
+    @Override
+    public void setPinValue(int pin, int value) {
+        int mode = gpioModes.get(pin);
+        int shiftDir = gpioDirShift(pin);
+        int shiftVal = gpioValShift(pin);
+        int reg = gpioReadReg();
+        if(mode == UsbGPIOInterface.OUT){
+            reg |= (1 << shiftDir);
+            reg &= ~(1 << shiftVal);
+            if(value != -1)
+                reg |= (value << shiftVal);
+            else
+                reg |= (0 << shiftVal);
+            gpioWriteReg(reg);
+        }else if(mode == UsbGPIOInterface.IN){
+            reg &= ~(1 << shiftDir);
+            reg &= ~(1 << shiftVal);
+            if(value != -1)
+                reg |= (value << shiftVal);
+            else
+                reg |= (0 << shiftVal);
+            gpioWriteReg(reg);
+        }
+    }
+
+    @Override
+    public void setPinMode(int pin, int mode, int defaultValue) {
+        gpioModes.put(pin, mode);
+        int shiftDir = gpioDirShift(pin);
+        int shiftVal = gpioValShift(pin);
+        int reg = gpioReadReg();
+        if(mode == UsbGPIOInterface.OUT) {
+            reg |= (1 << shiftDir);
+            reg &= ~(1 << shiftVal);
+            if(defaultValue != -1)
+                reg |= (defaultValue << shiftVal);
+            else
+                reg |= (0 << shiftVal);
+            gpioWriteReg(reg);
+        }else if(mode == UsbGPIOInterface.IN){
+            reg &= ~(1 << shiftDir);
+            reg &= ~(1 << shiftVal);
+            if(defaultValue != -1)
+                reg |= (defaultValue << shiftVal);
+            else
+                reg |= (0 << shiftVal);
+            gpioWriteReg(reg);
+        }
+    }
+
+    @Override
+    public void setPinMode(int pin, int mode) {
+        setPinMode(pin, mode, -1);
+    }
+
+    @Override
+    public int readPin(int pin) {
+        int ret = gpioReadReg();
+        int shift = gpioValShift(pin);
+        return (ret & (1<<shift));
+    }
+
     private boolean openPL2303()
     {
         if(connection.claimInterface(mInterface, true))
@@ -369,6 +435,46 @@ public class PL2303SerialDevice extends UsbSerialDevice
             return false;
 
         return true;
+    }
+
+    private int gpioDirShift(int gpio){
+        if(gpio == 0)
+            return 4;
+        if(gpio == 1)
+            return 5;
+        return 4; // Default to 0
+    }
+
+    private int gpioValShift(int gpio){
+        if(gpio == 0)
+            return 6;
+        if(gpio == 1)
+            return 7;
+        return 6; // Default to 0
+    }
+
+    private int gpioReadReg(){
+        byte[] buff = new byte[1];
+        setControlCommand(PL2303_REQTYPE_DEVICE2HOST_VENDOR,
+                0x01,
+                0x0081,
+                0,
+                buff);
+        return buff[0];
+    }
+
+    private void gpioWriteReg(int reg){
+        setControlCommand(PL2303_REQTYPE_HOST2DEVICE_VENDOR,
+                0x01,
+                1,
+                reg,
+                null);
+    }
+
+    private int gpioRead(int gpio){
+        int ret = gpioReadReg();
+        int shift = gpioValShift(gpio);
+        return (ret & (1<<shift));
     }
 
     private int setControlCommand(int reqType , int request, int value, int index, byte[] data)

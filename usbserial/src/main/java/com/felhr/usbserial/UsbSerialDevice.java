@@ -14,7 +14,7 @@ import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbRequest;
 
-public abstract class UsbSerialDevice implements UsbSerialInterface
+public abstract class UsbSerialDevice implements UsbSerialInterface, UsbGPIOInterface
 {
     public static final String CDC = "cdc";
     public static final String CH34x = "ch34x";

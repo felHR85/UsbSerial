@@ -432,6 +432,27 @@ public class FTDISerialDevice extends UsbSerialDevice
         this.parityCallback = parityCallback;
     }
 
+    @Override
+    public void setPinValue(int pin, int value) {
+        //TODO!!
+    }
+
+    @Override
+    public void setPinMode(int pin, int mode) {
+        //TODO!!
+    }
+
+    @Override
+    public void setPinMode(int pin, int mode, int defaultValue) {
+        //TODO!!
+    }
+
+    @Override
+    public int readPin(int pin) {
+        //TODO!!
+        return 0;
+    }
+
     private boolean openFTDI()
     {
         if(connection.claimInterface(mInterface, true))

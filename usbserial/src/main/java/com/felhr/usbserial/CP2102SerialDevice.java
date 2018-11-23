@@ -8,7 +8,6 @@ import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbRequest;
 import android.util.Log;
 
-import java.io.SequenceInputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CP2102SerialDevice extends UsbSerialDevice
@@ -403,9 +402,30 @@ public class CP2102SerialDevice extends UsbSerialDevice
         startFlowControlThread();
     }
 
+    @Override
+    public void setPinValue(int pin, int value) {
+        //TODO!!
+    }
+
+    @Override
+    public void setPinMode(int pin, int mode) {
+        //TODO!!
+    }
+
+    @Override
+    public void setPinMode(int pin, int mode, int defaultValue) {
+        //TODO!!
+    }
+
+    @Override
+    public int readPin(int pin) {
+        //TODO!!
+        return 0;
+    }
+
     /*
-        Thread to check every X time if flow signals CTS or DSR have been raised
-    */
+            Thread to check every X time if flow signals CTS or DSR have been raised
+        */
     private class FlowControlThread extends Thread
     {
         private long time = 40; // 40ms
