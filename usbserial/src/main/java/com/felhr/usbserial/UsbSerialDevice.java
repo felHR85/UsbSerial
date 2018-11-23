@@ -23,6 +23,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface, UsbGPIOInte
     public static final String PL2303 = "pl2303";
 
     private static final String CLASS_ID = UsbSerialDevice.class.getSimpleName();
+    protected static final String COM_PORT = "COM ";
 
     private static boolean mr1Version;
     protected final UsbDevice device;
@@ -46,6 +47,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface, UsbGPIOInte
 
     protected boolean asyncMode;
 
+    private String portName = "";
     protected boolean isOpen;
 
     // Get Android version if version < 4.3 It is not going to be asynchronous read operations
@@ -250,11 +252,31 @@ public abstract class UsbSerialDevice implements UsbSerialInterface, UsbGPIOInte
         return outputStream;
     }
 
+    public int getVid(){
+        return device.getVendorId();
+    }
+
+    public int getPid(){
+        return device.getProductId();
+    }
+
+    public int getDeviceId(){
+        return device.getDeviceId();
+    }
+
     //Debug options
     public void debug(boolean value)
     {
         if(serialBuffer != null)
             serialBuffer.debug(value);
+    }
+
+    public void setPortName(String portName) {
+        this.portName = portName;
+    }
+
+    public String getPortName(){
+        return this.portName;
     }
 
     public boolean isOpen(){
