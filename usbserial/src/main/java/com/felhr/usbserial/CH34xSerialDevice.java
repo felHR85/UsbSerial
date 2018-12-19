@@ -132,10 +132,12 @@ public class CH34xSerialDevice extends UsbSerialDevice
             setThreadsParams(requestIN, outEndpoint);
 
             asyncMode = true;
+            isOpen = true;
 
             return true;
         }else
         {
+            isOpen = false;
             return false;
         }
     }
@@ -147,6 +149,7 @@ public class CH34xSerialDevice extends UsbSerialDevice
         killWriteThread();
         stopFlowControlThread();
         connection.releaseInterface(mInterface);
+        isOpen = false;
     }
 
     @Override
@@ -159,9 +162,16 @@ public class CH34xSerialDevice extends UsbSerialDevice
             createFlowControlThread();
             setSyncParams(inEndpoint, outEndpoint);
             asyncMode = false;
+            isOpen = true;
+
+            // Init Streams
+            inputStream = new SerialInputStream(this);
+            outputStream = new SerialOutputStream(this);
+
             return true;
         }else
         {
+            isOpen = false;
             return false;
         }
     }
@@ -171,6 +181,7 @@ public class CH34xSerialDevice extends UsbSerialDevice
     {
         stopFlowControlThread();
         connection.releaseInterface(mInterface);
+        isOpen = false;
     }
 
     @Override
@@ -591,8 +602,11 @@ public class CH34xSerialDevice extends UsbSerialDevice
 
     private void stopFlowControlThread()
     {
-        flowControlThread.stopThread();
-        flowControlThread = null;
+        if(flowControlThread != null)
+        {
+            flowControlThread.stopThread();
+            flowControlThread = null;
+        }
     }
 
     private class FlowControlThread extends Thread

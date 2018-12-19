@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">ExampleInputOutputStream</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="serial_port">InputStream and OutputStream Serial Port</string>
+
+</resources>

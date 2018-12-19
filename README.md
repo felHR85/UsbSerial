@@ -1,9 +1,18 @@
-UsbSerial
+UsbSerial [![Build Status](https://travis-ci.org/felHR85/UsbSerial.svg?branch=master)](https://travis-ci.org/felHR85/UsbSerial) [![](https://jitpack.io/v/felHR85/UsbSerial.svg)](https://jitpack.io/#felHR85/UsbSerial) [![AndroidArsenal](https://img.shields.io/badge/Android%20Arsenal-UsbSerial-green.svg?style=true)](https://android-arsenal.com/details/1/4162) [![Join the chat at https://gitter.im/UsbSerial/Lobby](https://badges.gitter.im/UsbSerial/Lobby.svg)](https://gitter.im/UsbSerial/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) 
 =========
 
-Usb serial controller for Android. For more information, there is [a more complete description](http://felhr85.net/2014/11/11/usbserial-a-serial-port-driver-library-for-android-v2-0/).
+UsbSerial wiki available. Read it first
+--------------------------------------
+[**Getting started**](https://github.com/felHR85/UsbSerial/wiki/2.-Getting-Started)\
+[**Create UsbSerialDevice objects**](https://github.com/felHR85/UsbSerial/wiki/3.-Create-UsbSerialDevice)\
+[**Asynchronous api**](https://github.com/felHR85/UsbSerial/wiki/4.-Asynchronous-api)\
+[**Synchronous api**](https://github.com/felHR85/UsbSerial/wiki/5.-Synchronous-api)\
+[**InputStream and OutputStream I/O**](https://github.com/felHR85/UsbSerial/wiki/6.-InputStream-and-OutputStream-I-O)\
+[**Multiple Serial ports**](https://github.com/felHR85/UsbSerial/wiki/7.-Multiple-Serial-ports)\
+[**Projects using UsbSerial**](https://github.com/felHR85/UsbSerial/wiki/8.-Projects-using-UsbSerial)
 
-[A brief list of Apps and projects using UsbSerial](http://felhr85.net/2016/03/19/apps-and-projects-using-usbserial/)
+
+[If UsbSerial helped you with your projects please consider donating a little sum :)](https://www.paypal.me/felhr)
 
 Devices Supported
 --------------------------------------
@@ -17,15 +26,21 @@ Devices Supported
 
 [CH34x devices](https://www.olimex.com/Products/Breadboarding/BB-CH340T/resources/CH340DS1.PDF) Default 9600,8,1,None,flow off
 
+[CP2130 SPI-USB](http://www.silabs.com/products/interface/usb-bridges/classic-usb-bridges/Pages/usb-to-spi-bridge.aspx)
+
+Known Issue
+--------------------------------------
+Due to a bug in Android itself, it's highly recommended to **not** use it with a device running [Android 5.1.1 Lollipop](https://en.wikipedia.org/wiki/Android_version_history#Android_5.1_Lollipop_(API_22)). See issue [#142](https://github.com/felHR85/UsbSerial/issues/142) for more details.
+
 How to use it?
 --------------------------------------
 Instantiate a new object of the UsbSerialDevice class
-~~~
+```java
 UsbDevice device;
 UsbDeviceConnection usbConnection;
 ...
 UsbSerialDevice serial = UsbSerialDevice.createUsbSerialDevice(device, usbConnection); 
-~~~
+```
 
 Open the device and set it up as desired
 ```java
@@ -121,7 +136,41 @@ UsbDevice device;
 UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
 manager.openDevice(UsbDevice device)
 ```
+How to use the SPI interface (BETA)
+--------------------------------------
+Support for USB to SPI devices was added recently but it is still in beta. Although I tried to keep the api as close to standard UsbSerial api as possible, be aware because the beta nature of this feature this api may change in the future. Only CP2130 chipset is supported at the moment.
 
+```java
+UsbSpiDevice spi = UsbSpiDevice.createUsbSerialDevice(device, connection);
+spi.connectSPI();
+spi.selectSlave(0);
+spi.setClock(CP2130SpiDevice.CLOCK_3MHz);
+```
+Define the usual callback
+
+```java
+private UsbSpiInterface.UsbMISOCallback misoCallback = new UsbSpiInterface.UsbMISOCallback()
+    {
+        @Override
+        public int onReceivedData(byte[] data) {
+             // Your code here :)
+        }
+    };
+//...
+spi.setMISOCallback(misoCallback);
+```
+
+```java
+spi.writeMOSI("Hola!".getBytes()); // Write "Hola!" to the selected slave through MOSI (MASTER OUTPUT SLAVE INPUT)
+spi.readMISO(5); // Read 5 bytes from the MISO (MASTER INPUT SLAVE OUTPUT) line. Data will be received through UsbMISOCallback
+spi.writeRead("Hola!".getBytes(), 15); // Write "Hola!" and read 15 bytes synchronously
+```
+
+Close the device when done
+
+```java
+spi.closeSPI();
+```
 
 Gradle
 --------------------------------------
@@ -141,7 +190,7 @@ Then add the dependency to your module's build.gradle:
 
 /app/build.gradle
 ```groovy
-compile 'com.github.felHR85:UsbSerial:4.2'
+implementation 'com.github.felHR85:UsbSerial:5.0.0'
 ```
 
 TO-DO

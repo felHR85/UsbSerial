@@ -86,6 +86,11 @@ public class FTDISerialDevice extends UsbSerialDevice
 
     public FTDIUtilities ftdiUtilities;
 
+    private UsbSerialInterface.UsbParityCallback parityCallback;
+    private UsbSerialInterface.UsbFrameCallback frameCallback;
+    private UsbSerialInterface.UsbOverrunCallback overrunCallback;
+    private UsbSerialInterface.UsbBreakCallback breakCallback;
+
 
     public FTDISerialDevice(UsbDevice device, UsbDeviceConnection connection)
     {
@@ -123,10 +128,12 @@ public class FTDISerialDevice extends UsbSerialDevice
             setThreadsParams(requestIN, outEndpoint);
 
             asyncMode = true;
+            isOpen = true;
 
             return true;
         }else
         {
+            isOpen = false;
             return false;
         }
     }
@@ -140,6 +147,7 @@ public class FTDISerialDevice extends UsbSerialDevice
         killWorkingThread();
         killWriteThread();
         connection.releaseInterface(mInterface);
+        isOpen = false;
     }
 
     @Override
@@ -150,9 +158,17 @@ public class FTDISerialDevice extends UsbSerialDevice
         {
             setSyncParams(inEndpoint, outEndpoint);
             asyncMode = false;
+
+            // Init Streams
+            inputStream = new SerialInputStream(this);
+            outputStream = new SerialOutputStream(this);
+
+            isOpen = true;
+
             return true;
         }else
         {
+            isOpen = false;
             return false;
         }
     }
@@ -164,6 +180,7 @@ public class FTDISerialDevice extends UsbSerialDevice
         setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SET_MODEM_CTRL_DEFAULT4, 0, null);
         currentSioSetData = 0x0000;
         connection.releaseInterface(mInterface);
+        isOpen = false;
     }
 
     @Override
@@ -396,25 +413,25 @@ public class FTDISerialDevice extends UsbSerialDevice
     @Override
     public void getBreak(UsbBreakCallback breakCallback)
     {
-        //TODO
+        this.breakCallback = breakCallback;
     }
 
     @Override
     public void getFrame(UsbFrameCallback frameCallback)
     {
-        //TODO
+        this.frameCallback = frameCallback;
     }
 
     @Override
     public void getOverrun(UsbOverrunCallback overrunCallback)
     {
-        //TODO
+        this.overrunCallback = overrunCallback;
     }
 
     @Override
     public void getParity(UsbParityCallback parityCallback)
     {
-        //TODO
+        this.parityCallback = parityCallback;
     }
 
     private boolean openFTDI()
@@ -540,6 +557,38 @@ public class FTDISerialDevice extends UsbSerialDevice
                 dsrState = !dsrState;
                 dsrCallback.onDSRChanged(dsrState);
             }
+
+            if(parityCallback != null) // Parity error checking
+            {
+                if((data[1] & 0x04) == 0x04)
+                {
+                    parityCallback.onParityError();
+                }
+            }
+
+            if(frameCallback != null) // Frame error checking
+            {
+                if((data[1] & 0x08) == 0x08)
+                {
+                    frameCallback.onFramingError();
+                }
+            }
+
+            if(overrunCallback != null) // Overrun error checking
+            {
+                if((data[1] & 0x02) == 0x02)
+                {
+                    overrunCallback.onOverrunError();
+                }
+            }
+
+            if(breakCallback != null) // Break interrupt checking
+            {
+                if((data[1] & 0x10) == 0x10)
+                {
+                    breakCallback.onBreakInterrupt();
+                }
+            }
         }
 
         // Copy data without FTDI headers
@@ -596,10 +645,14 @@ public class FTDISerialDevice extends UsbSerialDevice
 
         do
         {
-            int timeLeft = (int) (stopTime - System.currentTimeMillis());
-            if(timeLeft <= 0)
+            int timeLeft = 0;
+            if(timeout > 0)
             {
-                break;
+                timeLeft = (int) (stopTime - System.currentTimeMillis());
+                if (timeLeft <= 0)
+                {
+                    break;
+                }
             }
 
             int numberBytes = connection.bulkTransfer(inEndpoint, tempBuffer, tempBuffer.length, timeLeft);

@@ -16,7 +16,14 @@ import android.hardware.usb.UsbRequest;
 
 public abstract class UsbSerialDevice implements UsbSerialInterface
 {
+    public static final String CDC = "cdc";
+    public static final String CH34x = "ch34x";
+    public static final String CP210x = "cp210x";
+    public static final String FTDI = "ftdi";
+    public static final String PL2303 = "pl2303";
+
     private static final String CLASS_ID = UsbSerialDevice.class.getSimpleName();
+    protected static final String COM_PORT = "COM ";
 
     private static boolean mr1Version;
     protected final UsbDevice device;
@@ -34,7 +41,14 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     private UsbEndpoint inEndpoint;
     private UsbEndpoint outEndpoint;
 
+    // InputStream and OutputStream (only for sync api)
+    protected SerialInputStream inputStream;
+    protected SerialOutputStream outputStream;
+
     protected boolean asyncMode;
+
+    private String portName = "";
+    protected boolean isOpen;
 
     // Get Android version if version < 4.3 It is not going to be asynchronous read operations
     static
@@ -82,6 +96,41 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
             return null;
     }
 
+    public static UsbSerialDevice createUsbSerialDevice(String type, UsbDevice device, UsbDeviceConnection connection, int iface){
+        if(type.equals(FTDI)){
+            return new FTDISerialDevice(device, connection, iface);
+        }else if(type.equals(CP210x)){
+            return new CP2102SerialDevice(device, connection, iface);
+        }else if(type.equals(PL2303)){
+            return new PL2303SerialDevice(device, connection, iface);
+        }else if(type.equals(CH34x)){
+            return new CH34xSerialDevice(device, connection, iface);
+        }else if(type.equals(CDC)){
+            return new CDCSerialDevice(device, connection, iface);
+        }else{
+            throw new IllegalArgumentException("Invalid type argument. Must be:cdc, ch34x, cp210x, ftdi or pl2303");
+        }
+    }
+
+    public static boolean isSupported(UsbDevice device)
+    {
+        int vid = device.getVendorId();
+        int pid = device.getProductId();
+
+        if(FTDISioIds.isDeviceSupported(vid, pid))
+            return true;
+        else if(CP210xIds.isDeviceSupported(vid, pid))
+            return true;
+        else if(PL2303Ids.isDeviceSupported(vid, pid))
+            return true;
+        else if(CH34xIds.isDeviceSupported(vid, pid))
+            return true;
+        else if(isCdcDevice(device))
+            return true;
+        else
+            return false;
+    }
+
     // Common Usb Serial Operations (I/O Asynchronous)
     @Override
     public abstract boolean open();
@@ -93,6 +142,30 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
             serialBuffer.putWriteBuffer(buffer);
     }
 
+    /**
+     * <p>
+     *     Use this setter <strong>before</strong> calling {@link #open()} to override the default baud rate defined in this particular class.
+     * </p>
+     *
+     * <p>
+     *     This is a workaround for devices where calling {@link #setBaudRate(int)} has no effect once {@link #open()} has been called.
+     * </p>
+     *
+     * @param initialBaudRate baud rate to be used when initializing the serial connection
+     */
+    public void setInitialBaudRate(int initialBaudRate) {
+        // this class does not implement initialBaudRate
+    }
+
+    /**
+     * Classes that do not implement {@link #setInitialBaudRate(int)} should always return -1
+     *
+     * @return initial baud rate used when initializing the serial connection
+     */
+    public int getInitialBaudRate() {
+        return -1;
+    }
+
     @Override
     public int read(UsbReadCallback mCallback)
     {
@@ -101,8 +174,10 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 
         if(mr1Version)
         {
-            workerThread.setCallback(mCallback);
-            workerThread.getUsbRequest().queue(serialBuffer.getReadBuffer(), SerialBuffer.DEFAULT_READ_BUFFER_SIZE);
+            if (workerThread != null) {
+                workerThread.setCallback(mCallback);
+                workerThread.getUsbRequest().queue(serialBuffer.getReadBuffer(), SerialBuffer.DEFAULT_READ_BUFFER_SIZE);
+            }
         }else
         {
             readThread.setCallback(mCallback);
@@ -163,11 +238,49 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     @Override
     public abstract void setFlowControl(int flowControl);
 
+    public SerialInputStream getInputStream() {
+        if(asyncMode)
+            throw new IllegalStateException("InputStream only available in Sync mode. \n" +
+                    "Open the port with syncOpen()");
+        return inputStream;
+    }
+
+    public SerialOutputStream getOutputStream() {
+        if(asyncMode)
+            throw new IllegalStateException("OutputStream only available in Sync mode. \n" +
+                    "Open the port with syncOpen()");
+        return outputStream;
+    }
+
+    public int getVid(){
+        return device.getVendorId();
+    }
+
+    public int getPid(){
+        return device.getProductId();
+    }
+
+    public int getDeviceId(){
+        return device.getDeviceId();
+    }
+
     //Debug options
     public void debug(boolean value)
     {
         if(serialBuffer != null)
             serialBuffer.debug(value);
+    }
+
+    public void setPortName(String portName) {
+        this.portName = portName;
+    }
+
+    public String getPortName(){
+        return this.portName;
+    }
+
+    public boolean isOpen(){
+        return isOpen;
     }
 
     private boolean isFTDIDevice()
@@ -283,7 +396,8 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
             while(working.get())
             {
                 byte[] data = serialBuffer.getWriteBuffer();
-                connection.bulkTransfer(outEndpoint, data, data.length, USB_TIMEOUT);
+                if(data.length > 0)
+                    connection.bulkTransfer(outEndpoint, data, data.length, USB_TIMEOUT);
             }
         }
 

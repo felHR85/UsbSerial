@@ -103,8 +103,7 @@ public class UsbService extends Service {
                     Intent intent = new Intent(ACTION_USB_PERMISSION_GRANTED);
                     arg0.sendBroadcast(intent);
                     connection = usbManager.openDevice(device);
-                    serialPortConnected = true;
-                    new ConnectionThread().run();
+                    new ConnectionThread().start();
                 } else // User not accepted our USB connection. Send an Intent to the Main Activity
                 {
                     Intent intent = new Intent(ACTION_USB_PERMISSION_NOT_GRANTED);
@@ -117,8 +116,10 @@ public class UsbService extends Service {
                 // Usb device was disconnected. send an intent to the Main Activity
                 Intent intent = new Intent(ACTION_USB_DISCONNECTED);
                 arg0.sendBroadcast(intent);
+                if (serialPortConnected) {
+                    serialPort.close();
+                }
                 serialPortConnected = false;
-                serialPort.close();
             }
         }
     };
@@ -179,7 +180,8 @@ public class UsbService extends Service {
                 int deviceVID = device.getVendorId();
                 int devicePID = device.getProductId();
 
-                if (deviceVID != 0x1d6b && (devicePID != 0x0001 || devicePID != 0x0002 || devicePID != 0x0003)) {
+                if (deviceVID != 0x1d6b && (devicePID != 0x0001 && devicePID != 0x0002 && devicePID != 0x0003) && deviceVID != 0x5c6 && devicePID != 0x904c) {
+              
                     // There is a device connected to our Android device. Try to open it as a Serial Port.
                     requestUserPermission();
                     keep = false;
@@ -235,6 +237,7 @@ public class UsbService extends Service {
             serialPort = UsbSerialDevice.createUsbSerialDevice(device, connection);
             if (serialPort != null) {
                 if (serialPort.open()) {
+                    serialPortConnected = true;
                     serialPort.setBaudRate(BAUD_RATE);
                     serialPort.setDataBits(UsbSerialInterface.DATA_BITS_8);
                     serialPort.setStopBits(UsbSerialInterface.STOP_BITS_1);
@@ -249,6 +252,12 @@ public class UsbService extends Service {
                     serialPort.read(mCallback);
                     serialPort.getCTS(ctsCallback);
                     serialPort.getDSR(dsrCallback);
+                    
+                    //
+                    // Some Arduinos would need some sleep because firmware wait some time to know whether a new sketch is going 
+                    // to be uploaded or not
+                    //Thread.sleep(2000); // sleep some. YMMV with different chips.
+                    
                     // Everything went as expected. Send an intent to MainActivity
                     Intent intent = new Intent(ACTION_USB_READY);
                     context.sendBroadcast(intent);

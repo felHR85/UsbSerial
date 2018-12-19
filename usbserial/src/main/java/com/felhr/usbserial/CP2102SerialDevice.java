@@ -8,8 +8,9 @@ import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbRequest;
 import android.util.Log;
 
-import com.felhr.utils.SafeUsbRequest;
 
+import com.felhr.utils.SafeUsbRequest;
+import java.io.SequenceInputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CP2102SerialDevice extends UsbSerialDevice
@@ -74,6 +75,12 @@ public class CP2102SerialDevice extends UsbSerialDevice
 
     private FlowControlThread flowControlThread;
 
+    // COMM_STATUS callbacks
+    private UsbSerialInterface.UsbParityCallback parityCallback;
+    private UsbSerialInterface.UsbBreakCallback breakCallback;
+    private UsbSerialInterface.UsbFrameCallback frameCallback;
+    private UsbSerialInterface.UsbOverrunCallback overrunCallback;
+
     public CP2102SerialDevice(UsbDevice device, UsbDeviceConnection connection)
     {
         this(device, connection, -1);
@@ -111,10 +118,12 @@ public class CP2102SerialDevice extends UsbSerialDevice
             setThreadsParams(requestIN, outEndpoint);
 
             asyncMode = true;
+            isOpen = true;
 
             return true;
         }else
         {
+            isOpen = false;
             return false;
         }
     }
@@ -127,6 +136,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
         killWriteThread();
         stopFlowControlThread();
         connection.releaseInterface(mInterface);
+        isOpen = false;
     }
 
     @Override
@@ -139,9 +149,16 @@ public class CP2102SerialDevice extends UsbSerialDevice
             createFlowControlThread();
             setSyncParams(inEndpoint, outEndpoint);
             asyncMode = false;
+            isOpen = true;
+
+            // Init Streams
+            inputStream = new SerialInputStream(this);
+            outputStream = new SerialOutputStream(this);
+
             return true;
         }else
         {
+            isOpen = false;
             return false;
         }
     }
@@ -152,6 +169,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
         setControlCommand(CP210x_IFC_ENABLE, CP210x_UART_DISABLE, null);
         stopFlowControlThread();
         connection.releaseInterface(mInterface);
+        isOpen = false;
     }
 
     @Override
@@ -365,25 +383,26 @@ public class CP2102SerialDevice extends UsbSerialDevice
     @Override
     public void getBreak(UsbBreakCallback breakCallback)
     {
-        //TODO
+        this.breakCallback = breakCallback;
     }
 
     @Override
     public void getFrame(UsbFrameCallback frameCallback)
     {
-        //TODO
+        this.frameCallback = frameCallback;
     }
 
     @Override
     public void getOverrun(UsbOverrunCallback overrunCallback)
     {
-        //TODO
+        this.overrunCallback = overrunCallback;
     }
 
     @Override
     public void getParity(UsbParityCallback parityCallback)
     {
-        //TODO
+        this.parityCallback = parityCallback;
+        startFlowControlThread();
     }
 
     /*
@@ -411,6 +430,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
                 if(!firstTime) // Only execute the callback when the status change
                 {
                     byte[] modemState = pollLines();
+                    byte[] commStatus = getCommStatus();
 
                     // Check CTS status
                     if(rtsCtsEnabled)
@@ -432,6 +452,45 @@ public class CP2102SerialDevice extends UsbSerialDevice
                             if (dsrCallback != null)
                                 dsrCallback.onDSRChanged(dsrState);
                         }
+                    }
+
+                    //Check Parity Errors
+                    if(parityCallback != null)
+                    {
+                        if((commStatus[0] & 0x10) == 0x10)
+                        {
+                            parityCallback.onParityError();
+                        }
+                    }
+
+                    // Check frame error
+                    if(frameCallback != null)
+                    {
+                        if((commStatus[0] & 0x02) == 0x02)
+                        {
+                            frameCallback.onFramingError();
+                        }
+                    }
+
+                    // Check break interrupt
+                    if(breakCallback != null)
+                    {
+                        if((commStatus[0] & 0x01) == 0x01)
+                        {
+                            breakCallback.onBreakInterrupt();
+                        }
+                    }
+
+                    // Check Overrun error
+
+                    if(overrunCallback != null)
+                    {
+                        if((commStatus[0] & 0x04) == 0x04
+                                || (commStatus[0] & 0x8) == 0x08)
+                        {
+                            overrunCallback.onOverrunError();
+                        }
+
                     }
                 }else // Execute the callback always the first time
                 {
@@ -521,8 +580,11 @@ public class CP2102SerialDevice extends UsbSerialDevice
 
     private void stopFlowControlThread()
     {
-        flowControlThread.stopThread();
-        flowControlThread = null;
+        if(flowControlThread != null)
+        {
+            flowControlThread.stopThread();
+            flowControlThread = null;
+        }
     }
 
     private int setControlCommand(int request, int value, byte[] data)

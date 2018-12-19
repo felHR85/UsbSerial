@@ -21,6 +21,10 @@ public class CDCSerialDevice extends UsbSerialDevice
     private static final int CDC_GET_LINE_CODING = 0x21;
     private static final int CDC_SET_CONTROL_LINE_STATE = 0x22;
 
+    private static final int CDC_SET_CONTROL_LINE_STATE_RTS = 0x2;
+    private static final int CDC_SET_CONTROL_LINE_STATE_DTR = 0x1;
+
+
     /***
      *  Default Serial Configuration
      *  Baud rate: 115200
@@ -47,6 +51,10 @@ public class CDCSerialDevice extends UsbSerialDevice
     private UsbEndpoint outEndpoint;
     private UsbRequest requestIN;
 
+    private int initialBaudRate = 0;
+
+    private int controlLineState = CDC_CONTROL_LINE_ON;
+
     public CDCSerialDevice(UsbDevice device, UsbDeviceConnection connection)
     {
         this(device, connection, -1);
@@ -56,6 +64,16 @@ public class CDCSerialDevice extends UsbSerialDevice
     {
         super(device, connection);
         mInterface = device.getInterface(iface >= 0 ? iface : findFirstCDC(device));
+    }
+
+    @Override
+    public void setInitialBaudRate(int initialBaudRate) {
+        this.initialBaudRate = initialBaudRate;
+    }
+
+    @Override
+    public int getInitialBaudRate() {
+        return initialBaudRate;
     }
 
     @Override
@@ -77,10 +95,12 @@ public class CDCSerialDevice extends UsbSerialDevice
             setThreadsParams(requestIN, outEndpoint);
 
             asyncMode = true;
+            isOpen = true;
 
             return true;
         }else
         {
+            isOpen = false;
             return false;
         }
     }
@@ -93,6 +113,7 @@ public class CDCSerialDevice extends UsbSerialDevice
         killWriteThread();
         connection.releaseInterface(mInterface);
         connection.close();
+        isOpen = false;
     }
 
     @Override
@@ -103,9 +124,16 @@ public class CDCSerialDevice extends UsbSerialDevice
         {
             setSyncParams(inEndpoint, outEndpoint);
             asyncMode = false;
+            isOpen = true;
+
+            // Init Streams
+            inputStream = new SerialInputStream(this);
+            outputStream = new SerialOutputStream(this);
+
             return true;
         }else
         {
+            isOpen = false;
             return false;
         }
     }
@@ -116,6 +144,7 @@ public class CDCSerialDevice extends UsbSerialDevice
         setControlCommand(CDC_SET_CONTROL_LINE_STATE, CDC_CONTROL_LINE_OFF, null);
         connection.releaseInterface(mInterface);
         connection.close();
+        isOpen = false;
     }
 
     @Override
@@ -220,13 +249,22 @@ public class CDCSerialDevice extends UsbSerialDevice
     @Override
     public void setRTS(boolean state)
     {
-        //TODO
+        if (state)
+            controlLineState |= CDC_SET_CONTROL_LINE_STATE_RTS;
+        else
+            controlLineState &= ~CDC_SET_CONTROL_LINE_STATE_RTS;
+        setControlCommand(CDC_SET_CONTROL_LINE_STATE, controlLineState, null);
+
     }
 
     @Override
     public void setDTR(boolean state)
     {
-        //TODO
+        if (state)
+            controlLineState |= CDC_SET_CONTROL_LINE_STATE_DTR;
+        else
+            controlLineState &= ~CDC_SET_CONTROL_LINE_STATE_DTR;
+        setControlCommand(CDC_SET_CONTROL_LINE_STATE, controlLineState, null);
     }
 
     @Override
@@ -299,10 +337,27 @@ public class CDCSerialDevice extends UsbSerialDevice
         }
 
         // Default Setup
-        setControlCommand(CDC_SET_LINE_CODING, 0, CDC_DEFAULT_LINE_CODING);
+        setControlCommand(CDC_SET_LINE_CODING, 0, getInitialLineCoding());
         setControlCommand(CDC_SET_CONTROL_LINE_STATE, CDC_CONTROL_LINE_ON, null);
 
         return true;
+    }
+
+    protected byte[] getInitialLineCoding() {
+        byte[] lineCoding;
+
+        int initialBaudRate = getInitialBaudRate();
+
+        if(initialBaudRate > 0) {
+            lineCoding = CDC_DEFAULT_LINE_CODING.clone();
+            for (int i = 0; i < 4; i++) {
+                lineCoding[i] = (byte) (initialBaudRate >> i*8 & 0xFF);
+            }
+        } else {
+            lineCoding = CDC_DEFAULT_LINE_CODING;
+        }
+
+        return lineCoding;
     }
 
     private int setControlCommand(int request, int value, byte[] data)
