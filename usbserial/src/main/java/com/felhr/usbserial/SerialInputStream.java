@@ -37,12 +37,12 @@ public class SerialInputStream extends InputStream
     {
         int value = checkFromBuffer();
         if(value >= 0)
-            return value;
+            return value & 0xff;
 
         int ret = device.syncRead(buffer, timeout);
         if(ret >= 0) {
             bufferSize = ret;
-            return buffer[pointer++];
+            return buffer[pointer++] & 0xff;
         }else {
             return -1;
         }
