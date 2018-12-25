@@ -80,6 +80,7 @@ public class CP210xIds
                     new ConcreteDevice(0x10C4, 0x85F8),
                     new ConcreteDevice(0x10C4, 0x8664),
                     new ConcreteDevice(0x10C4, 0x8665),
+                    new ConcreteDevice(0x10C4, 0x875C),
                     new ConcreteDevice(0x10C4, 0x88A4),
                     new ConcreteDevice(0x10C4, 0x88A5),
                     new ConcreteDevice(0x10C4, 0xEA60),
