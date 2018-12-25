@@ -64,7 +64,8 @@ public class PL2303Ids
                     new ConcreteDevice (0x11ad, 0x0001),
                     new ConcreteDevice (0x0b63, 0x6530),
                     new ConcreteDevice (0x0b8c, 0x2303),
-                    new ConcreteDevice (0x110a, 0x1150)
+                    new ConcreteDevice (0x110a, 0x1150),
+                    new ConcreteDevice (0x0557, 0x2008)
             };
 
     public static boolean isDeviceSupported(int vendorId, int productId)

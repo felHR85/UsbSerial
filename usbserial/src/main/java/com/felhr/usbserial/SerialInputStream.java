@@ -1,60 +1,78 @@
 package com.felhr.usbserial;
 
+import java.io.IOException;
 import java.io.InputStream;
-import java.util.concurrent.ArrayBlockingQueue;
 
-public class SerialInputStream extends InputStream implements UsbSerialInterface.UsbReadCallback
+public class SerialInputStream extends InputStream
 {
+    private int timeout = 0;
+
+    private int maxBufferSize =  16 * 1024;
+
+    private byte[] buffer;
+    private int pointer;
+    private int bufferSize;
+
     protected final UsbSerialInterface device;
-    protected ArrayBlockingQueue data = new ArrayBlockingQueue<Integer>(256);
-    protected volatile boolean is_open;
 
     public SerialInputStream(UsbSerialInterface device)
     {
         this.device = device;
-        is_open = true;
-        device.read(this);
+        this.buffer = new byte[maxBufferSize];
+        this.pointer = 0;
+        this.bufferSize = -1;
+    }
+
+    public SerialInputStream(UsbSerialInterface device, int maxBufferSize)
+    {
+        this.device = device;
+        this.maxBufferSize = maxBufferSize;
+        this.buffer = new byte[this.maxBufferSize];
+        this.pointer = 0;
+        this.bufferSize = -1;
     }
 
     @Override
     public int read()
     {
-        while (is_open)
-        {
-            try
-            {
-                return (Integer)data.take();
-            } catch (InterruptedException e)
-            {
-                // ignore, will be retried by while loop
-            }
-        }
-        return -1;
-    }
+        int value = checkFromBuffer();
+        if(value >= 0)
+            return value;
 
-    public void close()
-    {
-        is_open = false;
-        try
-        {
-            data.put(-1);
-        } catch (InterruptedException e)
-        {
-            e.printStackTrace();
+        int ret = device.syncRead(buffer, timeout);
+        if(ret >= 0) {
+            bufferSize = ret;
+            return buffer[pointer++];
+        }else {
+            return -1;
         }
     }
 
-    public void onReceivedData(byte[] new_data)
+    @Override
+    public int read(byte[] b)
     {
-        for (byte b : new_data)
-        {
-            try
-            {
-                data.put(((int)b) & 0xff);
-            } catch (InterruptedException e)
-            {
-                // ignore, possibly losing bytes when buffer is full
-            }
+        return device.syncRead(b, timeout);
+    }
+
+    @Override
+    public int available() throws IOException {
+        if(bufferSize > 0)
+            return bufferSize - pointer;
+        else
+            return 0;
+    }
+
+    public void setTimeout(int timeout) {
+        this.timeout = timeout;
+    }
+
+    private int checkFromBuffer(){
+        if(bufferSize > 0 && pointer < bufferSize){
+            return buffer[pointer++];
+        }else{
+            pointer = 0;
+            bufferSize = -1;
+            return -1;
         }
     }
 }

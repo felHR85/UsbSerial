@@ -1,0 +1,31 @@
+language: android
+android:
+  components:
+    - tools
+    - platform-tools
+    # Note that the tools section appears twice on purpose as it’s required to get the newest Android SDK tools.
+    # See: https://docs.travis-ci.com/user/languages/android/#Overview
+    - tools
+    - build-tools-27.0.3
+    - build-tools-27.0.2
+    - build-tools-26.0.2
+    - android-27
+    - android-26
+before_cache:
+  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+before_install:
+- yes | sdkmanager "platforms;android-27"
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+before_script:
+  - export VERSION_TO_BUILD="$TRAVIS_TAG"
+script: ./gradlew clean build
+deploy:
+  provider: releases
+  api_key: $GITHUB_OAUTH_TOKEN
+  file: usbserial/build/outputs/aar/usbserial-${VERSION_TO_BUILD}-release.aar
+  skip_cleanup: true
+  on:
+    tags: true
