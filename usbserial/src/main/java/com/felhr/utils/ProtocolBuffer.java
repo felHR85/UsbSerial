@@ -1,8 +1,9 @@
 package com.felhr.utils;
 
+import android.util.Log;
+
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -17,8 +18,8 @@ public class ProtocolBuffer {
      * .+?(?<=\\r\\n)
      */
 
-    private final String baseRegex1 = ".+?(?<=";
-    private final String baseRegex2 = ")";
+    private final String baseRegex1 = "(.+?(?<=";
+    private final String baseRegex2 = "))";
 
     private String mode;
 
@@ -28,14 +29,12 @@ public class ProtocolBuffer {
     private byte[] separator;
     private StringBuilder stringBuffer;
 
-    private Iterator<String> iterator;
     private List<String> commands = new ArrayList<>();
 
     private Pattern wholeCommandPattern;
 
     public ProtocolBuffer(String mode){
         this.mode = mode;
-        this.iterator = commands.iterator();
         if(mode.equals(BINARY)){
             rawBuffer = new byte[DEFAULT_BUFFER_SIZE];
         }else{
@@ -45,7 +44,6 @@ public class ProtocolBuffer {
 
     public ProtocolBuffer(String mode, int bufferSize){
         this.mode = mode;
-        this.iterator = commands.iterator();
         if(mode.equals(BINARY)){
             rawBuffer = new byte[bufferSize];
         }else{
@@ -54,7 +52,8 @@ public class ProtocolBuffer {
     }
 
     public void setTrailChars(String trailChars){
-        wholeCommandPattern = Pattern.compile(baseRegex1 + adaptTrailChars(trailChars) + baseRegex2);
+        wholeCommandPattern = Pattern.compile(baseRegex1 + adaptTrailChars(trailChars) + baseRegex2,
+                Pattern.MULTILINE);
     }
 
     public void setSeparator(byte[] separator){
@@ -72,13 +71,15 @@ public class ProtocolBuffer {
                 stringBuffer.append(dataStr);
 
                 Matcher matcher1 = wholeCommandPattern.matcher(stringBuffer.toString());
-                int groupCount = matcher1.groupCount();
+                if(matcher1.find()) {
+                    int groupCount = matcher1.groupCount();
 
-                for(int i=0;i<=groupCount-1;i++){
-                    commands.add(matcher1.group(i));
+                    for (int i = 0; i <= groupCount - 1; i++) {
+                        commands.add(matcher1.group(i));
+                    }
+
+                    stringBuffer.replace(0, stringBuffer.length(), matcher1.replaceAll(""));
                 }
-
-                stringBuffer.replace(0, stringBuffer.length(), matcher1.replaceAll(""));
 
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
@@ -89,12 +90,12 @@ public class ProtocolBuffer {
     }
 
     public boolean hasMoreCommands(){
-        return iterator.hasNext();
+        return commands.size() > 0;
     }
 
     public String nextCommand(){
-        if(iterator.hasNext()){
-            return iterator.next();
+        if(commands.size() > 0){
+            return commands.remove(0);
         }else{
             return null;
         }
@@ -102,9 +103,8 @@ public class ProtocolBuffer {
 
     private String adaptTrailChars(String trailChars){
         String tempStr = trailChars;
-
-        if(trailChars.contains("\\")){
-            tempStr = tempStr.replace("\\", "\\\\");
+        if(trailChars.contains("\r\n")){
+            tempStr = tempStr.replace("\r\n", "\\\\r\\\\n");
         }
 
         if(trailChars.contains(".")){
