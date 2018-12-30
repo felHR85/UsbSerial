@@ -1,37 +1,27 @@
 package com.felhr.utils;
 
-import android.util.Log;
-
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class ProtocolBuffer {
 
     public static final String BINARY = "binary.";
     public static final String TEXT = "text";
 
-    /**
-     * REGEX
-     * .+?(?<=\\r\\n)
-     */
-
-    private final String baseRegex1 = "(.+?(?<=";
-    private final String baseRegex2 = "))";
-
     private String mode;
 
     private static final int DEFAULT_BUFFER_SIZE = 16 * 1024;
 
     private byte[] rawBuffer;
+
     private byte[] separator;
+    private String delimiter;
     private StringBuilder stringBuffer;
 
     private List<String> commands = new ArrayList<>();
 
-    private Pattern wholeCommandPattern;
+    private String regex;
 
     public ProtocolBuffer(String mode){
         this.mode = mode;
@@ -51,17 +41,12 @@ public class ProtocolBuffer {
         }
     }
 
-    public void setTrailChars(String trailChars){
-        wholeCommandPattern = Pattern.compile(baseRegex1 + adaptTrailChars(trailChars) + baseRegex2,
-                Pattern.MULTILINE);
+    public void setDelimiter(String delimiter){
+        this.delimiter = delimiter;
     }
 
     public void setSeparator(byte[] separator){
         this.separator = separator;
-    }
-
-    public void setRegex(String regex){
-        wholeCommandPattern = Pattern.compile(regex);
     }
 
     public void appendData(byte[] data){
@@ -70,15 +55,21 @@ public class ProtocolBuffer {
                 String dataStr = new String(data, "UTF-8");
                 stringBuffer.append(dataStr);
 
-                Matcher matcher1 = wholeCommandPattern.matcher(stringBuffer.toString());
-                if(matcher1.find()) {
-                    int groupCount = matcher1.groupCount();
+                String buffer = stringBuffer.toString();
+                int prevIndex = 0;
+                int index = buffer.indexOf(delimiter);
+                while (index >= 0) {
+                    String tempStr = buffer.substring(prevIndex, index + delimiter.length());
+                    commands.add(tempStr);
+                    prevIndex = index + delimiter.length();
+                    index = stringBuffer.toString().indexOf(delimiter, prevIndex);
+                }
 
-                    for (int i = 0; i <= groupCount - 1; i++) {
-                        commands.add(matcher1.group(i));
-                    }
-
-                    stringBuffer.replace(0, stringBuffer.length(), matcher1.replaceAll(""));
+                if(prevIndex < buffer.length()
+                        && prevIndex > 0){
+                    String tempStr = buffer.substring(prevIndex, buffer.length());
+                    stringBuffer.setLength(0);
+                    stringBuffer.append(tempStr);
                 }
 
             } catch (UnsupportedEncodingException e) {
@@ -100,94 +91,4 @@ public class ProtocolBuffer {
             return null;
         }
     }
-
-    private String adaptTrailChars(String trailChars){
-        String tempStr = trailChars;
-        if(trailChars.contains("\r\n")){
-            tempStr = tempStr.replace("\r\n", "\\\\r\\\\n");
-        }
-
-        if(trailChars.contains(".")){
-            tempStr = tempStr.replace(".", "\\.");
-        }
-
-        if(trailChars.contains("+")){
-            tempStr = tempStr.replace("+", "\\+");
-        }
-
-        if(trailChars.contains("*")){
-            tempStr = tempStr.replace("*", "\\*");
-        }
-
-        if(trailChars.contains("?")){
-            tempStr = tempStr.replace("?", "\\?");
-        }
-
-        if(trailChars.contains("[")){
-            tempStr = tempStr.replace("[", "\\[");
-        }
-
-        if(trailChars.contains("^")){
-            tempStr = tempStr.replace("^", "\\^");
-        }
-
-        if(trailChars.contains("]")){
-            tempStr = tempStr.replace("]", "\\]");
-        }
-
-        if(trailChars.contains("$")){
-            tempStr = tempStr.replace("$", "\\$");
-        }
-
-        if(trailChars.contains("(")){
-            tempStr = tempStr.replace("(", "\\(");
-        }
-
-        if(trailChars.contains(")")){
-            tempStr = tempStr.replace(")", "\\)");
-        }
-
-        if(trailChars.contains("{")){
-            tempStr = tempStr.replace("{", "\\{");
-        }
-
-        if(trailChars.contains("}")){
-            tempStr = tempStr.replace("}", "\\}");
-        }
-
-        if(trailChars.contains("=")){
-            tempStr = tempStr.replace("=", "\\=");
-        }
-
-        if(trailChars.contains("!")){
-            tempStr = tempStr.replace("!", "\\!");
-        }
-
-        if(trailChars.contains("<")) {
-            tempStr = tempStr.replace("<", "\\<");
-        }
-
-        if(trailChars.contains(">")){
-            tempStr = tempStr.replace(">", "\\>");
-        }
-
-        if(trailChars.contains("|")){
-            tempStr = tempStr.replace("|", "\\|");
-        }
-
-        if(trailChars.contains(":")){
-            tempStr = tempStr.replace(":", "\\:");
-        }
-
-        if(trailChars.contains("-")){
-            tempStr = tempStr.replace("-", "\\-");
-        }
-
-        if(trailChars.contains("/")){
-            tempStr = tempStr.replace("/", "\\/");
-        }
-
-        return tempStr;
-    }
-
 }
