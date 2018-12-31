@@ -4,6 +4,7 @@ import com.felhr.utils.ProtocolBuffer;
 
 import junit.framework.TestCase;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 
@@ -23,6 +24,16 @@ public class ProtocolBufferTest extends TestCase {
         "10,N",
         ",WPTNME*32\r\n"};
 
+    private final byte[] rawPacket = new byte[]{0x21, 0x3b, 0x20, 0x40};
+    private final byte[] twoRawPackets = new byte[]{0x21, 0x3b, 0x20, 0x40, 0x4a, 0x20, 0x40};
+    private final byte[] splitRawPacket = new byte[]{0x21, 0x3b, 0x20, 0x40, 0x4a};
+
+    private final byte[][] verySplitRawPacket = {
+            new byte[]{0x21},
+            new byte[]{0x3b},
+            new byte[]{0x20},
+            new byte[]{0x40}};
+
     private ProtocolBuffer protocolBuffer;
     private final String modeText = ProtocolBuffer.TEXT;
     private final String modeBinary = ProtocolBuffer.BINARY;
@@ -35,7 +46,7 @@ public class ProtocolBufferTest extends TestCase {
 
         boolean hasMoreData = protocolBuffer.hasMoreCommands();
         assertTrue(hasMoreData);
-        String nextCommand = protocolBuffer.nextCommand();
+        String nextCommand = protocolBuffer.nextTextCommand();
         assertEquals(onePacket, nextCommand);
     }
 
@@ -48,7 +59,7 @@ public class ProtocolBufferTest extends TestCase {
         StringBuilder builder = new StringBuilder();
 
         while(protocolBuffer.hasMoreCommands()){
-            builder.append(protocolBuffer.nextCommand());
+            builder.append(protocolBuffer.nextTextCommand());
         }
         assertEquals(twoPackets, builder.toString());
     }
@@ -71,18 +82,18 @@ public class ProtocolBufferTest extends TestCase {
 
         boolean hasMoreData = protocolBuffer.hasMoreCommands();
         assertTrue(hasMoreData);
-        String nextCommand = protocolBuffer.nextCommand();
+        String nextCommand = protocolBuffer.nextTextCommand();
         assertEquals("$GPAAM,A,A,0.10,N,WPTNME*32\r\n", nextCommand);
 
         hasMoreData = protocolBuffer.hasMoreCommands();
         assertFalse(hasMoreData);
 
-        nextCommand = protocolBuffer.nextCommand();
+        nextCommand = protocolBuffer.nextTextCommand();
         assertNull(nextCommand);
     }
 
     @Test
-    public void testNMEA5(){
+    public void testVerySplit(){
         protocolBuffer = new ProtocolBuffer(modeText);
         protocolBuffer.setDelimiter("\r\n");
 
@@ -118,7 +129,86 @@ public class ProtocolBufferTest extends TestCase {
         hasMoreData = protocolBuffer.hasMoreCommands();
         assertTrue(hasMoreData);
 
-        String command = protocolBuffer.nextCommand();
+        String command = protocolBuffer.nextTextCommand();
         assertEquals("$GPAAM,A,A,0.10,N,WPTNME*32\r\n", command);
+    }
+
+    @Test
+    public void testRawPacket(){
+        protocolBuffer = new ProtocolBuffer(modeBinary);
+        protocolBuffer.setDelimiter(new byte[]{0x20, 0x40});
+        protocolBuffer.appendData(rawPacket);
+
+        boolean hasMoreData = protocolBuffer.hasMoreCommands();
+        assertTrue(hasMoreData);
+
+        byte[] command  = protocolBuffer.nextBinaryCommand();
+        Assert.assertArrayEquals(command, rawPacket);
+
+        command = protocolBuffer.nextBinaryCommand();
+        assertNull(command);
+    }
+
+    @Test
+    public void testTwoRawPackets(){
+        protocolBuffer = new ProtocolBuffer(modeBinary);
+        protocolBuffer.setDelimiter(new byte[]{0x20, 0x40});
+        protocolBuffer.appendData(twoRawPackets);
+
+        boolean hasMoreData = protocolBuffer.hasMoreCommands();
+        assertTrue(hasMoreData);
+
+        byte[] command1 = protocolBuffer.nextBinaryCommand();
+        Assert.assertArrayEquals(command1, new byte[]{0x21, 0x3b, 0x20, 0x40});
+
+        hasMoreData = protocolBuffer.hasMoreCommands();
+        assertTrue(hasMoreData);
+
+        byte[] command2 = protocolBuffer.nextBinaryCommand();
+        Assert.assertArrayEquals(command2, new byte[]{0x4a, 0x20, 0x40});
+
+        command2 = protocolBuffer.nextBinaryCommand();
+        assertNull(command2);
+    }
+
+    @Test
+    public void testSplitRawPacket(){
+        protocolBuffer = new ProtocolBuffer(modeBinary);
+        protocolBuffer.setDelimiter(new byte[]{0x20, 0x40});
+        protocolBuffer.appendData(splitRawPacket);
+
+        boolean hasMoreData = protocolBuffer.hasMoreCommands();
+        assertTrue(hasMoreData);
+
+        byte[] command1 = protocolBuffer.nextBinaryCommand();
+        Assert.assertArrayEquals(command1, new byte[]{0x21, 0x3b, 0x20, 0x40});
+
+        hasMoreData = protocolBuffer.hasMoreCommands();
+        assertFalse(hasMoreData);
+    }
+
+    @Test
+    public void testVerySplitRawPacket(){
+        protocolBuffer = new ProtocolBuffer(modeBinary);
+        protocolBuffer.setDelimiter(new byte[]{0x20, 0x40});
+
+        protocolBuffer.appendData(verySplitRawPacket[0]);
+        boolean hasMoreData = protocolBuffer.hasMoreCommands();
+        assertFalse(hasMoreData);
+
+        protocolBuffer.appendData(verySplitRawPacket[1]);
+        hasMoreData = protocolBuffer.hasMoreCommands();
+        assertFalse(hasMoreData);
+
+        protocolBuffer.appendData(verySplitRawPacket[2]);
+        hasMoreData = protocolBuffer.hasMoreCommands();
+        assertFalse(hasMoreData);
+
+        protocolBuffer.appendData(verySplitRawPacket[3]);
+        hasMoreData = protocolBuffer.hasMoreCommands();
+        assertTrue(hasMoreData);
+
+        byte[] command = protocolBuffer.nextBinaryCommand();
+        Assert.assertArrayEquals(command, new byte[]{0x21, 0x3b, 0x20, 0x40});
     }
 }
