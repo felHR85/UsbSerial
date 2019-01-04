@@ -544,7 +544,6 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
         {
             writeThread.stopWriteThread();
             writeThread = null;
-            serialBuffer.resetWriteBuffer();
         }
     }
 
