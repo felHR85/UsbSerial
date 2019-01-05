@@ -58,8 +58,10 @@ public class SerialBufferTest extends TestCase {
         new Random().nextBytes(bigBuffer2);
         serialBuffer = new SerialBuffer(true);
 
-        WriterThread writerThread = new WriterThread(serialBuffer, bigBuffer2, false);
+        WriterThread writerThread = new WriterThread(serialBuffer, bigBuffer2);
         writerThread.start();
+
+        while(writerThread.getState() != Thread.State.TERMINATED){/*Busy waiting*/}
 
         byte[] dataReceived = serialBuffer.getWriteBuffer();
         Assert.assertArrayEquals(bigBuffer2, dataReceived);
@@ -70,7 +72,7 @@ public class SerialBufferTest extends TestCase {
         new Random().nextBytes(bigBuffer2);
         serialBuffer = new SerialBuffer(true);
 
-        WriterThread writerThread = new WriterThread(serialBuffer, bigBuffer2, true);
+        WriterThread writerThread = new WriterThread(serialBuffer, bigBuffer2, Thread.currentThread());
         writerThread.start();
 
         byte[] dataReceived = serialBuffer.getWriteBuffer();
@@ -106,32 +108,28 @@ public class SerialBufferTest extends TestCase {
 
     private class WriterThread extends Thread{
 
-        private final static long DELAY_TIME = 5000;
-
         private SerialBuffer serialBuffer;
         private byte[] data;
-        private boolean delay;
+        private Thread callerThread;
 
-        public WriterThread(SerialBuffer serialBuffer, byte[] data, boolean delay){
+        public WriterThread(SerialBuffer serialBuffer, byte[] data){
             this.serialBuffer = serialBuffer;
             this.data = data;
-            this.delay = delay;
+        }
+
+        public WriterThread(SerialBuffer serialBuffer, byte[] data, Thread callerThread){
+            this.serialBuffer = serialBuffer;
+            this.data = data;
+            this.callerThread = callerThread;
         }
 
         @Override
         public void run() {
-            if(delay)
-                delayWrite();
-            serialBuffer.putWriteBuffer(data);
-        }
-
-        private void delayWrite(){
-            synchronized (this) {
-                try {
-                    wait(DELAY_TIME);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+            if(callerThread ==  null) {
+                serialBuffer.putWriteBuffer(data);
+            }else{
+                while(callerThread.getState() != State.WAITING){/*Busy waiting*/ }
+                serialBuffer.putWriteBuffer(data);
             }
         }
     }
