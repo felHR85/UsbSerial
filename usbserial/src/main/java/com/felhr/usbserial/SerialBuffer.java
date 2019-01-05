@@ -13,7 +13,7 @@ public class SerialBuffer
     private byte[] readBufferCompatible; // Read buffer for android < 4.2
     private boolean debugging = false;
 
-    SerialBuffer(boolean version)
+    public SerialBuffer(boolean version)
     {
         writeBuffer = new SynchronizedBuffer();
         if(version)
@@ -34,7 +34,7 @@ public class SerialBuffer
         debugging = value;
     }
 
-    ByteBuffer getReadBuffer()
+    public ByteBuffer getReadBuffer()
     {
         synchronized(this)
         {
@@ -43,7 +43,7 @@ public class SerialBuffer
     }
 
 
-    byte[] getDataReceived()
+    public byte[] getDataReceived()
     {
         synchronized(this)
         {
@@ -56,7 +56,7 @@ public class SerialBuffer
         }
     }
 
-    void clearReadBuffer()
+    public void clearReadBuffer()
     {
         synchronized(this)
         {
@@ -64,23 +64,23 @@ public class SerialBuffer
         }
     }
 
-    byte[] getWriteBuffer()
+    public byte[] getWriteBuffer()
     {
         return writeBuffer.get();
     }
 
-    void putWriteBuffer(byte[]data)
+    public void putWriteBuffer(byte[]data)
     {
         writeBuffer.put(data);
     }
 
 
-    byte[] getBufferCompatible()
+    public byte[] getBufferCompatible()
     {
         return readBufferCompatible;
     }
 
-    byte[] getDataReceivedCompatible(int numberBytes)
+    public byte[] getDataReceivedCompatible(int numberBytes)
     {
         return Arrays.copyOfRange(readBufferCompatible, 0, numberBytes);
     }
@@ -107,7 +107,7 @@ public class SerialBuffer
 
         synchronized byte[] get()
         {
-            if(buffer.size() > 0)
+            if(buffer.size() ==  0)
             {
                 try
                 {
