@@ -29,7 +29,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     protected final UsbDevice device;
     protected final UsbDeviceConnection connection;
 
-    protected static final int USB_TIMEOUT = 5000;
+    protected static final int USB_TIMEOUT = 0;
 
     protected SerialBuffer serialBuffer;
 

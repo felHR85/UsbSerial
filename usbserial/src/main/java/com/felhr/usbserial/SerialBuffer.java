@@ -1,5 +1,6 @@
 package com.felhr.usbserial;
 
+import java.io.EOFException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -8,6 +9,7 @@ import okio.Buffer;
 public class SerialBuffer
 {
     static final int DEFAULT_READ_BUFFER_SIZE = 16 * 1024;
+    static final int MAX_BULK_BUFFER = 16 * 1024;
     private ByteBuffer readBuffer;
     private SynchronizedBuffer writeBuffer;
     private byte[] readBufferCompatible; // Read buffer for android < 4.2
@@ -117,8 +119,17 @@ public class SerialBuffer
                     e.printStackTrace();
                 }
             }
-
-            byte[] dst = buffer.readByteArray();
+            byte[] dst;
+            if(buffer.size() <= MAX_BULK_BUFFER){
+                dst = buffer.readByteArray();
+            }else{
+                try {
+                    dst = buffer.readByteArray(MAX_BULK_BUFFER);
+                } catch (EOFException e) {
+                    e.printStackTrace();
+                    return new byte[0];
+                }
+            }
 
             if(debugging)
                 UsbSerialDebugger.printLogGet(dst, true);

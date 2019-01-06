@@ -7,8 +7,9 @@ import junit.framework.TestCase;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.Random;
 
 
@@ -37,46 +38,96 @@ public class SerialBufferTest extends TestCase {
 
     @Test
     public void testBigSimpleWriteBuffer(){
-        Arrays.fill(bigBuffer, (byte) 0x0A);
-        serialBuffer = new SerialBuffer(true);
-        serialBuffer.putWriteBuffer(bigBuffer);
-        byte[] dataReceived = serialBuffer.getWriteBuffer();
-        Assert.assertArrayEquals(bigBuffer, dataReceived);
+        try {
+            new Random().nextBytes(bigBuffer);
+            serialBuffer = new SerialBuffer(true);
+            serialBuffer.putWriteBuffer(bigBuffer);
+
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+
+            while(outputStream.size() < bigBuffer.length){
+                byte[] srcData = serialBuffer.getWriteBuffer();
+                outputStream.write(srcData);
+            }
+
+            byte[] srcBuffered = outputStream.toByteArray();
+
+            Assert.assertArrayEquals(bigBuffer, srcBuffered);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
     public void testSuperBigSimpleWriteBuffer(){
-        new Random().nextBytes(bigBuffer2);
-        serialBuffer = new SerialBuffer(true);
-        serialBuffer.putWriteBuffer(bigBuffer2);
-        byte[] dataReceived = serialBuffer.getWriteBuffer();
-        Assert.assertArrayEquals(bigBuffer2, dataReceived);
+        try {
+            new Random().nextBytes(bigBuffer2);
+            serialBuffer = new SerialBuffer(true);
+            serialBuffer.putWriteBuffer(bigBuffer2);
+
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+
+            while(outputStream.size() < bigBuffer2.length){
+                byte[] srcData = serialBuffer.getWriteBuffer();
+                outputStream.write(srcData);
+            }
+
+            byte[] srcBuffered = outputStream.toByteArray();
+
+            Assert.assertArrayEquals(bigBuffer2, srcBuffered);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
     public void testSimpleWriteBufferAsync1(){
-        new Random().nextBytes(bigBuffer2);
-        serialBuffer = new SerialBuffer(true);
+        try {
+            new Random().nextBytes(bigBuffer2);
+            serialBuffer = new SerialBuffer(true);
 
-        WriterThread writerThread = new WriterThread(serialBuffer, bigBuffer2);
-        writerThread.start();
+            WriterThread writerThread = new WriterThread(serialBuffer, bigBuffer2);
+            writerThread.start();
 
-        while(writerThread.getState() != Thread.State.TERMINATED){/*Busy waiting*/}
+            while(writerThread.getState() != Thread.State.TERMINATED){/*Busy waiting*/}
 
-        byte[] dataReceived = serialBuffer.getWriteBuffer();
-        Assert.assertArrayEquals(bigBuffer2, dataReceived);
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+
+            while(outputStream.size() < bigBuffer2.length){
+                byte[] srcData = serialBuffer.getWriteBuffer();
+                outputStream.write(srcData);
+            }
+
+            byte[] dataReceived = outputStream.toByteArray();
+
+            Assert.assertArrayEquals(bigBuffer2, dataReceived);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
     public void testSimpleWriteBufferAsync2(){
-        new Random().nextBytes(bigBuffer2);
-        serialBuffer = new SerialBuffer(true);
+        try {
+            new Random().nextBytes(bigBuffer2);
+            serialBuffer = new SerialBuffer(true);
 
-        WriterThread writerThread = new WriterThread(serialBuffer, bigBuffer2, Thread.currentThread());
-        writerThread.start();
+            WriterThread writerThread = new WriterThread(serialBuffer, bigBuffer2, Thread.currentThread());
+            writerThread.start();
 
-        byte[] dataReceived = serialBuffer.getWriteBuffer();
-        Assert.assertArrayEquals(bigBuffer2, dataReceived);
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+
+            while(outputStream.size() < bigBuffer2.length){
+                byte[] srcData = serialBuffer.getWriteBuffer();
+                outputStream.write(srcData);
+            }
+
+            byte[] dataReceived = outputStream.toByteArray();
+
+            Assert.assertArrayEquals(bigBuffer2, dataReceived);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     // Testing ReadBuffer
