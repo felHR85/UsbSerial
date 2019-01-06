@@ -155,6 +155,7 @@ public class UsbService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        unregisterReceiver(usbReceiver);
         UsbService.SERVICE_CONNECTED = false;
     }
 
