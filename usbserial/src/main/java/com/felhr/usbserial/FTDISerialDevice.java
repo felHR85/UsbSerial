@@ -464,17 +464,8 @@ public class FTDISerialDevice extends UsbSerialDevice
         firstTime = true;
         if(setControlCommand(FTDI_SIO_RESET, 0x00, 0, null) < 0)
             return false;
-        if(setControlCommand(FTDI_SIO_SET_DATA, FTDI_SET_DATA_DEFAULT, 0, null) < 0)
-            return false;
+
         currentSioSetData = FTDI_SET_DATA_DEFAULT;
-        if(setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SET_MODEM_CTRL_DEFAULT1, 0, null) < 0)
-            return false;
-        if(setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SET_MODEM_CTRL_DEFAULT2, 0, null) < 0)
-            return false;
-        if(setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, 0, null) < 0)
-            return false;
-        if(setControlCommand(FTDI_SIO_SET_BAUD_RATE, FTDI_BAUDRATE_9600, 0, null) < 0)
-            return false;
 
         // Flow control disabled by default
         rtsCtsEnabled = false;

@@ -336,10 +336,6 @@ public class CDCSerialDevice extends UsbSerialDevice
             return false;
         }
 
-        // Default Setup
-        setControlCommand(CDC_SET_LINE_CODING, 0, getInitialLineCoding());
-        setControlCommand(CDC_SET_CONTROL_LINE_STATE, CDC_CONTROL_LINE_ON, null);
-
         return true;
     }
 
