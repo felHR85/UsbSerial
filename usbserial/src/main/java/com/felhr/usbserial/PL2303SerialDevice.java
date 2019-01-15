@@ -22,7 +22,7 @@ public class PL2303SerialDevice extends UsbSerialDevice
     private static final int PL2303_SET_LINE_CODING = 0x20;
     private static final int PL2303_SET_CONTROL_REQUEST = 0x22;
 
-    private byte[] defaultSetLine = new byte[]{
+    private final byte[] defaultSetLine = new byte[]{
             (byte) 0x80, // [0:3] Baud rate (reverse hex encoding 9600:00 00 25 80 -> 80 25 00 00)
             (byte) 0x25,
             (byte) 0x00,
@@ -33,10 +33,9 @@ public class PL2303SerialDevice extends UsbSerialDevice
     };
 
 
-    private UsbInterface mInterface;
+    private final UsbInterface mInterface;
     private UsbEndpoint inEndpoint;
     private UsbEndpoint outEndpoint;
-    private UsbRequest requestIN;
 
 
     public PL2303SerialDevice(UsbDevice device, UsbDeviceConnection connection)
@@ -64,7 +63,7 @@ public class PL2303SerialDevice extends UsbSerialDevice
         if(ret)
         {
             // Initialize UsbRequest
-            requestIN = new SafeUsbRequest();
+            UsbRequest requestIN = new SafeUsbRequest();
             requestIN.initialize(connection, inEndpoint);
 
             // Restart the working thread if it has been killed before and  get and claim interface

@@ -41,10 +41,9 @@ public class BLED112SerialDevice extends UsbSerialDevice
     private static final int BLED112_DEFAULT_CONTROL_LINE = 0x0003;
     private static final int BLED112_DISCONNECT_CONTROL_LINE = 0x0002;
 
-    private UsbInterface mInterface;
+    private final UsbInterface mInterface;
     private UsbEndpoint inEndpoint;
     private UsbEndpoint outEndpoint;
-    private UsbRequest requestIN;
 
     @Deprecated
     public BLED112SerialDevice(UsbDevice device, UsbDeviceConnection connection)
@@ -88,7 +87,7 @@ public class BLED112SerialDevice extends UsbSerialDevice
         setControlCommand(BLED112_SET_CONTROL_LINE_STATE, BLED112_DEFAULT_CONTROL_LINE, null);
 
         // Initialize UsbRequest
-        requestIN = new UsbRequest();
+        UsbRequest requestIN = new UsbRequest();
         requestIN.initialize(connection, inEndpoint);
 
         // Pass references to the threads

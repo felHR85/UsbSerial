@@ -46,10 +46,9 @@ public class CDCSerialDevice extends UsbSerialDevice
     private static final int CDC_CONTROL_LINE_ON = 0x0003;
     private static final int CDC_CONTROL_LINE_OFF = 0x0000;
 
-    private UsbInterface mInterface;
+    private final UsbInterface mInterface;
     private UsbEndpoint inEndpoint;
     private UsbEndpoint outEndpoint;
-    private UsbRequest requestIN;
 
     private int initialBaudRate = 0;
 
@@ -84,7 +83,7 @@ public class CDCSerialDevice extends UsbSerialDevice
         if(ret)
         {
             // Initialize UsbRequest
-            requestIN = new SafeUsbRequest();
+            UsbRequest requestIN = new SafeUsbRequest();
             requestIN.initialize(connection, inEndpoint);
 
             // Restart the working thread if it has been killed before and  get and claim interface

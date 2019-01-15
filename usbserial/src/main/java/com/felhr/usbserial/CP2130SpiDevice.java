@@ -11,7 +11,7 @@ import android.util.Log;
 
 public class CP2130SpiDevice extends UsbSpiDevice
 {
-    private static String CLASS_ID = CP2130SpiDevice.class.getSimpleName();
+    private static final String CLASS_ID = CP2130SpiDevice.class.getSimpleName();
 
     public static final int CLOCK_12MHz = 0;
     public static final int CLOCK_6MHz = 1;
@@ -29,7 +29,7 @@ public class CP2130SpiDevice extends UsbSpiDevice
     private static final int SET_GPIO_CHIP_SELECT = 0x25;
     private static final int GET_SPI_WORD = 0x30;
 
-    private UsbInterface mInterface;
+    private final UsbInterface mInterface;
     private UsbEndpoint inEndpoint;
     private UsbEndpoint outEndpoint;
     private UsbRequest requestIN;

@@ -9,7 +9,7 @@ public class SerialBuffer
     public static final int DEFAULT_READ_BUFFER_SIZE = 16 * 1024;
     public static final int DEFAULT_WRITE_BUFFER_SIZE = 16 * 1024;
     private ByteBuffer readBuffer;
-    private SynchronizedBuffer writeBuffer;
+    private final SynchronizedBuffer writeBuffer;
     private byte[] readBuffer_compatible; // Read buffer for android < 4.2
     private boolean debugging = false;
 
@@ -107,7 +107,7 @@ public class SerialBuffer
 
     private class SynchronizedBuffer
     {
-        private byte[] buffer;
+        private final byte[] buffer;
         private int position;
 
         public SynchronizedBuffer()
