@@ -1,16 +1,19 @@
 package com.felhr.usbserial;
 
-import java.nio.BufferOverflowException;
+import java.io.EOFException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import okio.Buffer;
+
 public class SerialBuffer
 {
-    public static final int DEFAULT_READ_BUFFER_SIZE = 16 * 1024;
-    public static final int DEFAULT_WRITE_BUFFER_SIZE = 16 * 1024;
+    static final int DEFAULT_READ_BUFFER_SIZE = 16 * 1024;
+    static final int MAX_BULK_BUFFER = 16 * 1024;
     private ByteBuffer readBuffer;
-    private final SynchronizedBuffer writeBuffer;
-    private byte[] readBuffer_compatible; // Read buffer for android < 4.2
+
+    private SynchronizedBuffer writeBuffer;
+    private byte[] readBufferCompatible; // Read buffer for android < 4.2
     private boolean debugging = false;
 
     public SerialBuffer(boolean version)
@@ -22,7 +25,7 @@ public class SerialBuffer
 
         }else
         {
-            readBuffer_compatible = new byte[DEFAULT_READ_BUFFER_SIZE];
+            readBufferCompatible = new byte[DEFAULT_READ_BUFFER_SIZE];
         }
     }
 
@@ -32,20 +35,6 @@ public class SerialBuffer
     public void debug(boolean value)
     {
         debugging = value;
-    }
-
-    public void putReadBuffer(ByteBuffer data)
-    {
-        synchronized(this)
-        {
-            try
-            {
-                readBuffer.put(data);
-            }catch(BufferOverflowException e)
-            {
-                // TO-DO
-            }
-        }
     }
 
     public ByteBuffer getReadBuffer()
@@ -89,57 +78,39 @@ public class SerialBuffer
     }
 
 
-    public void resetWriteBuffer()
-    {
-        writeBuffer.reset();
-    }
-
     public byte[] getBufferCompatible()
     {
-        return readBuffer_compatible;
+        return readBufferCompatible;
     }
 
     public byte[] getDataReceivedCompatible(int numberBytes)
     {
-        byte[] tempBuff = Arrays.copyOfRange(readBuffer_compatible, 0, numberBytes);
-        return tempBuff;
+        return Arrays.copyOfRange(readBufferCompatible, 0, numberBytes);
     }
 
     private class SynchronizedBuffer
     {
-        private final byte[] buffer;
-        private int position;
+        private Buffer buffer;
 
-        public SynchronizedBuffer()
+        SynchronizedBuffer()
         {
-            this.buffer = new byte[DEFAULT_WRITE_BUFFER_SIZE];
-            position = -1;
+            this.buffer = new Buffer();
         }
 
-        public synchronized void put(byte[] src)
+        synchronized void put(byte[] src)
         {
             if(src == null || src.length == 0) return;
-            if(position == -1)
-                position = 0;
+
             if(debugging)
                 UsbSerialDebugger.printLogPut(src, true);
-            if(position + src.length > DEFAULT_WRITE_BUFFER_SIZE - 1) //Checking bounds. Source data does not fit in buffer
-            {
-                if(position < DEFAULT_WRITE_BUFFER_SIZE)
-                    System.arraycopy(src, 0, buffer, position, DEFAULT_WRITE_BUFFER_SIZE - position);
-                position = DEFAULT_WRITE_BUFFER_SIZE;
-                notify();
-            }else // Source data fits in buffer
-            {
-                System.arraycopy(src, 0, buffer, position, src.length);
-                position += src.length;
-                notify();
-            }
+
+            buffer.write(src);
+            notify();
         }
 
-        public synchronized byte[] get()
+        synchronized byte[] get()
         {
-            if(position == -1)
+            if(buffer.size() ==  0)
             {
                 try
                 {
@@ -149,17 +120,22 @@ public class SerialBuffer
                     e.printStackTrace();
                 }
             }
-            if(position <= -1 ) return new byte[0];
-            byte[] dst =  Arrays.copyOfRange(buffer, 0, position);
+            byte[] dst;
+            if(buffer.size() <= MAX_BULK_BUFFER){
+                dst = buffer.readByteArray();
+            }else{
+                try {
+                    dst = buffer.readByteArray(MAX_BULK_BUFFER);
+                } catch (EOFException e) {
+                    e.printStackTrace();
+                    return new byte[0];
+                }
+            }
+
             if(debugging)
                 UsbSerialDebugger.printLogGet(dst, true);
-            position = -1;
-            return dst;
-        }
 
-        public synchronized void reset()
-        {
-            position = -1;
+            return dst;
         }
     }
 

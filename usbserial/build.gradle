@@ -36,6 +36,14 @@ android {
 
     dependencies {
         implementation 'com.annimon:stream:1.2.1'
+        implementation 'com.squareup.okio:okio:2.1.0'
+
+        androidTestImplementation 'com.android.support.test:runner:1.0.2'
+        androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+        androidTestImplementation 'junit:junit:4.12'
+
+        testImplementation 'junit:junit:4.12'
+
     }
 
     createJar.dependsOn(deleteJar, build)

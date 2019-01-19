@@ -176,7 +176,6 @@ public abstract class UsbSpiDevice implements UsbSpiInterface
         {
             writeThread.stopThread();
             writeThread = null;
-            serialBuffer.resetWriteBuffer();
         }
     }
 
