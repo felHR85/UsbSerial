@@ -12,7 +12,7 @@ public class SerialBuffer
     static final int MAX_BULK_BUFFER = 16 * 1024;
     private ByteBuffer readBuffer;
 
-    private SynchronizedBuffer writeBuffer;
+    private final SynchronizedBuffer writeBuffer;
     private byte[] readBufferCompatible; // Read buffer for android < 4.2
     private boolean debugging = false;
 
@@ -90,7 +90,7 @@ public class SerialBuffer
 
     private class SynchronizedBuffer
     {
-        private Buffer buffer;
+        private final Buffer buffer;
 
         SynchronizedBuffer()
         {
