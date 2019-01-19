@@ -14,6 +14,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
 {
     private static final String CLASS_ID = CP2102SerialDevice.class.getSimpleName();
 
+    private static final int CP210x_PURGE = 0x12;
     private static final int CP210x_IFC_ENABLE = 0x00;
     private static final int CP210x_SET_BAUDDIV = 0x01;
     private static final int CP210x_SET_LINE_CTL = 0x03;
@@ -34,6 +35,8 @@ public class CP2102SerialDevice extends UsbSerialDevice
     private static final int CP210x_MHS_RTS_OFF = 0x200;
     private static final int CP210x_MHS_DTR_ON = 0x101;
     private static final int CP210x_MHS_DTR_OFF = 0x100;
+
+    private static final int CP210x_PURGE_ALL = 0x000f;
 
     /***
      *  Default Serial Configuration
@@ -127,6 +130,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
     @Override
     public void close()
     {
+        setControlCommand(CP210x_PURGE, CP210x_PURGE_ALL, null);
         setControlCommand(CP210x_IFC_ENABLE, CP210x_UART_DISABLE, null);
         killWorkingThread();
         killWriteThread();
@@ -162,6 +166,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
     @Override
     public void syncClose()
     {
+        setControlCommand(CP210x_PURGE, CP210x_PURGE_ALL, null);
         setControlCommand(CP210x_IFC_ENABLE, CP210x_UART_DISABLE, null);
         stopFlowControlThread();
         connection.releaseInterface(mInterface);
