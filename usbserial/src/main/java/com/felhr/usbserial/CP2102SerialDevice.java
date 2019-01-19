@@ -188,94 +188,75 @@ public class CP2102SerialDevice extends UsbSerialDevice
     @Override
     public void setDataBits(int dataBits)
     {
-        byte[] data = getCTL();
+        short wValue = getCTL();
+        wValue &= ~0x0F00;
         switch(dataBits)
         {
             case UsbSerialInterface.DATA_BITS_5:
-                data[1] = 5;
+                wValue |= 0x0500;
                 break;
             case UsbSerialInterface.DATA_BITS_6:
-                data[1] = 6;
+                wValue |= 0x0600;
                 break;
             case UsbSerialInterface.DATA_BITS_7:
-                data[1] = 7;
+                wValue |= 0x0700;
                 break;
             case UsbSerialInterface.DATA_BITS_8:
-                data[1] = 8;
+                wValue |= 0x0800;
                 break;
             default:
                 return;
         }
-        byte wValue = (byte) ((data[1] << 8) | (data[0] & 0xFF));
         setControlCommand(CP210x_SET_LINE_CTL, wValue, null);
-
     }
 
     @Override
     public void setStopBits(int stopBits)
     {
-        byte[] data = getCTL();
+        short wValue = getCTL();
+        wValue &= ~0x0003;
         switch(stopBits)
         {
             case UsbSerialInterface.STOP_BITS_1:
-                data[0] &= ~1;
-                data[0] &= ~(1 << 1);
+                wValue |= 0;
                 break;
             case UsbSerialInterface.STOP_BITS_15:
-                data[0] |= 1;
-                data[0] &= ~(1 << 1) ;
+                wValue |= 1;
                 break;
             case UsbSerialInterface.STOP_BITS_2:
-                data[0] &= ~1;
-                data[0] |= (1 << 1);
+                wValue |= 2;
                 break;
             default:
                 return;
         }
-        byte wValue = (byte) ((data[1] << 8) | (data[0] & 0xFF));
         setControlCommand(CP210x_SET_LINE_CTL, wValue, null);
     }
 
     @Override
     public void setParity(int parity)
     {
-        byte[] data = getCTL();
+        short wValue = getCTL();
+        wValue &= ~0x00F0;
         switch(parity)
         {
             case UsbSerialInterface.PARITY_NONE:
-                data[0] &= ~(1 << 4);
-                data[0] &= ~(1 << 5);
-                data[0] &= ~(1 << 6);
-                data[0] &= ~(1 << 7);
+                wValue |= 0x0000;
                 break;
             case UsbSerialInterface.PARITY_ODD:
-                data[0] |= (1 << 4);
-                data[0] &= ~(1 << 5);
-                data[0] &= ~(1 << 6);
-                data[0] &= ~(1 << 7);
+                wValue |= 0x0010;
                 break;
             case UsbSerialInterface.PARITY_EVEN:
-                data[0] &= ~(1 << 4);
-                data[0] |= (1 << 5);
-                data[0] &= ~(1 << 6);
-                data[0] &= ~(1 << 7);
+                wValue |= 0x0020;
                 break;
             case UsbSerialInterface.PARITY_MARK:
-                data[0] |= (1 << 4);
-                data[0] |= (1 << 5);
-                data[0] &= ~(1 << 6);
-                data[0] &= ~(1 << 7);
+                wValue |= 0x0030;
                 break;
             case UsbSerialInterface.PARITY_SPACE:
-                data[0] &= ~(1 << 4);
-                data[0] &= ~(1 << 5);
-                data[0] |= (1 << 6);
-                data[0] &= ~(1 << 7);
+                wValue |= 0x0040;
                 break;
             default:
                 return;
         }
-        byte wValue =  (byte) ((data[1] << 8) | (data[0] & 0xFF));
         setControlCommand(CP210x_SET_LINE_CTL, wValue, null);
     }
 
@@ -597,11 +578,11 @@ public class CP2102SerialDevice extends UsbSerialDevice
         return data;
     }
 
-    private byte[] getCTL()
+    private short getCTL()
     {
         byte[] data = new byte[2];
         int response = connection.controlTransfer(CP210x_REQTYPE_DEVICE2HOST, CP210x_GET_LINE_CTL, 0, mInterface.getId(), data, data.length, USB_TIMEOUT);
         Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
-        return data;
+        return (short)((data[1] << 8) | (data[0] & 0xFF));
     }
 }
