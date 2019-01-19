@@ -6,11 +6,8 @@ import android.hardware.usb.UsbEndpoint;
 
 import com.felhr.deviceids.CP2130Ids;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 public abstract class UsbSpiDevice implements UsbSpiInterface
 {
-    private static final String CLASS_ID = UsbSerialDevice.class.getSimpleName();
 
     protected static final int USB_TIMEOUT = 5000;
 
@@ -83,48 +80,28 @@ public abstract class UsbSpiDevice implements UsbSpiInterface
     @Override
     public abstract void closeSPI();
 
-    protected class WriteThread extends Thread
+    protected class WriteThread extends AbstractWorkerThread
     {
         private UsbEndpoint outEndpoint;
-        private AtomicBoolean working;
-
-        public WriteThread()
-        {
-            working = new AtomicBoolean(true);
-        }
 
         @Override
-        public void run()
+        public void doRun()
         {
-            while(working.get())
-            {
-                byte[] data = serialBuffer.getWriteBuffer();
-                if(data.length > 0)
-                    connection.bulkTransfer(outEndpoint, data, data.length, USB_TIMEOUT);
-            }
+            byte[] data = serialBuffer.getWriteBuffer();
+            if(data.length > 0)
+                connection.bulkTransfer(outEndpoint, data, data.length, USB_TIMEOUT);
         }
 
         public void setUsbEndpoint(UsbEndpoint outEndpoint)
         {
             this.outEndpoint = outEndpoint;
         }
-
-        public void stopWriteThread()
-        {
-            working.set(false);
-        }
     }
 
-    protected class ReadThread extends Thread
+    protected class ReadThread extends AbstractWorkerThread
     {
         private UsbMISOCallback misoCallback;
         private UsbEndpoint inEndpoint;
-        private AtomicBoolean working;
-
-        public ReadThread()
-        {
-            working = new AtomicBoolean(true);
-        }
 
         public void setCallback(UsbMISOCallback misoCallback)
         {
@@ -132,36 +109,27 @@ public abstract class UsbSpiDevice implements UsbSpiInterface
         }
 
         @Override
-        public void run()
+        public void doRun()
         {
             byte[] dataReceived = null;
+            int numberBytes;
+            if(inEndpoint != null)
+                numberBytes = connection.bulkTransfer(inEndpoint, serialBuffer.getBufferCompatible(),
+                        SerialBuffer.DEFAULT_READ_BUFFER_SIZE, 0);
+            else
+                numberBytes = 0;
 
-            while(working.get())
+            if(numberBytes > 0)
             {
-                int numberBytes;
-                if(inEndpoint != null)
-                    numberBytes = connection.bulkTransfer(inEndpoint, serialBuffer.getBufferCompatible(),
-                            SerialBuffer.DEFAULT_READ_BUFFER_SIZE, 0);
-                else
-                    numberBytes = 0;
-
-                if(numberBytes > 0)
-                {
-                    dataReceived = serialBuffer.getDataReceivedCompatible(numberBytes);
-                    onReceivedData(dataReceived);
-                }
-
+                dataReceived = serialBuffer.getDataReceivedCompatible(numberBytes);
+                onReceivedData(dataReceived);
             }
+
         }
 
         public void setUsbEndpoint(UsbEndpoint inEndpoint)
         {
             this.inEndpoint = inEndpoint;
-        }
-
-        public void stopReadThread()
-        {
-            working.set(false);
         }
 
         private void onReceivedData(byte[] data)
@@ -187,7 +155,7 @@ public abstract class UsbSpiDevice implements UsbSpiInterface
     {
         if(readThread != null)
         {
-            readThread.stopReadThread();
+            readThread.stopThread();
             readThread = null;
         }
     }
@@ -206,7 +174,7 @@ public abstract class UsbSpiDevice implements UsbSpiInterface
     {
         if(writeThread != null)
         {
-            writeThread.stopWriteThread();
+            writeThread.stopThread();
             writeThread = null;
             serialBuffer.resetWriteBuffer();
         }

@@ -9,7 +9,7 @@ public class SerialInputStream extends InputStream
 
     private int maxBufferSize =  16 * 1024;
 
-    private byte[] buffer;
+    private final byte[] buffer;
     private int pointer;
     private int bufferSize;
 
