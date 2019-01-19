@@ -10,8 +10,6 @@ import android.util.Log;
 
 import com.felhr.utils.SafeUsbRequest;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 public class CP2102SerialDevice extends UsbSerialDevice
 {
     private static final String CLASS_ID = CP2102SerialDevice.class.getSimpleName();
@@ -67,10 +65,9 @@ public class CP2102SerialDevice extends UsbSerialDevice
     private UsbCTSCallback ctsCallback;
     private UsbDSRCallback dsrCallback;
 
-    private UsbInterface mInterface;
+    private final UsbInterface mInterface;
     private UsbEndpoint inEndpoint;
     private UsbEndpoint outEndpoint;
-    private UsbRequest requestIN;
 
     private FlowControlThread flowControlThread;
 
@@ -103,7 +100,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
         if(ret)
         {
             // Initialize UsbRequest
-            requestIN = new SafeUsbRequest();
+            UsbRequest requestIN = new SafeUsbRequest();
             requestIN.initialize(connection, inEndpoint);
 
             // Restart the working thread if it has been killed before and  get and claim interface
@@ -407,106 +404,88 @@ public class CP2102SerialDevice extends UsbSerialDevice
     /*
         Thread to check every X time if flow signals CTS or DSR have been raised
     */
-    private class FlowControlThread extends Thread
+    private class FlowControlThread extends AbstractWorkerThread
     {
-        private long time = 40; // 40ms
-
-        private boolean firstTime;
-
-        private AtomicBoolean keep;
-
-        public FlowControlThread()
-        {
-            keep = new AtomicBoolean(true);
-            firstTime = true;
-        }
+        private final long time = 40; // 40ms
 
         @Override
-        public void run()
+        public void doRun()
         {
-            while(keep.get())
+            if(!firstTime) // Only execute the callback when the status change
             {
-                if(!firstTime) // Only execute the callback when the status change
+                byte[] modemState = pollLines();
+                byte[] commStatus = getCommStatus();
+
+                // Check CTS status
+                if(rtsCtsEnabled)
                 {
-                    byte[] modemState = pollLines();
-                    byte[] commStatus = getCommStatus();
-
-                    // Check CTS status
-                    if(rtsCtsEnabled)
+                    if(ctsState != ((modemState[0] & 0x10) == 0x10))
                     {
-                        if(ctsState != ((modemState[0] & 0x10) == 0x10))
-                        {
-                            ctsState = !ctsState;
-                            if (ctsCallback != null)
-                                ctsCallback.onCTSChanged(ctsState);
-                        }
+                        ctsState = !ctsState;
+                        if (ctsCallback != null)
+                            ctsCallback.onCTSChanged(ctsState);
                     }
-
-                    // Check DSR status
-                    if(dtrDsrEnabled)
-                    {
-                        if(dsrState != ((modemState[0] & 0x20) == 0x20))
-                        {
-                            dsrState = !dsrState;
-                            if (dsrCallback != null)
-                                dsrCallback.onDSRChanged(dsrState);
-                        }
-                    }
-
-                    //Check Parity Errors
-                    if(parityCallback != null)
-                    {
-                        if((commStatus[0] & 0x10) == 0x10)
-                        {
-                            parityCallback.onParityError();
-                        }
-                    }
-
-                    // Check frame error
-                    if(frameCallback != null)
-                    {
-                        if((commStatus[0] & 0x02) == 0x02)
-                        {
-                            frameCallback.onFramingError();
-                        }
-                    }
-
-                    // Check break interrupt
-                    if(breakCallback != null)
-                    {
-                        if((commStatus[0] & 0x01) == 0x01)
-                        {
-                            breakCallback.onBreakInterrupt();
-                        }
-                    }
-
-                    // Check Overrun error
-
-                    if(overrunCallback != null)
-                    {
-                        if((commStatus[0] & 0x04) == 0x04
-                                || (commStatus[0] & 0x8) == 0x08)
-                        {
-                            overrunCallback.onOverrunError();
-                        }
-
-                    }
-                }else // Execute the callback always the first time
-                {
-                    if(rtsCtsEnabled && ctsCallback != null)
-                        ctsCallback.onCTSChanged(ctsState);
-
-                    if(dtrDsrEnabled && dsrCallback != null)
-                        dsrCallback.onDSRChanged(dsrState);
-
-                    firstTime = false;
                 }
-            }
-        }
 
-        public void stopThread()
-        {
-            keep.set(false);
+                // Check DSR status
+                if(dtrDsrEnabled)
+                {
+                    if(dsrState != ((modemState[0] & 0x20) == 0x20))
+                    {
+                        dsrState = !dsrState;
+                        if (dsrCallback != null)
+                            dsrCallback.onDSRChanged(dsrState);
+                    }
+                }
+
+                //Check Parity Errors
+                if(parityCallback != null)
+                {
+                    if((commStatus[0] & 0x10) == 0x10)
+                    {
+                        parityCallback.onParityError();
+                    }
+                }
+
+                // Check frame error
+                if(frameCallback != null)
+                {
+                    if((commStatus[0] & 0x02) == 0x02)
+                    {
+                        frameCallback.onFramingError();
+                    }
+                }
+
+                // Check break interrupt
+                if(breakCallback != null)
+                {
+                    if((commStatus[0] & 0x01) == 0x01)
+                    {
+                        breakCallback.onBreakInterrupt();
+                    }
+                }
+
+                // Check Overrun error
+
+                if(overrunCallback != null)
+                {
+                    if((commStatus[0] & 0x04) == 0x04
+                        || (commStatus[0] & 0x8) == 0x08)
+                    {
+                        overrunCallback.onOverrunError();
+                    }
+
+                }
+            }else // Execute the callback always the first time
+            {
+                if(rtsCtsEnabled && ctsCallback != null)
+                    ctsCallback.onCTSChanged(ctsState);
+
+                if(dtrDsrEnabled && dsrCallback != null)
+                    dsrCallback.onDSRChanged(dsrState);
+
+                firstTime = false;
+            }
         }
 
         private byte[] pollLines()

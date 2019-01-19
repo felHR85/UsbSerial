@@ -12,6 +12,7 @@ import android.hardware.usb.UsbManager;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.util.Log;
 
 import com.felhr.usbserial.CDCSerialDevice;
 import com.felhr.usbserial.UsbSerialDevice;
@@ -22,6 +23,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class UsbService extends Service {
+
+    public static final String TAG = "UsbService";
 
     public static final String ACTION_USB_READY = "com.felhr.connectivityservices.USB_READY";
     public static final String ACTION_USB_ATTACHED = "android.hardware.usb.action.USB_DEVICE_ATTACHED";
@@ -156,6 +159,8 @@ public class UsbService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        serialPort.close();
+        unregisterReceiver(usbReceiver);
         UsbService.SERVICE_CONNECTED = false;
     }
 
@@ -184,30 +189,39 @@ public class UsbService extends Service {
         // This snippet will try to open the first encountered usb device connected, excluding usb root hubs
         HashMap<String, UsbDevice> usbDevices = usbManager.getDeviceList();
         if (!usbDevices.isEmpty()) {
-            boolean keep = true;
+            
+            // first, dump the map for diagnostic purposes
+            for (Map.Entry<String, UsbDevice> entry : usbDevices.entrySet()) {
+                device = entry.getValue();
+                Log.d(TAG, String.format("USBDevice.HashMap (vid:pid) (%X:%X)-%b class:%X:%X name:%s",
+                        device.getVendorId(), device.getProductId(),
+                        UsbSerialDevice.isSupported(device),
+                        device.getDeviceClass(), device.getDeviceSubclass(),
+                        device.getDeviceName()));
+            }
+
             for (Map.Entry<String, UsbDevice> entry : usbDevices.entrySet()) {
                 device = entry.getValue();
                 int deviceVID = device.getVendorId();
                 int devicePID = device.getProductId();
 
-                if (deviceVID != 0x1d6b && (devicePID != 0x0001 && devicePID != 0x0002 && devicePID != 0x0003)) {
+//                if (deviceVID != 0x1d6b && (devicePID != 0x0001 && devicePID != 0x0002 && devicePID != 0x0003)) {
+                if (UsbSerialDevice.isSupported(device)) {
                     // There is a device connected to our Android device. Try to open it as a Serial Port.
                     requestUserPermission();
-                    keep = false;
+                    break;
                 } else {
                     connection = null;
                     device = null;
                 }
-
-                if (!keep)
-                    break;
             }
-            if (!keep) {
+            if (device==null) {
                 // There is no USB devices connected (but usb host were listed). Send an intent to MainActivity.
                 Intent intent = new Intent(ACTION_NO_USB);
                 sendBroadcast(intent);
             }
         } else {
+            Log.d(TAG, "findSerialPortDevice() usbManager returned empty device list." );
             // There is no USB devices connected. Send an intent to MainActivity
             Intent intent = new Intent(ACTION_NO_USB);
             sendBroadcast(intent);
@@ -226,6 +240,7 @@ public class UsbService extends Service {
      * Request user permission. The response will be received in the BroadcastReceiver
      */
     private void requestUserPermission() {
+        Log.d(TAG, String.format("requestUserPermission(%X:%X)", device.getVendorId(), device.getProductId() ) );
         PendingIntent mPendingIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
         usbManager.requestPermission(device, mPendingIntent);
     }

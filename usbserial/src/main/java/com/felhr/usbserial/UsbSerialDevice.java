@@ -1,7 +1,5 @@
 package com.felhr.usbserial;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import com.felhr.deviceids.CH34xIds;
 import com.felhr.deviceids.CP210xIds;
 import com.felhr.deviceids.FTDISioIds;
@@ -22,10 +20,9 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     public static final String FTDI = "ftdi";
     public static final String PL2303 = "pl2303";
 
-    private static final String CLASS_ID = UsbSerialDevice.class.getSimpleName();
     protected static final String COM_PORT = "COM ";
 
-    private static boolean mr1Version;
+    private static final boolean mr1Version;
     protected final UsbDevice device;
     protected final UsbDeviceConnection connection;
 
@@ -304,52 +301,47 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     /*
      * WorkerThread waits for request notifications from IN endpoint
      */
-    protected class WorkerThread extends Thread
+    protected class WorkerThread extends AbstractWorkerThread
     {
-        private UsbSerialDevice usbSerialDevice;
+        private final UsbSerialDevice usbSerialDevice;
 
         private UsbReadCallback callback;
         private UsbRequest requestIN;
-        private AtomicBoolean working;
 
         public WorkerThread(UsbSerialDevice usbSerialDevice)
         {
             this.usbSerialDevice = usbSerialDevice;
-            working = new AtomicBoolean(true);
         }
 
         @Override
-        public void run()
+        public void doRun()
         {
-            while(working.get())
+            UsbRequest request = connection.requestWait();
+            if(request != null && request.getEndpoint().getType() == UsbConstants.USB_ENDPOINT_XFER_BULK
+                    && request.getEndpoint().getDirection() == UsbConstants.USB_DIR_IN)
             {
-                UsbRequest request = connection.requestWait();
-                if(request != null && request.getEndpoint().getType() == UsbConstants.USB_ENDPOINT_XFER_BULK
-                        && request.getEndpoint().getDirection() == UsbConstants.USB_DIR_IN)
+                byte[] data = serialBuffer.getDataReceived();
+
+                // FTDI devices reserves two first bytes of an IN endpoint with info about
+                // modem and Line.
+                if(isFTDIDevice())
                 {
-                    byte[] data = serialBuffer.getDataReceived();
+                    ((FTDISerialDevice) usbSerialDevice).ftdiUtilities.checkModemStatus(data); //Check the Modem status
+                    serialBuffer.clearReadBuffer();
 
-                    // FTDI devices reserves two first bytes of an IN endpoint with info about
-                    // modem and Line.
-                    if(isFTDIDevice())
+                    if(data.length > 2)
                     {
-                        ((FTDISerialDevice) usbSerialDevice).ftdiUtilities.checkModemStatus(data); //Check the Modem status
-                        serialBuffer.clearReadBuffer();
-
-                        if(data.length > 2)
-                        {
-                            data = ((FTDISerialDevice) usbSerialDevice).ftdiUtilities.adaptArray(data);
-                            onReceivedData(data);
-                        }
-                    }else
-                    {
-                        // Clear buffer, execute the callback
-                        serialBuffer.clearReadBuffer();
+                        data = ((FTDISerialDevice) usbSerialDevice).ftdiUtilities.adaptArray(data);
                         onReceivedData(data);
                     }
-                    // Queue a new request
-                    requestIN.queue(serialBuffer.getReadBuffer(), SerialBuffer.DEFAULT_READ_BUFFER_SIZE);
+                }else
+                {
+                    // Clear buffer, execute the callback
+                    serialBuffer.clearReadBuffer();
+                    onReceivedData(data);
                 }
+                // Queue a new request
+                requestIN.queue(serialBuffer.getReadBuffer(), SerialBuffer.DEFAULT_READ_BUFFER_SIZE);
             }
         }
 
@@ -373,57 +365,36 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
             if(callback != null)
                 callback.onReceivedData(data);
         }
-
-        public void stopWorkingThread()
-        {
-            working.set(false);
-        }
     }
 
-    protected class WriteThread extends Thread
+    private class WriteThread extends AbstractWorkerThread
     {
         private UsbEndpoint outEndpoint;
-        private AtomicBoolean working;
-
-        public WriteThread()
-        {
-            working = new AtomicBoolean(true);
-        }
 
         @Override
-        public void run()
+        public void doRun()
         {
-            while(working.get())
-            {
-                byte[] data = serialBuffer.getWriteBuffer();
-                if(data.length > 0)
-                    connection.bulkTransfer(outEndpoint, data, data.length, USB_TIMEOUT);
-            }
+            byte[] data = serialBuffer.getWriteBuffer();
+            if(data.length > 0)
+                connection.bulkTransfer(outEndpoint, data, data.length, USB_TIMEOUT);
         }
 
         public void setUsbEndpoint(UsbEndpoint outEndpoint)
         {
             this.outEndpoint = outEndpoint;
         }
-
-        public void stopWriteThread()
-        {
-            working.set(false);
-        }
     }
 
-    protected class ReadThread extends Thread
+    protected class ReadThread extends AbstractWorkerThread
     {
-        private UsbSerialDevice usbSerialDevice;
+        private final UsbSerialDevice usbSerialDevice;
 
         private UsbReadCallback callback;
         private UsbEndpoint inEndpoint;
-        private AtomicBoolean working;
 
         public ReadThread(UsbSerialDevice usbSerialDevice)
         {
             this.usbSerialDevice = usbSerialDevice;
-            working = new AtomicBoolean(true);
         }
 
         public void setCallback(UsbReadCallback callback)
@@ -432,38 +403,34 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
         }
 
         @Override
-        public void run()
+        public void doRun()
         {
             byte[] dataReceived = null;
+            int numberBytes;
+            if(inEndpoint != null)
+                numberBytes = connection.bulkTransfer(inEndpoint, serialBuffer.getBufferCompatible(),
+                        SerialBuffer.DEFAULT_READ_BUFFER_SIZE, 0);
+            else
+                numberBytes = 0;
 
-            while(working.get())
+            if(numberBytes > 0)
             {
-                int numberBytes;
-                if(inEndpoint != null)
-                    numberBytes = connection.bulkTransfer(inEndpoint, serialBuffer.getBufferCompatible(),
-                            SerialBuffer.DEFAULT_READ_BUFFER_SIZE, 0);
-                else
-                    numberBytes = 0;
+                dataReceived = serialBuffer.getDataReceivedCompatible(numberBytes);
 
-                if(numberBytes > 0)
+                // FTDI devices reserve two first bytes of an IN endpoint with info about
+                // modem and Line.
+                if(isFTDIDevice())
                 {
-                    dataReceived = serialBuffer.getDataReceivedCompatible(numberBytes);
+                    ((FTDISerialDevice) usbSerialDevice).ftdiUtilities.checkModemStatus(dataReceived);
 
-                    // FTDI devices reserve two first bytes of an IN endpoint with info about
-                    // modem and Line.
-                    if(isFTDIDevice())
+                    if(dataReceived.length > 2)
                     {
-                        ((FTDISerialDevice) usbSerialDevice).ftdiUtilities.checkModemStatus(dataReceived);
-
-                        if(dataReceived.length > 2)
-                        {
-                            dataReceived = ((FTDISerialDevice) usbSerialDevice).ftdiUtilities.adaptArray(dataReceived);
-                            onReceivedData(dataReceived);
-                        }
-                    }else
-                    {
+                        dataReceived = ((FTDISerialDevice) usbSerialDevice).ftdiUtilities.adaptArray(dataReceived);
                         onReceivedData(dataReceived);
                     }
+                }else
+                {
+                    onReceivedData(dataReceived);
                 }
             }
         }
@@ -471,11 +438,6 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
         public void setUsbEndpoint(UsbEndpoint inEndpoint)
         {
             this.inEndpoint = inEndpoint;
-        }
-
-        public void stopReadThread()
-        {
-            working.set(false);
         }
 
         private void onReceivedData(byte[] data)
@@ -511,11 +473,11 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     {
         if(mr1Version && workerThread != null)
         {
-            workerThread.stopWorkingThread();
+            workerThread.stopThread();
             workerThread = null;
         }else if(!mr1Version && readThread != null)
         {
-            readThread.stopReadThread();
+            readThread.stopThread();
             readThread = null;
         }
     }
@@ -542,7 +504,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     {
         if(writeThread != null)
         {
-            writeThread.stopWriteThread();
+            writeThread.stopThread();
             writeThread = null;
         }
     }

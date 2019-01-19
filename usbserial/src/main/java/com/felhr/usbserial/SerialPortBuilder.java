@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SerialPortBuilder {
     private static final String ACTION_USB_PERMISSION = "com.felhr.usbserial.USB_PERMISSION";
@@ -30,14 +29,12 @@ public class SerialPortBuilder {
     private List<UsbDeviceStatus> devices;
     private List<UsbSerialDevice> serialDevices = new ArrayList<>();
 
-    private ArrayBlockingQueue<PendingUsbPermission> queuedPermissions = new ArrayBlockingQueue<>(100);
-    private AtomicBoolean processingPermission = new AtomicBoolean(false);
+    private final ArrayBlockingQueue<PendingUsbPermission> queuedPermissions = new ArrayBlockingQueue<>(100);
+    private volatile boolean processingPermission = false;
     private PendingUsbPermission currentPendingPermission;
 
     private UsbManager usbManager;
-    private SerialPortCallback serialPortCallback;
-
-    private InitSerialPortThread initSerialPortThread;
+    private final SerialPortCallback serialPortCallback;
 
     private int baudRate, dataBits, stopBits, parity, flowControl;
     private int mode = 0;
@@ -87,7 +84,7 @@ public class SerialPortBuilder {
                 queuedPermissions.add(createUsbPermission(context, deviceStatus));
             }
 
-            if(!processingPermission.get()){
+            if(!processingPermission){
                 launchPermission();
             }
 
@@ -107,7 +104,7 @@ public class SerialPortBuilder {
 
             devices.addAll(newDevices);
 
-            if(!processingPermission.get()){
+            if(!processingPermission){
                 launchPermission();
             }
         }
@@ -164,13 +161,13 @@ public class SerialPortBuilder {
 
     private void launchPermission(){
         try {
-            processingPermission.set(true);
+            processingPermission = true;
             currentPendingPermission = queuedPermissions.take();
             usbManager.requestPermission(currentPendingPermission.usbDeviceStatus.usbDevice,
                     currentPendingPermission.pendingIntent);
         } catch (InterruptedException e) {
             e.printStackTrace();
-            processingPermission.set(false);
+            processingPermission = false;
         }
     }
 
@@ -204,12 +201,13 @@ public class SerialPortBuilder {
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(ACTION_USB_PERMISSION)) {
                 boolean granted = intent.getExtras().getBoolean(UsbManager.EXTRA_PERMISSION_GRANTED);
+                InitSerialPortThread initSerialPortThread;
                 if (granted) {
                     createAllPorts(currentPendingPermission.usbDeviceStatus);
                     if(queuedPermissions.size() > 0) {
                         launchPermission();
                     }else{
-                        processingPermission.set(false);
+                        processingPermission = false;
                         if(mode == MODE_START) {
                             serialPortCallback.onSerialPortsDetected(serialDevices);
                         }else{
@@ -221,7 +219,7 @@ public class SerialPortBuilder {
                     if(queuedPermissions.size() > 0) {
                         launchPermission();
                     }else{
-                        processingPermission.set(false);
+                        processingPermission = false;
                         if(mode == MODE_START) {
                             serialPortCallback.onSerialPortsDetected(serialDevices);
                         }else{
@@ -236,7 +234,7 @@ public class SerialPortBuilder {
 
     private class InitSerialPortThread extends Thread {
 
-        private List<UsbSerialDevice> usbSerialDevices;
+        private final List<UsbSerialDevice> usbSerialDevices;
 
         public InitSerialPortThread(List<UsbSerialDevice> usbSerialDevices) {
             this.usbSerialDevices = usbSerialDevices;
