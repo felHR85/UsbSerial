@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+// Thanks to Thomas Moorhead for improvements and suggestions
+
 public class ProtocolBuffer {
 
     public static final String BINARY = "binary";
