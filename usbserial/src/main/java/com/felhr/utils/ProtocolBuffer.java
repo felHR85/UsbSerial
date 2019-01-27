@@ -53,7 +53,10 @@ public class ProtocolBuffer {
         this.separator = delimiter;
     }
 
-    public void appendData(byte[] data){
+    public synchronized void appendData(byte[] data){
+        // Ignore the frequent empty calls
+        if (data.length == 0) return;
+
         if(mode.equals(TEXT)){
             try {
                 String dataStr = new String(data, "UTF-8");
@@ -69,8 +72,7 @@ public class ProtocolBuffer {
                     index = stringBuffer.toString().indexOf(delimiter, prevIndex);
                 }
 
-                if(prevIndex < buffer.length()
-                        && prevIndex > 0){
+                if( /*prevIndex < buffer.length() &&*/ prevIndex > 0){
                     String tempStr = buffer.substring(prevIndex, buffer.length());
                     stringBuffer.setLength(0);
                     stringBuffer.append(tempStr);
