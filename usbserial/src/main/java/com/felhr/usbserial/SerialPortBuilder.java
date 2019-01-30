@@ -130,17 +130,18 @@ public class SerialPortBuilder {
     }
 
     public boolean disconnectDevice(UsbDevice usbDevice){
-        Optional<UsbSerialDevice> optionalDevice = Stream.of(serialDevices)
+        List<UsbSerialDevice> devices = Stream.of(serialDevices)
                 .filter(p -> usbDevice.getDeviceId() == p.getDeviceId())
-                .findSingle();
+                .toList();
 
-        if(optionalDevice.isPresent()){
-            UsbSerialDevice disconnectedDevice = optionalDevice.get();
-            disconnectedDevice.syncClose();
+        int removedDevices = 0;
+        for(UsbSerialDevice device : devices){
+            device.syncClose();
             serialDevices = Utils.removeIf(serialDevices, p -> usbDevice.getDeviceId() == p.getDeviceId());
-            return true;
+            removedDevices ++;
         }
-        return false;
+
+        return removedDevices == devices.size();
     }
 
     public void unregisterListeners(Context context){
