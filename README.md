@@ -11,8 +11,10 @@ UsbSerial wiki available. Read it first
 [**Multiple Serial ports**](https://github.com/felHR85/UsbSerial/wiki/7.-Multiple-Serial-ports)\
 [**Projects using UsbSerial**](https://github.com/felHR85/UsbSerial/wiki/8.-Projects-using-UsbSerial)
 
-
-[If UsbSerial helped you with your projects please consider donating a little sum :)](https://www.paypal.me/felhr)
+Support UsbSerial
+--------------------------------------
+[If UsbSerial helped you with your projects please consider donating a little sum :)](https://www.paypal.me/felhr)\
+[Or consider buying DroidTerm Pro: A Usb serial port terminal using UsbSerial](https://play.google.com/store/apps/details?id=com.felhr.droidtermpro)
 
 Devices Supported
 --------------------------------------
