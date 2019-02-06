@@ -13,7 +13,7 @@ UsbSerial wiki available. Read it first
 
 Support UsbSerial
 --------------------------------------
-[If UsbSerial helped you with your projects please consider donating a little sum :)](https://www.paypal.me/felhr)\
+[If UsbSerial helped you with your projects please consider donating a little sum](https://www.paypal.me/felhr)\
 [Or consider buying DroidTerm Pro: A Usb serial port terminal using UsbSerial](https://play.google.com/store/apps/details?id=com.felhr.droidtermpro)
 
 Devices Supported
