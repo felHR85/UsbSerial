@@ -1,6 +1,10 @@
 CHANGELOG
 =========
 
+Release 6.0.2
+--------------------------------------
+- Solved issue when disconnecting multiple serial ports.
+
 Release 6.0.1
 --------------------------------------
 - Internal serial buffer now uses [Okio](https://github.com/square/okio). This erases the 16kb write
