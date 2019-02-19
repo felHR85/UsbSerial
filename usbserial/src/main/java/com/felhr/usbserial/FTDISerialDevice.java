@@ -63,6 +63,7 @@ public class FTDISerialDevice extends UsbSerialDevice
     private static final int FTDI_SET_MODEM_CTRL_DEFAULT3 = 0x0100;
     private static final int FTDI_SET_MODEM_CTRL_DEFAULT4 = 0x0200;
     private static final int FTDI_SET_FLOW_CTRL_DEFAULT = 0x0000;
+    private static final byte[] EMPTY_BYTE_ARRAY = {};
 
     private int currentSioSetData = 0x0000;
 
@@ -494,32 +495,54 @@ public class FTDISerialDevice extends UsbSerialDevice
         return response;
     }
 
+    // Special treatment needed to FTDI devices
+    static byte[] adaptArray(byte[] ftdiData)
+    {
+        int length = ftdiData.length;
+        if(length > 64)
+        {
+            int n = 1;
+            int p = 64;
+            // Precalculate length without FTDI headers
+            while(p < length)
+            {
+                n++;
+                p = n*64;
+            }
+            int realLength = length - n*2;
+            byte[] data = new byte[realLength];
+            copyData(ftdiData, data);
+            return data;
+        }
+        else if (length == 2) // special case optimization that returns the same instance.
+        {
+            return EMPTY_BYTE_ARRAY;
+        }
+        else
+        {
+            return Arrays.copyOfRange(ftdiData, 2, length);
+        }
+    }
+
+    // Copy data without FTDI headers
+    private static void copyData(byte[] src, byte[] dst)
+    {
+        int srcPos = 2, dstPos = 0;
+        while(srcPos - 2 <= src.length - 64)
+        {
+            System.arraycopy(src, srcPos, dst, dstPos, 62);
+            srcPos += 64;
+            dstPos += 62;
+        }
+        int remaining = src.length - srcPos + 2;
+        if (remaining > 0)
+        {
+            System.arraycopy(src, srcPos, dst, dstPos, remaining - 2);
+        }
+    }
+
     public class FTDIUtilities
     {
-        // Special treatment needed to FTDI devices
-        public byte[] adaptArray(byte[] ftdiData)
-        {
-            int length = ftdiData.length;
-            if(length > 64)
-            {
-                int n = 1;
-                int p = 64;
-                // Precalculate length without FTDI headers
-                while(p < length)
-                {
-                    n++;
-                    p = n*64;
-                }
-                int realLength = length - n*2;
-                byte[] data = new byte[realLength];
-                copyData(ftdiData, data);
-                return data;
-            }else
-            {
-                return Arrays.copyOfRange(ftdiData, 2, length);
-            }
-        }
-
         public void checkModemStatus(byte[] data)
         {
             if(data.length == 0) // Safeguard for zero length arrays
@@ -589,31 +612,6 @@ public class FTDISerialDevice extends UsbSerialDevice
                 }
             }
         }
-
-        // Copy data without FTDI headers
-        private void copyData(byte[] src, byte[] dst)
-        {
-            int i = 0; // src index
-            int j = 0; // dst index
-            while(i <= src.length-1)
-            {
-                if(i != 0 && i != 1)
-                {
-                    if(i % 64 == 0 && i >= 64)
-                    {
-                        i += 2;
-                    }else
-                    {
-                        dst[j] = src[i];
-                        i++;
-                        j++;
-                    }
-                }else
-                {
-                    i++;
-                }
-            }
-        }
     }
 
     @Override
@@ -658,7 +656,7 @@ public class FTDISerialDevice extends UsbSerialDevice
 
             if(numberBytes > 2) // Data received
             {
-                byte[] newBuffer = this.ftdiUtilities.adaptArray(tempBuffer);
+                byte[] newBuffer = adaptArray(tempBuffer);
                 System.arraycopy(newBuffer, 0, buffer, 0, buffer.length);
 
                 int p = numberBytes / 64;

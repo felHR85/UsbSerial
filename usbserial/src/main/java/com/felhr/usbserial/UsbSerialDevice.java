@@ -331,7 +331,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 
                     if(data.length > 2)
                     {
-                        data = ((FTDISerialDevice) usbSerialDevice).ftdiUtilities.adaptArray(data);
+                        data = FTDISerialDevice.adaptArray(data);
                         onReceivedData(data);
                     }
                 }else
@@ -425,7 +425,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 
                     if(dataReceived.length > 2)
                     {
-                        dataReceived = ((FTDISerialDevice) usbSerialDevice).ftdiUtilities.adaptArray(dataReceived);
+                        dataReceived = FTDISerialDevice.adaptArray(dataReceived);
                         onReceivedData(dataReceived);
                     }
                 }else
