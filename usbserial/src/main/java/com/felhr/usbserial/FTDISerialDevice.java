@@ -141,8 +141,8 @@ public class FTDISerialDevice extends UsbSerialDevice
     @Override
     public void close()
     {
-        setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SET_MODEM_CTRL_DEFAULT3, 0, null);
-        setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SET_MODEM_CTRL_DEFAULT4, 0, null);
+        setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SET_MODEM_CTRL_DEFAULT3, 0);
+        setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SET_MODEM_CTRL_DEFAULT4, 0);
         currentSioSetData = 0x0000;
         killWorkingThread();
         killWriteThread();
@@ -176,8 +176,8 @@ public class FTDISerialDevice extends UsbSerialDevice
     @Override
     public void syncClose()
     {
-        setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SET_MODEM_CTRL_DEFAULT3, 0, null);
-        setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SET_MODEM_CTRL_DEFAULT4, 0, null);
+        setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SET_MODEM_CTRL_DEFAULT3, 0);
+        setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SET_MODEM_CTRL_DEFAULT4, 0);
         currentSioSetData = 0x0000;
         connection.releaseInterface(mInterface);
         isOpen = false;
@@ -217,7 +217,7 @@ public class FTDISerialDevice extends UsbSerialDevice
             value = FTDI_BAUDRATE_921600;
         else
             value = FTDI_BAUDRATE_9600;
-        setControlCommand(FTDI_SIO_SET_BAUD_RATE, value, 0, null);
+        setControlCommand(FTDI_SIO_SET_BAUD_RATE, value, 0);
     }
 
     @Override
@@ -230,35 +230,35 @@ public class FTDISerialDevice extends UsbSerialDevice
                 currentSioSetData &= ~(1 << 1);
                 currentSioSetData |= (1 << 2);
                 currentSioSetData &= ~(1 << 3);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0);
                 break;
             case UsbSerialInterface.DATA_BITS_6:
                 currentSioSetData &= ~1;
                 currentSioSetData |= (1 << 1);
                 currentSioSetData |= (1 << 2);
                 currentSioSetData &= ~(1 << 3);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0);
                 break;
             case UsbSerialInterface.DATA_BITS_7:
                 currentSioSetData |= 1;
                 currentSioSetData |= (1 << 1);
                 currentSioSetData |= (1 << 2);
                 currentSioSetData &= ~(1 << 3);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0);
                 break;
             case UsbSerialInterface.DATA_BITS_8:
                 currentSioSetData &= ~1;
                 currentSioSetData &= ~(1 << 1);
                 currentSioSetData &= ~(1 << 2);
                 currentSioSetData |= (1 << 3);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0);
                 break;
             default:
                 currentSioSetData &= ~1;
                 currentSioSetData &= ~(1 << 1);
                 currentSioSetData &= ~(1 << 2);
                 currentSioSetData |= (1 << 3);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0);
                 break;
         }
 
@@ -273,25 +273,25 @@ public class FTDISerialDevice extends UsbSerialDevice
                 currentSioSetData &= ~(1 << 11);
                 currentSioSetData &= ~(1 << 12);
                 currentSioSetData &= ~(1 << 13);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0);
                 break;
             case UsbSerialInterface.STOP_BITS_15:
                 currentSioSetData |= (1 << 11);
                 currentSioSetData &= ~(1 << 12);
                 currentSioSetData &= ~(1 << 13);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0);
                 break;
             case UsbSerialInterface.STOP_BITS_2:
                 currentSioSetData &= ~(1 << 11);
                 currentSioSetData |= (1 << 12);
                 currentSioSetData &= ~(1 << 13);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0);
                 break;
             default:
                 currentSioSetData &= ~(1 << 11);
                 currentSioSetData &= ~(1 << 12);
                 currentSioSetData &= ~(1 << 13);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0);
         }
 
     }
@@ -305,37 +305,37 @@ public class FTDISerialDevice extends UsbSerialDevice
                 currentSioSetData &= ~(1 << 8);
                 currentSioSetData &= ~(1 << 9);
                 currentSioSetData &= ~(1 << 10);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0);
                 break;
             case UsbSerialInterface.PARITY_ODD:
                 currentSioSetData |= (1 << 8);
                 currentSioSetData &= ~(1 << 9);
                 currentSioSetData &= ~(1 << 10);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0);
                 break;
             case UsbSerialInterface.PARITY_EVEN:
                 currentSioSetData &= ~(1 << 8);
                 currentSioSetData |= (1 << 9);
                 currentSioSetData &= ~(1 << 10);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0);
                 break;
             case UsbSerialInterface.PARITY_MARK:
                 currentSioSetData |= (1 << 8);
                 currentSioSetData |= (1 << 9);
                 currentSioSetData &= ~(1 << 10);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0);
                 break;
             case UsbSerialInterface.PARITY_SPACE:
                 currentSioSetData &= ~(1 << 8);
                 currentSioSetData &= ~(1 << 9);
                 currentSioSetData |= (1 << 10);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0);
                 break;
             default:
                 currentSioSetData &= ~(1 << 8);
                 currentSioSetData &= ~(1 << 9);
                 currentSioSetData &= ~(1 << 10);
-                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0, null);
+                setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0);
                 break;
         }
 
@@ -347,7 +347,7 @@ public class FTDISerialDevice extends UsbSerialDevice
         switch(flowControl)
         {
             case UsbSerialInterface.FLOW_CONTROL_OFF:
-                setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, 0, null);
+                setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, 0);
                 rtsCtsEnabled = false;
                 dtrDsrEnabled = false;
                 break;
@@ -355,21 +355,21 @@ public class FTDISerialDevice extends UsbSerialDevice
                 rtsCtsEnabled = true;
                 dtrDsrEnabled = false;
                 int indexRTSCTS = 0x0001;
-                setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, indexRTSCTS, null);
+                setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, indexRTSCTS);
                 break;
             case UsbSerialInterface.FLOW_CONTROL_DSR_DTR:
                 dtrDsrEnabled = true;
                 rtsCtsEnabled = false;
                 int indexDSRDTR = 0x0002;
-                setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, indexDSRDTR , null);
+                setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, indexDSRDTR);
                 break;
             case UsbSerialInterface.FLOW_CONTROL_XON_XOFF:
                 int indexXONXOFF = 0x0004;
                 int wValue = 0x1311;
-                setControlCommand(FTDI_SIO_SET_FLOW_CTRL, wValue, indexXONXOFF , null);
+                setControlCommand(FTDI_SIO_SET_FLOW_CTRL, wValue, indexXONXOFF);
                 break;
             default:
-                setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, 0, null);
+                setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, 0);
                 break;
         }
     }
@@ -379,10 +379,10 @@ public class FTDISerialDevice extends UsbSerialDevice
     {
         if(state)
         {
-            setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SIO_SET_RTS_HIGH, 0, null);
+            setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SIO_SET_RTS_HIGH, 0);
         }else
         {
-            setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SIO_SET_RTS_LOW, 0, null);
+            setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SIO_SET_RTS_LOW, 0);
         }
     }
 
@@ -391,10 +391,10 @@ public class FTDISerialDevice extends UsbSerialDevice
     {
         if(state)
         {
-            setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SIO_SET_DTR_HIGH, 0, null);
+            setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SIO_SET_DTR_HIGH, 0);
         }else
         {
-            setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SIO_SET_DTR_LOW, 0, null);
+            setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SIO_SET_DTR_LOW, 0);
         }
     }
 
@@ -462,18 +462,18 @@ public class FTDISerialDevice extends UsbSerialDevice
 
         // Default Setup
         firstTime = true;
-        if(setControlCommand(FTDI_SIO_RESET, 0x00, 0, null) < 0)
+        if(setControlCommand(FTDI_SIO_RESET, 0x00, 0) < 0)
             return false;
-        if(setControlCommand(FTDI_SIO_SET_DATA, FTDI_SET_DATA_DEFAULT, 0, null) < 0)
+        if(setControlCommand(FTDI_SIO_SET_DATA, FTDI_SET_DATA_DEFAULT, 0) < 0)
             return false;
         currentSioSetData = FTDI_SET_DATA_DEFAULT;
-        if(setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SET_MODEM_CTRL_DEFAULT1, 0, null) < 0)
+        if(setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SET_MODEM_CTRL_DEFAULT1, 0) < 0)
             return false;
-        if(setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SET_MODEM_CTRL_DEFAULT2, 0, null) < 0)
+        if(setControlCommand(FTDI_SIO_MODEM_CTRL, FTDI_SET_MODEM_CTRL_DEFAULT2, 0) < 0)
             return false;
-        if(setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, 0, null) < 0)
+        if(setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, 0) < 0)
             return false;
-        if(setControlCommand(FTDI_SIO_SET_BAUD_RATE, FTDI_BAUDRATE_9600, 0, null) < 0)
+        if(setControlCommand(FTDI_SIO_SET_BAUD_RATE, FTDI_BAUDRATE_9600, 0) < 0)
             return false;
 
         // Flow control disabled by default
@@ -483,14 +483,10 @@ public class FTDISerialDevice extends UsbSerialDevice
         return true;
     }
 
-    private int setControlCommand(int request, int value, int index, byte[] data)
+    private int setControlCommand(int request, int value, int index)
     {
         int dataLength = 0;
-        if(data != null)
-        {
-            dataLength = data.length;
-        }
-        int response = connection.controlTransfer(FTDI_REQTYPE_HOST2DEVICE, request, value, mInterface.getId() + 1 + index, data, dataLength, USB_TIMEOUT);
+        int response = connection.controlTransfer(FTDI_REQTYPE_HOST2DEVICE, request, value, mInterface.getId() + 1 + index, null, dataLength, USB_TIMEOUT);
         Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
         return response;
     }
