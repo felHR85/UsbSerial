@@ -1,5 +1,8 @@
 package com.felhr.deviceids;
 
+import static com.felhr.deviceids.Helpers.createTable;
+import static com.felhr.deviceids.Helpers.createDevice;
+
 public class CH34xIds
 {
     private CH34xIds()
@@ -7,34 +10,15 @@ public class CH34xIds
 
     }
 
-    private static final ConcreteDevice[] ch34xDevices = new ConcreteDevice[]
-            {
-                    new ConcreteDevice(0x4348, 0x5523),
-                    new ConcreteDevice(0x1a86, 0x7523),
-                    new ConcreteDevice(0x1a86, 0x5523),
-                    new ConcreteDevice(0x1a86, 0x0445)
-            };
+    private static final long[] ch34xDevices = createTable(
+            createDevice(0x4348, 0x5523),
+            createDevice(0x1a86, 0x7523),
+            createDevice(0x1a86, 0x5523),
+            createDevice(0x1a86, 0x0445)
+    );
 
     public static boolean isDeviceSupported(int vendorId, int productId)
     {
-        for(int i=0;i<=ch34xDevices.length-1;i++)
-        {
-            if(ch34xDevices[i].vendorId == vendorId &&ch34xDevices[i].productId == productId )
-                return true;
-        }
-        return false;
+        return Helpers.exists(ch34xDevices, vendorId, productId);
     }
-
-    private static class ConcreteDevice
-    {
-        public int vendorId;
-        public int productId;
-
-        public ConcreteDevice(int vendorId, int productId)
-        {
-            this.vendorId = vendorId;
-            this.productId = productId;
-        }
-    }
-
 }
