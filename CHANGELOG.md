@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-Release 6.0.2
+Release 6.0.3
 --------------------------------------
 - VID/PID pairs are sorted and searched in a faster way.
 - FTDI driver improved.
