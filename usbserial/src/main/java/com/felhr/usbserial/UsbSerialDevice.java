@@ -22,7 +22,9 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 
     protected static final String COM_PORT = "COM ";
 
-    private static final boolean mr1Version;
+    // Android version < 4.3 It is not going to be asynchronous read operations
+    static final boolean mr1Version =
+            android.os.Build.VERSION.SDK_INT > android.os.Build.VERSION_CODES.JELLY_BEAN_MR1;
     protected final UsbDevice device;
     protected final UsbDeviceConnection connection;
 
@@ -46,15 +48,6 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 
     private String portName = "";
     protected boolean isOpen;
-
-    // Get Android version if version < 4.3 It is not going to be asynchronous read operations
-    static
-    {
-        if(android.os.Build.VERSION.SDK_INT > android.os.Build.VERSION_CODES.JELLY_BEAN_MR1)
-            mr1Version = true;
-        else
-            mr1Version = false;
-    }
 
     public UsbSerialDevice(UsbDevice device, UsbDeviceConnection connection)
     {
@@ -455,14 +448,13 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
 
     protected void setThreadsParams(UsbRequest request, UsbEndpoint endpoint)
     {
+        writeThread.setUsbEndpoint(endpoint);
         if(mr1Version)
         {
             workerThread.setUsbRequest(request);
-            writeThread.setUsbEndpoint(endpoint);
         }else
         {
             readThread.setUsbEndpoint(request.getEndpoint());
-            writeThread.setUsbEndpoint(endpoint);
         }
     }
 

@@ -2,12 +2,14 @@ package com.felhr.usbserial;
 
 import java.util.Arrays;
 
+import android.annotation.SuppressLint;
 import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbRequest;
+import android.os.Build;
 import android.util.Log;
 
 import com.felhr.utils.SafeUsbRequest;
@@ -626,6 +628,10 @@ public class FTDISerialDevice extends UsbSerialDevice
             return 0;
         }
 
+        if (mr1Version) {
+            return readSyncJelly(buffer, timeout, stopTime);
+        }
+
         int n = buffer.length / 62;
         if(buffer.length % 62 != 0)
         {
@@ -665,5 +671,41 @@ public class FTDISerialDevice extends UsbSerialDevice
         }while(readen <= 0);
 
         return readen;
+    }
+
+    private static final byte[] skip = new byte[2];
+
+    /**
+     * This method avoids creation of garbage by reusing the same
+     * array instance for skipping header bytes and running
+     * {@link UsbDeviceConnection#bulkTransfer(UsbEndpoint, byte[], int, int, int)}
+     * directly.
+     */
+    @SuppressLint("NewApi")
+    private int readSyncJelly(byte[] buffer, int timeout, long stopTime) {
+        int read = 0;
+        do
+        {
+            int timeLeft = 0;
+            if(timeout > 0)
+            {
+                timeLeft = (int) (stopTime - System.currentTimeMillis());
+                if (timeLeft <= 0)
+                {
+                    break;
+                }
+            }
+
+
+            int numberBytes = connection.bulkTransfer(inEndpoint, skip, skip.length, timeLeft);
+
+            if(numberBytes > 2) // Data received
+            {
+                numberBytes = connection.bulkTransfer(inEndpoint, buffer, read, 62, timeLeft);
+                read += numberBytes;
+            }
+        } while(read <= 0);
+
+        return read;
     }
 }
