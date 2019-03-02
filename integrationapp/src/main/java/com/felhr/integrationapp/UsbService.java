@@ -50,7 +50,11 @@ public class UsbService extends Service {
     public static final String ACTION_USB_DISCONNECTED = "com.felhr.usbservice.USB_DISCONNECTED";
     public static final String ACTION_CDC_DRIVER_NOT_WORKING = "com.felhr.connectivityservices.ACTION_CDC_DRIVER_NOT_WORKING";
     public static final String ACTION_USB_DEVICE_NOT_WORKING = "com.felhr.connectivityservices.ACTION_USB_DEVICE_NOT_WORKING";
-    public static final int MESSAGE_FROM_SERIAL_PORT = 0;
+    public static final int MESSAGE_TEST_1 = 0;
+    public static final int MESSAGE_TEST_2 = 1;
+    public static final int MESSAGE_TEST_3 = 2;
+    public static final int MESSAGE_TEST_4 = 3;
+    public static final int MESSAGE_TEST_5 = 4;
     public static final int CTS_CHANGE = 1;
     public static final int DSR_CHANGE = 2;
     private static final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
@@ -80,32 +84,32 @@ public class UsbService extends Service {
                 if(buffer.size() == SIZE_TEST_1){
                     serialPort.write(buffer.readByteArray());
                     mode = TEST_2;
-                    mHandler.obtainMessage(MESSAGE_FROM_SERIAL_PORT, "Test 1Kb completed correctly").sendToTarget();
+                    mHandler.obtainMessage(MESSAGE_TEST_1, "Test 1Kb completed correctly").sendToTarget();
                 }
             }else if(mode.equals(TEST_2)){
                 if(buffer.size() == SIZE_TEST_2){
                     serialPort.write(buffer.readByteArray());
                     mode = TEST_3;
-                    mHandler.obtainMessage(MESSAGE_FROM_SERIAL_PORT, "Test 3Kb completed correctly").sendToTarget();
+                    mHandler.obtainMessage(MESSAGE_TEST_2, "Test 3Kb completed correctly").sendToTarget();
                 }
 
             }else if(mode.equals(TEST_3)){
                 if(buffer.size() == SIZE_TEST_3){
                     serialPort.write(buffer.readByteArray());
                     mode = TEST_4;
-                    mHandler.obtainMessage(MESSAGE_FROM_SERIAL_PORT, "Test 16Kb completed correctly").sendToTarget();
+                    mHandler.obtainMessage(MESSAGE_TEST_3, "Test 16Kb completed correctly").sendToTarget();
                 }
             }else if(mode.equals(TEST_4)){
                 if(buffer.size() == SIZE_TEST_4){
                     serialPort.write(buffer.readByteArray());
                     mode = TEST_5;
-                    mHandler.obtainMessage(MESSAGE_FROM_SERIAL_PORT, "Test 64Kb completed correctly").sendToTarget();
+                    mHandler.obtainMessage(MESSAGE_TEST_4, "Test 64Kb completed correctly").sendToTarget();
                 }
             }else if(mode.equals(TEST_5)){
                 if(buffer.size() == SIZE_TEST_5){
                     serialPort.write(buffer.readByteArray());
                     mode = TEST_1;
-                    mHandler.obtainMessage(MESSAGE_FROM_SERIAL_PORT, "Test 128Kb completed correctly").sendToTarget();
+                    mHandler.obtainMessage(MESSAGE_TEST_5, "Test 128Kb completed correctly").sendToTarget();
                 }
             }
         }

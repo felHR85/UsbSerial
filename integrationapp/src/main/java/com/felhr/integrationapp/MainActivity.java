@@ -11,17 +11,18 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.lang.ref.WeakReference;
 import java.util.Set;
 
-/**
- * Created by Felipe Herranz(felhr85@gmail.com) on 24/02/2019.
- */
+import static com.felhr.integrationapp.UsbService.MESSAGE_TEST_1;
+import static com.felhr.integrationapp.UsbService.MESSAGE_TEST_2;
+import static com.felhr.integrationapp.UsbService.MESSAGE_TEST_3;
+import static com.felhr.integrationapp.UsbService.MESSAGE_TEST_4;
+import static com.felhr.integrationapp.UsbService.MESSAGE_TEST_5;
+
 public class MainActivity extends AppCompatActivity {
 
     /*
@@ -33,26 +34,34 @@ public class MainActivity extends AppCompatActivity {
             switch (intent.getAction()) {
                 case UsbService.ACTION_USB_PERMISSION_GRANTED: // USB PERMISSION GRANTED
                     Toast.makeText(context, "USB Ready", Toast.LENGTH_SHORT).show();
+                    statusText.setText("USB connected. Run Python tests");
                     break;
                 case UsbService.ACTION_USB_PERMISSION_NOT_GRANTED: // USB PERMISSION NOT GRANTED
                     Toast.makeText(context, "USB Permission not granted", Toast.LENGTH_SHORT).show();
+                    resetTestTextViews();
+                    statusText.setText("Connect USB Device");
                     break;
                 case UsbService.ACTION_NO_USB: // NO USB CONNECTED
                     Toast.makeText(context, "No USB connected", Toast.LENGTH_SHORT).show();
+                    resetTestTextViews();
+                    statusText.setText("Connect USB Device");
                     break;
                 case UsbService.ACTION_USB_DISCONNECTED: // USB DISCONNECTED
                     Toast.makeText(context, "USB disconnected", Toast.LENGTH_SHORT).show();
+                    resetTestTextViews();
+                    statusText.setText("Connect USB Device");
                     break;
                 case UsbService.ACTION_USB_NOT_SUPPORTED: // USB NOT SUPPORTED
                     Toast.makeText(context, "USB device not supported", Toast.LENGTH_SHORT).show();
+                    resetTestTextViews();
+                    statusText.setText("Connect USB Device");
                     break;
             }
         }
     };
     private UsbService usbService;
-    private TextView display1, display2;
-    private EditText editText1, editText2;
-    private Button button1, button2;
+    private TextView test1, test2, test3, test4, test5;
+    private TextView statusText;
     private MyHandler mHandler;
 
     private final ServiceConnection usbConnection = new ServiceConnection() {
@@ -72,9 +81,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        //TODO!!
-
+        test1 = findViewById(R.id.test_1_result);
+        test2 = findViewById(R.id.test_2_result);
+        test3 = findViewById(R.id.test_3_result);
+        test4 = findViewById(R.id.test_4_result);
+        test5 = findViewById(R.id.test_5_result);
+        statusText = findViewById(R.id.status);
         mHandler = new MyHandler(this);
     }
 
@@ -118,6 +130,14 @@ public class MainActivity extends AppCompatActivity {
         registerReceiver(mUsbReceiver, filter);
     }
 
+    private void resetTestTextViews(){
+        test1.setText("TEST1: Not Passed");
+        test2.setText("TEST2: Not Passed");
+        test3.setText("TEST3: Not Passed");
+        test4.setText("TEST4: Not Passed");
+        test5.setText("TEST5: Not Passed");
+    }
+
     /*
      * This handler will be passed to UsbService. Data received from serial port is displayed through this handler
      */
@@ -130,8 +150,27 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void handleMessage(Message msg) {
+            String data = (String) msg.obj;
             switch (msg.what) {
-                //TODO!!
+                case MESSAGE_TEST_1:
+                    mActivity.get().test1.setText(data);
+                    break;
+
+                case MESSAGE_TEST_2:
+                    mActivity.get().test2.setText(data);
+                    break;
+
+                case MESSAGE_TEST_3:
+                    mActivity.get().test3.setText(data);
+                    break;
+
+                case MESSAGE_TEST_4:
+                    mActivity.get().test4.setText(data);
+                    break;
+
+                case MESSAGE_TEST_5:
+                    mActivity.get().test5.setText(data);
+                    break;
             }
         }
     }
