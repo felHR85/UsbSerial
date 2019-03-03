@@ -58,7 +58,7 @@ public class UsbService extends Service {
     public static final int CTS_CHANGE = 1;
     public static final int DSR_CHANGE = 2;
     private static final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
-    private static final int BAUD_RATE = 9600; // BaudRate. Change this value if you need
+    private static final int BAUD_RATE = 115200; // BaudRate. Change this value if you need
     public static boolean SERVICE_CONNECTED = false;
 
     private IBinder binder = new UsbBinder();
@@ -90,7 +90,7 @@ public class UsbService extends Service {
                 if(buffer.size() == SIZE_TEST_2){
                     serialPort.write(buffer.readByteArray());
                     mode = TEST_3;
-                    mHandler.obtainMessage(MESSAGE_TEST_2, "Test 3Kb completed correctly").sendToTarget();
+                    mHandler.obtainMessage(MESSAGE_TEST_2, "Test 2Kb completed correctly").sendToTarget();
                 }
 
             }else if(mode.equals(TEST_3)){

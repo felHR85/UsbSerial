@@ -1,3 +1,9 @@
+# UsbSerial test: Validate single packet
+# args:
+#   port (eg /dev/ttyUSB0)
+#   size in bytes (eg 1024)
+#   speed in bauds (eg 115200)
+
 import serial
 import sys
 import os
