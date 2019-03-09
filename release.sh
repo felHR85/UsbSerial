@@ -14,14 +14,14 @@ esac
 done
 
 # Show error message if no version was provided
-if [ -z $VERSION ];
+if [ -z ${VERSION} ];
 then
     echo "UsbSerial: Error!! No version was provided"
     exit 0
 fi
 
 # Show error message if no message was provided
-if [ -z $MESSAGE ];
+if [ -z ${MESSAGE} ];
 then
     echo "UsbSerial: Error!! No message was provided"
     exit 0
@@ -45,8 +45,9 @@ ex -sc "${LINE}i|$GRADLE_LINE" -cx README.md
 ./gradlew clean build
 
 # Git stuff
-git commit -am $MESSAGE
-git tag -a $VERSION
-git push && git push --tags
+git commit -m $MESSAGE
+git tag $VERSION
+git push origin master
+git push --tags
 
 echo "UsbSerial: Release Finished!!!"
