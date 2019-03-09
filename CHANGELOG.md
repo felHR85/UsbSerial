@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+Release 6.0.4
+--------------------------------------
+- Proguard rules
+- FTDI driver improved again
+
 Release 6.0.3
 --------------------------------------
 - VID/PID pairs are sorted and searched in a faster way.
