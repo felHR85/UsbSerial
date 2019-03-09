@@ -7,6 +7,12 @@ import serial
 import sys
 import os
 
+class style():
+    RED = lambda x: '\033[31m' + str(x)
+    GREEN = lambda x: '\033[32m' + str(x)
+    BLUE = lambda x: '\033[34m' + str(x)
+    RESET = lambda x: '\033[0m' + str(x)
+
 port = sys.argv[1]
 speed = sys.argv[2]
 
@@ -22,6 +28,7 @@ for i in range(0,5):
     data_rx = comm.read(test_sizes[i])
     
     if data_tx == data_rx:
-        print("Success: " + str(test_sizes[i]) + " bytes buffer was transmitted correctly")
+        print(style.GREEN("Success: " + str(test_sizes[i]) + " bytes buffer was transmitted correctly"))
     else:
-        print("Error: " + str(test_sizes[i]) + " bytes buffer was not transmitted correctly")
+        print(style.RED("Error: " + str(test_sizes[i]) + " bytes buffer was not transmitted correctly"))
+    print(style.RESET(""))
