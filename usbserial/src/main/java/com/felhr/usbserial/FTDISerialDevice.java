@@ -187,38 +187,46 @@ public class FTDISerialDevice extends UsbSerialDevice
     @Override
     public void setBaudRate(int baudRate)
     {
-        int value = 0;
-        if(baudRate >= 0 && baudRate <= 300 )
-            value = FTDI_BAUDRATE_300;
-        else if(baudRate > 300 && baudRate <= 600)
-            value = FTDI_BAUDRATE_600;
-        else if(baudRate > 600 && baudRate <= 1200)
-            value = FTDI_BAUDRATE_1200;
-        else if(baudRate > 1200 && baudRate <= 2400)
-            value = FTDI_BAUDRATE_2400;
-        else if(baudRate > 2400 && baudRate <= 4800)
-            value = FTDI_BAUDRATE_4800;
-        else if(baudRate > 4800 && baudRate <= 9600)
-            value = FTDI_BAUDRATE_9600;
-        else if(baudRate > 9600 && baudRate <=19200)
-            value = FTDI_BAUDRATE_19200;
-        else if(baudRate > 19200 && baudRate <= 38400)
-            value = FTDI_BAUDRATE_38400;
-        else if(baudRate > 19200 && baudRate <= 57600)
-            value = FTDI_BAUDRATE_57600;
-        else if(baudRate > 57600 && baudRate <= 115200)
-            value = FTDI_BAUDRATE_115200;
-        else if(baudRate > 115200 && baudRate <= 230400)
-            value = FTDI_BAUDRATE_230400;
-        else if(baudRate > 230400 && baudRate <= 460800)
-            value = FTDI_BAUDRATE_460800;
-        else if(baudRate > 460800 && baudRate <= 921600)
-            value = FTDI_BAUDRATE_921600;
-        else if(baudRate > 921600)
-            value = FTDI_BAUDRATE_921600;
-        else
-            value = FTDI_BAUDRATE_9600;
-        setControlCommand(FTDI_SIO_SET_BAUD_RATE, value, 0);
+        short[] encodedBaudRate = encodedBaudRate(baudRate);
+
+        if(encodedBaudRate != null) {
+            connection.controlTransfer(FTDI_REQTYPE_HOST2DEVICE, FTDI_SIO_SET_BAUD_RATE
+                    , encodedBaudRate[0], encodedBaudRate[1], null, 0, USB_TIMEOUT);
+        }else{
+            int value = 0;
+            if(baudRate >= 0 && baudRate <= 300 )
+                value = FTDI_BAUDRATE_300;
+            else if(baudRate > 300 && baudRate <= 600)
+                value = FTDI_BAUDRATE_600;
+            else if(baudRate > 600 && baudRate <= 1200)
+                value = FTDI_BAUDRATE_1200;
+            else if(baudRate > 1200 && baudRate <= 2400)
+                value = FTDI_BAUDRATE_2400;
+            else if(baudRate > 2400 && baudRate <= 4800)
+                value = FTDI_BAUDRATE_4800;
+            else if(baudRate > 4800 && baudRate <= 9600)
+                value = FTDI_BAUDRATE_9600;
+            else if(baudRate > 9600 && baudRate <=19200)
+                value = FTDI_BAUDRATE_19200;
+            else if(baudRate > 19200 && baudRate <= 38400)
+                value = FTDI_BAUDRATE_38400;
+            else if(baudRate > 19200 && baudRate <= 57600)
+                value = FTDI_BAUDRATE_57600;
+            else if(baudRate > 57600 && baudRate <= 115200)
+                value = FTDI_BAUDRATE_115200;
+            else if(baudRate > 115200 && baudRate <= 230400)
+                value = FTDI_BAUDRATE_230400;
+            else if(baudRate > 230400 && baudRate <= 460800)
+                value = FTDI_BAUDRATE_460800;
+            else if(baudRate > 460800 && baudRate <= 921600)
+                value = FTDI_BAUDRATE_921600;
+            else if(baudRate > 921600)
+                value = FTDI_BAUDRATE_921600;
+            else
+                value = FTDI_BAUDRATE_9600;
+
+            setControlCommand(FTDI_SIO_SET_BAUD_RATE, value, 0);
+        }
     }
 
     @Override
@@ -734,7 +742,7 @@ public class FTDISerialDevice extends UsbSerialDevice
 
     // Encoding baudrate as freebsd driver:
     // https://github.com/freebsd/freebsd/blob/1d6e4247415d264485ee94b59fdbc12e0c566fd0/sys/dev/usb/serial/uftdi.c
-    private short[] encodeBaudRate(int baudRate){
+    private short[] encodedBaudRate(int baudRate){
         boolean isFT232A = false;
         boolean clk12MHz = false;
         boolean hIndex = false;
@@ -808,8 +816,8 @@ public class FTDISerialDevice extends UsbSerialDevice
         }
         divisor |= (encodedFraction[frac] << 14) | fastClk;
 
-        ret[0] = (short) divisor;
-        ret[1] = (short) (divisor >> 16);
+        ret[0] = (short) divisor; //loBits
+        ret[1] = (short) (divisor >> 16); //hiBits
 
 
         if(hIndex) {
