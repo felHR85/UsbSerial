@@ -144,7 +144,8 @@ public class CP210xIds
             createDevice(0x3195, 0xF190),
             createDevice(0x3195, 0xF280),
             createDevice(0x3195, 0xF281),
-            createDevice(0x413C, 0x9500)
+            createDevice(0x413C, 0x9500),
+            createDevice(0x1908, 0x2311)    //serial of CMOS camera
     );
 
     public static boolean isDeviceSupported(int vendorId, int productId)
