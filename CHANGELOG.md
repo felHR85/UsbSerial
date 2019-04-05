@@ -1,10 +1,16 @@
 CHANGELOG
 =========
 
+Release 6.0.6
+--------------------------------------
+- Solved issue with CDC.
+- Added new pair of VID/PID pairs for CP2102.
+- Threads closing in a safer way.
+
 Release 6.0.4
 --------------------------------------
-- Proguard rules
-- FTDI driver improved again
+- Proguard rules.
+- FTDI driver improved again.
 
 Release 6.0.3
 --------------------------------------
