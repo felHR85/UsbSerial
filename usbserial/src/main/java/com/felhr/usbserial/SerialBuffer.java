@@ -118,6 +118,7 @@ public class SerialBuffer
                 } catch (InterruptedException e)
                 {
                     e.printStackTrace();
+                    Thread.currentThread().interrupt();
                 }
             }
             byte[] dst;
