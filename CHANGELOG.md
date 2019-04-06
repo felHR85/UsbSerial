@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-Release 6.0.6
+Release 6.0.5
 --------------------------------------
 - Solved issue with CDC.
 - Added new pair of VID/PID pairs for CP2102.
