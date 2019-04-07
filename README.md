@@ -9,7 +9,8 @@ UsbSerial wiki available. Read it first
 [**Synchronous api**](https://github.com/felHR85/UsbSerial/wiki/5.-Synchronous-api)\
 [**InputStream and OutputStream I/O**](https://github.com/felHR85/UsbSerial/wiki/6.-InputStream-and-OutputStream-I-O)\
 [**Multiple Serial ports**](https://github.com/felHR85/UsbSerial/wiki/7.-Multiple-Serial-ports)\
-[**Projects using UsbSerial**](https://github.com/felHR85/UsbSerial/wiki/8.-Projects-using-UsbSerial)
+[**Projects using UsbSerial**](https://github.com/felHR85/UsbSerial/wiki/8.-Projects-using-UsbSerial)\
+[**Debugging over Wifi**](https://github.com/felHR85/UsbSerial/wiki/9.-Debugging-over-Wifi)
 
 Support UsbSerial
 --------------------------------------
