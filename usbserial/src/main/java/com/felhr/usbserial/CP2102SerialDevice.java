@@ -27,6 +27,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
     private static final int CP210x_SET_CHARS = 0x19;
     private static final int CP210x_GET_MDMSTS = 0x08;
     private static final int CP210x_GET_COMM_STATUS = 0x10;
+    private static final int CP210X_SET_BREAK = 0x05;
 
     private static final int CP210x_REQTYPE_HOST2DEVICE = 0x41;
     private static final int CP210x_REQTYPE_DEVICE2HOST = 0xC1;
@@ -64,6 +65,12 @@ public class CP2102SerialDevice extends UsbSerialDevice
     private boolean dtrDsrEnabled;
     private boolean ctsState;
     private boolean dsrState;
+
+    /**
+     * Break control variables
+     */
+    private static final int CP210x_BREAK_ON = 0x0001;
+    private static final int CP210x_BREAK_OFF = 0x0000;
 
     private UsbCTSCallback ctsCallback;
     private UsbDSRCallback dsrCallback;
@@ -360,6 +367,14 @@ public class CP2102SerialDevice extends UsbSerialDevice
     public void getDSR(UsbDSRCallback dsrCallback)
     {
         this.dsrCallback = dsrCallback;
+    }
+
+    @Override
+    public void setBreak(boolean state) {
+        if(state)
+            setControlCommand(CP210X_SET_BREAK, CP210x_BREAK_ON, null);
+        else
+            setControlCommand(CP210X_SET_BREAK, CP210x_BREAK_OFF, null);
     }
 
     @Override

@@ -25,7 +25,7 @@ import java.util.Map;
 public class UsbService extends Service {
 
     public static final String TAG = "UsbService";
-    
+
     public static final String ACTION_USB_READY = "com.felhr.connectivityservices.USB_READY";
     public static final String ACTION_USB_ATTACHED = "android.hardware.usb.action.USB_DEVICE_ATTACHED";
     public static final String ACTION_USB_DETACHED = "android.hardware.usb.action.USB_DEVICE_DETACHED";
@@ -39,6 +39,7 @@ public class UsbService extends Service {
     public static final int MESSAGE_FROM_SERIAL_PORT = 0;
     public static final int CTS_CHANGE = 1;
     public static final int DSR_CHANGE = 2;
+    public static final int BREAK_INTERRUPT = 3;
     private static final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
     private static final int BAUD_RATE = 9600; // BaudRate. Change this value if you need
     public static boolean SERVICE_CONNECTED = false;
@@ -77,7 +78,7 @@ public class UsbService extends Service {
     private UsbSerialInterface.UsbCTSCallback ctsCallback = new UsbSerialInterface.UsbCTSCallback() {
         @Override
         public void onCTSChanged(boolean state) {
-            if(mHandler != null)
+            if (mHandler != null)
                 mHandler.obtainMessage(CTS_CHANGE).sendToTarget();
         }
     };
@@ -88,9 +89,23 @@ public class UsbService extends Service {
     private UsbSerialInterface.UsbDSRCallback dsrCallback = new UsbSerialInterface.UsbDSRCallback() {
         @Override
         public void onDSRChanged(boolean state) {
-            if(mHandler != null)
+            if (mHandler != null)
                 mHandler.obtainMessage(DSR_CHANGE).sendToTarget();
         }
+    };
+
+    /*
+     * State changes in the Break signal will be received here
+     */
+    private UsbSerialInterface.UsbBreakCallback breakCallback = new UsbSerialInterface.UsbBreakCallback() {
+
+        @Override
+        public void onBreakInterrupt() {
+            Log.d(TAG, "onBreakInterrupt");
+            if (mHandler != null)
+                mHandler.obtainMessage(BREAK_INTERRUPT).sendToTarget();
+        }
+
     };
     /*
      * Different notifications from OS will be received here (USB attached, detached, permission responses...)
@@ -167,9 +182,22 @@ public class UsbService extends Service {
      * This function will be called from MainActivity to write data through Serial Port
      */
     public void write(byte[] data) {
-        if (serialPort != null)
+        if (serialPort != null) {
             serialPort.write(data);
+        }
     }
+
+    public void sendBreak() {
+        try {
+            serialPort.setBreak(true);
+            Thread.sleep(500);
+            serialPort.setBreak(false);
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     public void setHandler(Handler mHandler) {
         this.mHandler = mHandler;
@@ -179,7 +207,7 @@ public class UsbService extends Service {
         // This snippet will try to open the first encountered usb device connected, excluding usb root hubs
         HashMap<String, UsbDevice> usbDevices = usbManager.getDeviceList();
         if (!usbDevices.isEmpty()) {
-            
+
             // first, dump the hashmap for diagnostic purposes
             for (Map.Entry<String, UsbDevice> entry : usbDevices.entrySet()) {
                 device = entry.getValue();
@@ -205,13 +233,13 @@ public class UsbService extends Service {
                     device = null;
                 }
             }
-            if (device==null) {
+            if (device == null) {
                 // There are no USB devices connected (but usb host were listed). Send an intent to MainActivity.
                 Intent intent = new Intent(ACTION_NO_USB);
                 sendBroadcast(intent);
             }
         } else {
-            Log.d(TAG, "findSerialPortDevice() usbManager returned empty device list." );
+            Log.d(TAG, "findSerialPortDevice() usbManager returned empty device list.");
             // There is no USB devices connected. Send an intent to MainActivity
             Intent intent = new Intent(ACTION_NO_USB);
             sendBroadcast(intent);
@@ -230,7 +258,7 @@ public class UsbService extends Service {
      * Request user permission. The response will be received in the BroadcastReceiver
      */
     private void requestUserPermission() {
-        Log.d(TAG, String.format("requestUserPermission(%X:%X)", device.getVendorId(), device.getProductId() ) );
+        Log.d(TAG, String.format("requestUserPermission(%X:%X)", device.getVendorId(), device.getProductId()));
         PendingIntent mPendingIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
         usbManager.requestPermission(device, mPendingIntent);
     }
@@ -266,12 +294,13 @@ public class UsbService extends Service {
                     serialPort.read(mCallback);
                     serialPort.getCTS(ctsCallback);
                     serialPort.getDSR(dsrCallback);
-                    
+                    serialPort.getBreak(breakCallback);
+
                     //
                     // Some Arduinos would need some sleep because firmware wait some time to know whether a new sketch is going 
                     // to be uploaded or not
                     //Thread.sleep(2000); // sleep some. YMMV with different chips.
-                    
+
                     // Everything went as expected. Send an intent to MainActivity
                     Intent intent = new Intent(ACTION_USB_READY);
                     context.sendBroadcast(intent);

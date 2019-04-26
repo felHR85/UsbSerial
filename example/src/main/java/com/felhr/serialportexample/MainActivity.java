@@ -85,6 +85,15 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+        Button sendBreak = (Button) findViewById(R.id.buttonBreak);
+        sendBreak.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (usbService != null) { // if UsbService was correctly binded, Send data
+                    usbService.sendBreak();
+                }
+            }
+        });
     }
 
     @Override
@@ -149,6 +158,9 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case UsbService.DSR_CHANGE:
                     Toast.makeText(mActivity.get(), "DSR_CHANGE",Toast.LENGTH_LONG).show();
+                    break;
+                case UsbService.BREAK_INTERRUPT:
+                    Toast.makeText(mActivity.get(), "BREAK_INTERRUPT",Toast.LENGTH_LONG).show();
                     break;
             }
         }

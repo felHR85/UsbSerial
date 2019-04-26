@@ -53,6 +53,9 @@ public interface UsbSerialInterface
     void getCTS(UsbCTSCallback ctsCallback);
     void getDSR(UsbDSRCallback dsrCallback);
 
+    // Break control commands and interface callback
+    void setBreak(boolean state);
+
     // Status methods
     void getBreak(UsbBreakCallback breakCallback);
     void getFrame(UsbFrameCallback frameCallback);

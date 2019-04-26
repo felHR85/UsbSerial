@@ -235,6 +235,11 @@ public class BLED112SerialDevice extends UsbSerialDevice
     }
 
     @Override
+    public void setBreak(boolean state) {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
     public void getBreak(UsbBreakCallback breakCallback)
     {
         //TODO
