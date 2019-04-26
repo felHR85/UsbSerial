@@ -268,6 +268,12 @@ public class CH34xSerialDevice extends UsbSerialDevice
     }
 
     @Override
+    public void setBreak(boolean state)
+    {
+        //TODO Auto-generated method stub
+    }
+
+    @Override
     public void setParity(int parity)
     {
         switch(parity)

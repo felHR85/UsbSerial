@@ -36,6 +36,13 @@ public class FTDISerialDevice extends UsbSerialDevice
     private static final int FTDI_SIO_SET_RTS_HIGH = (2 | (FTDI_SIO_SET_RTS_MASK << 8));
     private static final int FTDI_SIO_SET_RTS_LOW = (0 | (FTDI_SIO_SET_RTS_MASK << 8));
 
+    /**
+     *  BREAK on/off values obtained from linux driver
+     *  https://github.com/torvalds/linux/blob/master/drivers/usb/serial/ftdi_sio.h
+     */
+    private static final int FTDI_SIO_SET_BREAK_ON = (1<<14);
+    private static final int FTDI_SIO_SET_BREAK_OFF = (0<<14);
+
     public static final int FTDI_BAUDRATE_300 = 0x2710;
     public static final int FTDI_BAUDRATE_600 = 0x1388;
     public static final int FTDI_BAUDRATE_1200 = 0x09c4;
@@ -373,6 +380,21 @@ public class FTDISerialDevice extends UsbSerialDevice
                 setControlCommand(FTDI_SIO_SET_FLOW_CTRL, FTDI_SET_FLOW_CTRL_DEFAULT, 0);
                 break;
         }
+    }
+
+    /**
+     *  BREAK on/off methods obtained from linux driver
+     *  https://github.com/torvalds/linux/blob/master/drivers/usb/serial/ftdi_sio.c
+     */
+    @Override
+    public void setBreak(boolean state)
+    {
+        if(state){
+            currentSioSetData |= FTDI_SIO_SET_BREAK_ON;
+        }else{
+            currentSioSetData &= ~(FTDI_SIO_SET_BREAK_ON);
+        }
+        setControlCommand(FTDI_SIO_SET_DATA, currentSioSetData, 0);
     }
 
     @Override
