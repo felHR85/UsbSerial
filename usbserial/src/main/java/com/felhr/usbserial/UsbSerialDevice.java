@@ -227,6 +227,8 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     public abstract void setParity(int parity);
     @Override
     public abstract void setFlowControl(int flowControl);
+    @Override
+    public abstract void setBreak(boolean state);
 
     public SerialInputStream getInputStream() {
         if(asyncMode)

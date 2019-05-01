@@ -204,6 +204,12 @@ public class BLED112SerialDevice extends UsbSerialDevice
     }
 
     @Override
+    public void setBreak(boolean state)
+    {
+        //TODO
+    }
+
+    @Override
     public void setRTS(boolean state)
     {
         //TODO

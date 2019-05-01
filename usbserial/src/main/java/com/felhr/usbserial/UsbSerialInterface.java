@@ -46,6 +46,7 @@ public interface UsbSerialInterface
     void setStopBits(int stopBits);
     void setParity(int parity);
     void setFlowControl(int flowControl);
+    void setBreak(boolean state);
 
     // Flow control commands and interface callback
     void setRTS(boolean state);
