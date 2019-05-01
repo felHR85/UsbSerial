@@ -9,6 +9,7 @@ import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbRequest;
+import android.os.Build;
 import android.util.Log;
 
 import com.felhr.utils.SafeUsbRequest;
@@ -98,7 +99,6 @@ public class FTDISerialDevice extends UsbSerialDevice
     private UsbSerialInterface.UsbFrameCallback frameCallback;
     private UsbSerialInterface.UsbOverrunCallback overrunCallback;
     private UsbSerialInterface.UsbBreakCallback breakCallback;
-
 
     public FTDISerialDevice(UsbDevice device, UsbDeviceConnection connection)
     {
@@ -194,38 +194,13 @@ public class FTDISerialDevice extends UsbSerialDevice
     @Override
     public void setBaudRate(int baudRate)
     {
-        int value = 0;
-        if(baudRate >= 0 && baudRate <= 300 )
-            value = FTDI_BAUDRATE_300;
-        else if(baudRate > 300 && baudRate <= 600)
-            value = FTDI_BAUDRATE_600;
-        else if(baudRate > 600 && baudRate <= 1200)
-            value = FTDI_BAUDRATE_1200;
-        else if(baudRate > 1200 && baudRate <= 2400)
-            value = FTDI_BAUDRATE_2400;
-        else if(baudRate > 2400 && baudRate <= 4800)
-            value = FTDI_BAUDRATE_4800;
-        else if(baudRate > 4800 && baudRate <= 9600)
-            value = FTDI_BAUDRATE_9600;
-        else if(baudRate > 9600 && baudRate <=19200)
-            value = FTDI_BAUDRATE_19200;
-        else if(baudRate > 19200 && baudRate <= 38400)
-            value = FTDI_BAUDRATE_38400;
-        else if(baudRate > 19200 && baudRate <= 57600)
-            value = FTDI_BAUDRATE_57600;
-        else if(baudRate > 57600 && baudRate <= 115200)
-            value = FTDI_BAUDRATE_115200;
-        else if(baudRate > 115200 && baudRate <= 230400)
-            value = FTDI_BAUDRATE_230400;
-        else if(baudRate > 230400 && baudRate <= 460800)
-            value = FTDI_BAUDRATE_460800;
-        else if(baudRate > 460800 && baudRate <= 921600)
-            value = FTDI_BAUDRATE_921600;
-        else if(baudRate > 921600)
-            value = FTDI_BAUDRATE_921600;
-        else
-            value = FTDI_BAUDRATE_9600;
-        setControlCommand(FTDI_SIO_SET_BAUD_RATE, value, 0);
+        short[] encodedBaudRate = encodedBaudRate(baudRate);
+
+        if(encodedBaudRate != null) {
+            setEncodedBaudRate(encodedBaudRate);
+        }else{
+            setOldBaudRate(baudRate);
+        }
     }
 
     @Override
@@ -728,5 +703,157 @@ public class FTDISerialDevice extends UsbSerialDevice
         } while(read <= 0);
 
         return read;
+    }
+
+    // https://stackoverflow.com/questions/47303802/how-is-androids-string-usbdevice-getversion-encoded-from-word-bcddevice
+    private short getBcdDevice() {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+            byte[] descriptors = connection.getRawDescriptors();
+            return (short) ((descriptors[12] << 8) + descriptors[13]);
+        }else{
+            return -1;
+        }
+    }
+
+    private byte getISerialNumber(){
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+            byte[] descriptors = connection.getRawDescriptors();
+            return descriptors[16];
+        }else{
+            return -1;
+        }
+    }
+
+    private boolean isBaudTolerated(long speed, long target) {
+        return ((speed >= (target * 100) / 103) &&
+                (speed <= (target * 100) / 97));
+    }
+
+    // Encoding baudrate as freebsd driver:
+    // https://github.com/freebsd/freebsd/blob/1d6e4247415d264485ee94b59fdbc12e0c566fd0/sys/dev/usb/serial/uftdi.c
+    private short[] encodedBaudRate(int baudRate){
+        boolean isFT232A = false;
+        boolean clk12MHz = false;
+        boolean hIndex = false;
+
+        short[] ret = new short[2];
+        int clk, divisor, fastClk, frac, hwSpeed;
+
+        byte[] encodedFraction = new byte[]{
+                0, 3, 2, 4, 1, 5, 6, 7
+        };
+
+        byte[] roundoff232a = new byte[]{
+                0,  1,  0,  1,  0, -1,  2,  1,
+                0, -1, -2, -3,  4,  3,  2,  1,
+        };
+
+        short bcdDevice = getBcdDevice();
+
+        if(bcdDevice == -1) {
+            return null;
+        }
+
+        if(bcdDevice == 0x200 && getISerialNumber() == 0) {
+            isFT232A = true;
+        }
+
+        if(bcdDevice == 0x500 || bcdDevice == 0x700 || bcdDevice == 0x800 || bcdDevice == 0x900 || bcdDevice == 0x1000) {
+            hIndex = true;
+        }
+
+        if(bcdDevice == 0x700 || bcdDevice == 0x800 || bcdDevice == 0x900 ) {
+            clk12MHz = true;
+        }
+
+        if(baudRate >= 1200 && clk12MHz) {
+            clk = 12000000;
+            fastClk = (1 << 17);
+        }else {
+            clk = 3000000;
+            fastClk = 0;
+        }
+
+        if(baudRate < (clk >> 14) || baudRate > clk) {
+            return null;
+        }
+
+        divisor = (clk << 4) / baudRate;
+        if((divisor & 0xf) == 1) {
+            divisor &= 0xfffffff8;
+        }else if (isFT232A) {
+            divisor += roundoff232a[divisor & 0x0f];
+        }else {
+            divisor += 1;  /* Rounds odd 16ths up to next 8th. */
+        }
+        divisor >>= 1;
+
+        hwSpeed = (clk << 3) / divisor;
+
+        if(!isBaudTolerated(hwSpeed, baudRate)) {
+            return null;
+        }
+
+        frac = divisor & 0x07;
+        divisor >>= 3;
+        if (divisor == 1) {
+            if (frac == 0) {
+                divisor = 0;  /* 1.0 becomes 0.0 */
+            }else {
+                frac = 0;     /* 1.5 becomes 1.0 */
+            }
+        }
+        divisor |= (encodedFraction[frac] << 14) | fastClk;
+
+        ret[0] = (short) divisor; //loBits
+        ret[1] = (short) (divisor >> 16); //hiBits
+
+
+        if(hIndex) {
+            ret[1] <<= 8;
+        }
+
+        return ret;
+    }
+
+    private void setEncodedBaudRate(short[] encodedBaudRate) {
+        connection.controlTransfer(FTDI_REQTYPE_HOST2DEVICE, FTDI_SIO_SET_BAUD_RATE
+                , encodedBaudRate[0], encodedBaudRate[1], null, 0, USB_TIMEOUT);
+    }
+
+    private void setOldBaudRate(int baudRate) {
+        int value = 0;
+        if(baudRate >= 0 && baudRate <= 300 )
+            value = FTDI_BAUDRATE_300;
+        else if(baudRate > 300 && baudRate <= 600)
+            value = FTDI_BAUDRATE_600;
+        else if(baudRate > 600 && baudRate <= 1200)
+            value = FTDI_BAUDRATE_1200;
+        else if(baudRate > 1200 && baudRate <= 2400)
+            value = FTDI_BAUDRATE_2400;
+        else if(baudRate > 2400 && baudRate <= 4800)
+            value = FTDI_BAUDRATE_4800;
+        else if(baudRate > 4800 && baudRate <= 9600)
+            value = FTDI_BAUDRATE_9600;
+        else if(baudRate > 9600 && baudRate <=19200)
+            value = FTDI_BAUDRATE_19200;
+        else if(baudRate > 19200 && baudRate <= 38400)
+            value = FTDI_BAUDRATE_38400;
+        else if(baudRate > 19200 && baudRate <= 57600)
+            value = FTDI_BAUDRATE_57600;
+        else if(baudRate > 57600 && baudRate <= 115200)
+            value = FTDI_BAUDRATE_115200;
+        else if(baudRate > 115200 && baudRate <= 230400)
+            value = FTDI_BAUDRATE_230400;
+        else if(baudRate > 230400 && baudRate <= 460800)
+            value = FTDI_BAUDRATE_460800;
+        else if(baudRate > 460800 && baudRate <= 921600)
+            value = FTDI_BAUDRATE_921600;
+        else if(baudRate > 921600)
+            value = FTDI_BAUDRATE_921600;
+        else
+            value = FTDI_BAUDRATE_9600;
+
+        setControlCommand(FTDI_SIO_SET_BAUD_RATE, value, 0);
     }
 }
