@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+Release 6.0.6
+--------------------------------------
+- Added custom baud rates in FTDI devices.
+- Added setBreak method. Currently only working in FTDI devices.
+
 Release 6.0.5
 --------------------------------------
 - Solved issue with CDC.
