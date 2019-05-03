@@ -66,6 +66,12 @@ public class CH34xSerialDevice extends UsbSerialDevice
 
     private static final int CH34X_921600_1312 = 0xf387;
 
+    private static final int CH34X_1228800_1312 = 0xfb03;
+    private static final int CH34X_1228800_0f2c = 0x21;
+
+    private static final int CH34X_2000000_1312 = 0xfd03;
+    private static final int CH34X_2000000_0f2c = 0x02;
+
     // Parity values
     private static final int CH34X_PARITY_NONE = 0xc3;
     private static final int CH34X_PARITY_ODD = 0xcb;
@@ -248,6 +254,16 @@ public class CH34xSerialDevice extends UsbSerialDevice
         }else if(baudRate > 460800 && baudRate <= 921600)
         {
             int ret = setBaudRate(CH34X_921600_1312, CH34X_19200_0f2c_rest);
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
+        } else if(baudRate > 921600 && baudRate <= 1228800)
+        {
+            int ret = setBaudRate(CH34X_1228800_1312, CH34X_1228800_0f2c);
+            if(ret == -1)
+                Log.i(CLASS_ID, "SetBaudRate failed!");
+        } else if(baudRate > 1228800 && baudRate <= 2000000)
+        {
+            int ret = setBaudRate(CH34X_2000000_1312, CH34X_2000000_0f2c);
             if(ret == -1)
                 Log.i(CLASS_ID, "SetBaudRate failed!");
         }
