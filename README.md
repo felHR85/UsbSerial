@@ -11,6 +11,7 @@ UsbSerial wiki available. Read it first
 [**Multiple Serial ports**](https://github.com/felHR85/UsbSerial/wiki/7.-Multiple-Serial-ports)\
 [**Projects using UsbSerial**](https://github.com/felHR85/UsbSerial/wiki/8.-Projects-using-UsbSerial)\
 [**Debugging over Wifi**](https://github.com/felHR85/UsbSerial/wiki/9.-Debugging-over-Wifi)
+[**UsbSerial video tutorials**](https://github.com/felHR85/UsbSerial/wiki/10.UsbSerial-video-tutorials)
 
 Support UsbSerial
 --------------------------------------
