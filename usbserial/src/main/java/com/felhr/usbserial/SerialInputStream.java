@@ -55,6 +55,18 @@ public class SerialInputStream extends InputStream
     }
 
     @Override
+    public int read(byte b[], int off, int len)
+    {
+        if (off == 0 && len == b.length) {
+            return read(b);
+        }
+        byte[] slice = new byte[len];
+        int ret = device.syncRead(slice, timeout);
+        System.arraycopy(slice, 0, b, off, ret);
+        return ret;
+    }
+
+    @Override
     public int available() throws IOException {
         if(bufferSize > 0)
             return bufferSize - pointer;
