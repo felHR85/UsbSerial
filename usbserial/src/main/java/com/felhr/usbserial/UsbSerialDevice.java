@@ -72,7 +72,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
         int vid = device.getVendorId();
         int pid = device.getProductId();
 
-        if(FTDISioIds.isDeviceSupported(vid, pid))
+        if(FTDISioIds.isDeviceSupported(device))
             return new FTDISerialDevice(device, connection, iface);
         else if(CP210xIds.isDeviceSupported(vid, pid))
             return new CP2102SerialDevice(device, connection, iface);
@@ -107,7 +107,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
         int vid = device.getVendorId();
         int pid = device.getProductId();
 
-        if(FTDISioIds.isDeviceSupported(vid, pid))
+        if(FTDISioIds.isDeviceSupported(device))
             return true;
         else if(CP210xIds.isDeviceSupported(vid, pid))
             return true;
