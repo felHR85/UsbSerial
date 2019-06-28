@@ -251,7 +251,6 @@ public class FTDISioIds
             createDevice(0x03eb, 0x2109),
             createDevice(0x0456, 0xf000),
             createDevice(0x0456, 0xf001),
-            createDevice(0x04d8, 0x000a),
             createDevice(0x0584, 0xb020),
             createDevice(0x0647, 0x0100),
             createDevice(0x06CE, 0x8311),
