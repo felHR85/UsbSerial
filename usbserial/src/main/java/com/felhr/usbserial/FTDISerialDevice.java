@@ -817,8 +817,10 @@ public class FTDISerialDevice extends UsbSerialDevice
     }
 
     private void setEncodedBaudRate(short[] encodedBaudRate) {
+        Log.i("FELIPE_TEST", String.valueOf(encodedBaudRate[0]));
+        Log.i("FELIPE_TEST", String.valueOf(encodedBaudRate[1]));
         connection.controlTransfer(FTDI_REQTYPE_HOST2DEVICE, FTDI_SIO_SET_BAUD_RATE
-                , encodedBaudRate[0], encodedBaudRate[1], null, 0, USB_TIMEOUT);
+                , 0x4138, mInterface.getId() + 1, null, 0, USB_TIMEOUT);
     }
 
     private void setOldBaudRate(int baudRate) {
