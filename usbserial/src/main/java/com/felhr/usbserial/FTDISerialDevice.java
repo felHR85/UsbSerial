@@ -537,6 +537,30 @@ public class FTDISerialDevice extends UsbSerialDevice
 
     public class FTDIUtilities
     {
+        // Special treatment needed to FTDI devices
+        public byte[] adaptArray(byte[] ftdiData)
+        {
+            int length = ftdiData.length;
+            if(length > 64)
+            {
+                int n = 1;
+                int p = 64;
+                // Precalculate length without FTDI headers
+                while(p < length)
+                {
+                    n++;
+                    p = n*64;
+                }
+                int realLength = length - n*2;
+                byte[] data = new byte[realLength];
+                copyData(ftdiData, data);
+                return data;
+            }else
+            {
+                return Arrays.copyOfRange(ftdiData, 2, length);
+            }
+        }
+
         public void checkModemStatus(byte[] data)
         {
             if(data.length == 0) // Safeguard for zero length arrays
@@ -624,10 +648,6 @@ public class FTDISerialDevice extends UsbSerialDevice
             return 0;
         }
 
-        if (mr1Version) {
-            return readSyncJelly(buffer, timeout, stopTime);
-        }
-
         int n = buffer.length / 62;
         if(buffer.length % 62 != 0)
         {
@@ -654,7 +674,7 @@ public class FTDISerialDevice extends UsbSerialDevice
 
             if(numberBytes > 2) // Data received
             {
-                byte[] newBuffer = adaptArray(tempBuffer);
+                byte[] newBuffer = this.ftdiUtilities.adaptArray(tempBuffer);
                 System.arraycopy(newBuffer, 0, buffer, 0, buffer.length);
 
                 int p = numberBytes / 64;
