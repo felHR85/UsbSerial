@@ -25,6 +25,8 @@ import static com.felhr.integrationapp.UsbService.MESSAGE_TEST_5;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final int MODE = 0; // 0: Async, 1: Sync, 2: Streams
+
     /*
      * Notifications from UsbService will be received here.
      */
@@ -60,6 +62,7 @@ public class MainActivity extends AppCompatActivity {
         }
     };
     private UsbService usbService;
+    private UsbSyncService usbSyncService;
     private TextView test1, test2, test3, test4, test5;
     private TextView statusText;
     private MyHandler mHandler;
@@ -74,6 +77,19 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
             usbService = null;
+        }
+    };
+
+    private final ServiceConnection usbSyncConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName arg0, IBinder arg1) {
+            usbSyncService = ((UsbSyncService.UsbBinder) arg1).getService();
+            usbSyncService.setHandler(mHandler);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            usbSyncService = null;
         }
     };
 
@@ -94,7 +110,11 @@ public class MainActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
         setFilters();  // Start listening notifications from UsbService
-        startService(UsbService.class, usbConnection, null); // Start UsbService(if it was not started before) and Bind it
+        if (MODE == 0) {
+            startService(UsbService.class, usbConnection, null); // Start UsbService(if it was not started before) and Bind it
+        }else if (MODE == 1) {
+            startService(UsbSyncService.class, usbSyncConnection, null);
+        }
     }
 
     @Override
