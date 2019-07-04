@@ -23,6 +23,10 @@
             android:name="com.felhr.integrationapp.UsbService"
             android:enabled="true">
         </service>
+        <service
+            android:name="com.felhr.integrationapp.UsbSyncService"
+            android:enabled="true">
+        </service>
     </application>
 </manifest>
 
