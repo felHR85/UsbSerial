@@ -110,6 +110,7 @@ public class MainActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
         setFilters();  // Start listening notifications from UsbService
+        Toast.makeText(this, "Mode: " + String.valueOf(MODE), Toast.LENGTH_LONG).show();
         if (MODE == 0) {
             startService(UsbService.class, usbConnection, null); // Start UsbService(if it was not started before) and Bind it
         }else if (MODE == 1) {
@@ -121,7 +122,11 @@ public class MainActivity extends AppCompatActivity {
     public void onPause() {
         super.onPause();
         unregisterReceiver(mUsbReceiver);
-        unbindService(usbConnection);
+        if(MODE == 0) {
+            unbindService(usbConnection);
+        }else{
+            unbindService(usbSyncConnection);
+        }
     }
 
     private void startService(Class<?> service, ServiceConnection serviceConnection, Bundle extras) {

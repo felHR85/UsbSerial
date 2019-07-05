@@ -33,8 +33,6 @@ public class UsbSyncService extends Service {
     private static final int SIZE_TEST_1 = 1024;
     private static final int SIZE_TEST_2 = 2048;
     private static final int SIZE_TEST_3 = 16384;
-    private static final int SIZE_TEST_4 = 65535;
-    private static final int SIZE_TEST_5 = 131072;
 
     private static final String TEST_1 = "test1";
     private static final String TEST_2 = "test2";
@@ -58,10 +56,6 @@ public class UsbSyncService extends Service {
     public static final int MESSAGE_TEST_1 = 0;
     public static final int MESSAGE_TEST_2 = 1;
     public static final int MESSAGE_TEST_3 = 2;
-    public static final int MESSAGE_TEST_4 = 3;
-    public static final int MESSAGE_TEST_5 = 4;
-    public static final int CTS_CHANGE = 1;
-    public static final int DSR_CHANGE = 2;
     private static final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
     private static final int BAUD_RATE = 115200; // BaudRate. Change this value if you need
     public static boolean SERVICE_CONNECTED = false;
@@ -282,11 +276,11 @@ public class UsbSyncService extends Service {
         @Override
         public void run() {
             while(true){
-                byte[] tmpBuffer = new byte[BUFFER_SYNC];
+                byte[] tmpBuffer = new byte[16384];
                 int n = serialPort.syncRead(tmpBuffer, 0);
 
                 if(n > 0) {
-                  buffer.write(tmpBuffer);
+                    buffer.write(tmpBuffer, 0, n);
                 }
 
                 if(mode.equals(TEST_1)){
@@ -305,20 +299,8 @@ public class UsbSyncService extends Service {
                 }else if(mode.equals(TEST_3)){
                     if(buffer.size() == SIZE_TEST_3){
                         serialPort.syncWrite(buffer.readByteArray(), 0);
-                        mode = TEST_4;
-                        mHandler.obtainMessage(MESSAGE_TEST_3, "Test 16Kb completed correctly").sendToTarget();
-                    }
-                }else if(mode.equals(TEST_4)){
-                    if(buffer.size() == SIZE_TEST_4){
-                        serialPort.syncWrite(buffer.readByteArray(), 0);
-                        mode = TEST_5;
-                        mHandler.obtainMessage(MESSAGE_TEST_4, "Test 64Kb completed correctly").sendToTarget();
-                    }
-                }else if(mode.equals(TEST_5)){
-                    if(buffer.size() == SIZE_TEST_5){
-                        serialPort.syncWrite(buffer.readByteArray(), 0);
                         mode = TEST_1;
-                        mHandler.obtainMessage(MESSAGE_TEST_5, "Test 128Kb completed correctly").sendToTarget();
+                        mHandler.obtainMessage(MESSAGE_TEST_3, "Test 16Kb completed correctly").sendToTarget();
                     }
                 }
             }
