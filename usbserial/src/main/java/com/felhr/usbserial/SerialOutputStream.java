@@ -45,9 +45,7 @@ public class SerialOutputStream extends OutputStream
             return;
         }
 
-        byte[] slice = new byte[len];
-        System.arraycopy(b, off, slice, 0, len);
-        device.syncWrite(slice, timeout);
+        device.syncWrite(b, off, len, timeout);
     }
 
     public void setTimeout(int timeout) {

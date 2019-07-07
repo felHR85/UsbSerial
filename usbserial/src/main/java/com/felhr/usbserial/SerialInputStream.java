@@ -73,10 +73,7 @@ public class SerialInputStream extends InputStream
             return read(b);
         }
 
-        byte[] slice = new byte[len];
-        int ret = device.syncRead(slice, timeout);
-        System.arraycopy(slice, 0, b, off, ret);
-        return ret;
+        return device.syncRead(b, off, len, timeout);
     }
 
     @Override
