@@ -48,7 +48,7 @@ public class DeviceIdTest {
 
         for (TestCase tc : cases) {
             Assert.assertTrue(CP210xIds.isDeviceSupported(tc.vendor, tc.product));
-            Assert.assertFalse(FTDISioIds.isDeviceSupported(tc.vendor, tc.product));
+            Assert.assertFalse(FTDISioIds.isDeviceIdSupported(tc.vendor, tc.product));
         }
     }
 

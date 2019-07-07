@@ -1,5 +1,8 @@
 package com.felhr.deviceids;
 
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbInterface;
+
 import static com.felhr.deviceids.Helpers.createTable;
 import static com.felhr.deviceids.Helpers.createDevice;
 
@@ -251,7 +254,6 @@ public class FTDISioIds
             createDevice(0x03eb, 0x2109),
             createDevice(0x0456, 0xf000),
             createDevice(0x0456, 0xf001),
-            createDevice(0x04d8, 0x000a),
             createDevice(0x0584, 0xb020),
             createDevice(0x0647, 0x0100),
             createDevice(0x06CE, 0x8311),
@@ -560,7 +562,25 @@ public class FTDISioIds
             createDevice(0x0403, 0x0) //fake FTDI reprogrammed by driver
     );
 
-    public static boolean isDeviceSupported(int vendorId, int productId) {
+    private static boolean isMicrochipFtdi(UsbDevice dev) {
+        if (dev.getVendorId() != 0x04d8 || dev.getProductId() != 0x000a)
+            return false;
+        for (int i = 0; i < dev.getInterfaceCount(); i++) {
+            UsbInterface intf = dev.getInterface(i);
+            if (intf.getInterfaceClass() == 0xff && intf.getInterfaceSubclass() == 0xff &&
+                    intf.getInterfaceProtocol() == 0x00)
+                return true;
+        }
+        return false;
+    }
+
+    public static boolean isDeviceSupported(UsbDevice dev) {
+        return Helpers.exists(ftdiDevices, dev.getVendorId(), dev.getProductId()) ||
+                isMicrochipFtdi(dev);
+
+    }
+
+    static boolean isDeviceIdSupported(int vendorId, int productId) {
         return Helpers.exists(ftdiDevices, vendorId, productId);
     }
 }
