@@ -691,7 +691,7 @@ public class FTDISerialDevice extends UsbSerialDevice
 
     @Override
     public int syncRead(byte[] buffer, int offset, int length, int timeout) {
-        /* TODO
+
         long beginTime = System.currentTimeMillis();
         long stopTime = beginTime + timeout;
 
@@ -705,13 +705,13 @@ public class FTDISerialDevice extends UsbSerialDevice
             return 0;
         }
 
-        int n = buffer.length / 62;
-        if(buffer.length % 62 != 0)
+        int n = length / 62;
+        if(length % 62 != 0)
         {
             n++;
         }
 
-        byte[] tempBuffer = new byte[buffer.length + n * 2];
+        byte[] tempBuffer = new byte[length + n * 2];
 
         int readen = 0;
 
@@ -732,7 +732,7 @@ public class FTDISerialDevice extends UsbSerialDevice
             if(numberBytes > 2) // Data received
             {
                 byte[] newBuffer = this.ftdiUtilities.adaptArray(tempBuffer);
-                System.arraycopy(newBuffer, 0, buffer, 0, buffer.length);
+                System.arraycopy(newBuffer, 0, buffer, offset, length);
 
                 int p = numberBytes / 64;
                 if(numberBytes % 64 != 0)
@@ -744,8 +744,6 @@ public class FTDISerialDevice extends UsbSerialDevice
         }while(readen <= 0);
 
         return readen;
-        */
-        return 0;
     }
 
     private static final byte[] skip = new byte[2];
