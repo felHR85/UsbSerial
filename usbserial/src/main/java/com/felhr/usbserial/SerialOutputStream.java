@@ -25,6 +25,31 @@ public class SerialOutputStream extends OutputStream
         device.syncWrite(b, timeout);
     }
 
+    @Override
+    public void write(byte b[], int off, int len)
+    {
+        if(off < 0 ){
+            throw new IndexOutOfBoundsException("Offset must be >= 0");
+        }
+
+        if(len < 0){
+            throw new IndexOutOfBoundsException("Length must positive");
+        }
+
+        if(off + len > b.length) {
+            throw new IndexOutOfBoundsException("off + length greater than buffer length");
+        }
+
+        if (off == 0 && len == b.length) {
+            write(b);
+            return;
+        }
+
+        byte[] slice = new byte[len];
+        System.arraycopy(b, off, slice, 0, len);
+        device.syncWrite(slice, timeout);
+    }
+
     public void setTimeout(int timeout) {
         this.timeout = timeout;
     }
