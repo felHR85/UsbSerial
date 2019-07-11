@@ -1,6 +1,14 @@
 CHANGELOG
 =========
 
+Release 6.1.0
+--------------------------------------
+- Added 1228800 and 2000000 baud rates to CH34xx driver.
+- Microchip pid/vid correclty determined.
+- FTDI sync method back to previous implementation.
+- setBreak method implemented in CP210x devices.
+- Added chunked stream methods.
+
 Release 6.0.6
 --------------------------------------
 - Added custom baud rates in FTDI devices.
