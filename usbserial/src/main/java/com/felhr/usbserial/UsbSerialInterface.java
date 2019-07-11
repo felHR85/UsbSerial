@@ -38,6 +38,8 @@ public interface UsbSerialInterface
     boolean syncOpen();
     int syncWrite(byte[] buffer, int timeout);
     int syncRead(byte[] buffer, int timeout);
+    int syncWrite(byte[] buffer, int offset, int length, int timeout);
+    int syncRead(byte[] buffer, int offset, int length, int timeout);
     void syncClose();
 
     // Serial port configuration

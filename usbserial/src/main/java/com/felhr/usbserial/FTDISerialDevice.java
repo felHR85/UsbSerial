@@ -689,6 +689,63 @@ public class FTDISerialDevice extends UsbSerialDevice
         return readen;
     }
 
+    @Override
+    public int syncRead(byte[] buffer, int offset, int length, int timeout) {
+
+        long beginTime = System.currentTimeMillis();
+        long stopTime = beginTime + timeout;
+
+        if(asyncMode)
+        {
+            return -1;
+        }
+
+        if(buffer == null)
+        {
+            return 0;
+        }
+
+        int n = length / 62;
+        if(length % 62 != 0)
+        {
+            n++;
+        }
+
+        byte[] tempBuffer = new byte[length + n * 2];
+
+        int readen = 0;
+
+        do
+        {
+            int timeLeft = 0;
+            if(timeout > 0)
+            {
+                timeLeft = (int) (stopTime - System.currentTimeMillis());
+                if (timeLeft <= 0)
+                {
+                    break;
+                }
+            }
+
+            int numberBytes = connection.bulkTransfer(inEndpoint, tempBuffer, tempBuffer.length, timeLeft);
+
+            if(numberBytes > 2) // Data received
+            {
+                byte[] newBuffer = this.ftdiUtilities.adaptArray(tempBuffer);
+                System.arraycopy(newBuffer, 0, buffer, offset, length);
+
+                int p = numberBytes / 64;
+                if(numberBytes % 64 != 0)
+                {
+                    p++;
+                }
+                readen = numberBytes - p * 2;
+            }
+        }while(readen <= 0);
+
+        return readen;
+    }
+
     private static final byte[] skip = new byte[2];
 
     /**

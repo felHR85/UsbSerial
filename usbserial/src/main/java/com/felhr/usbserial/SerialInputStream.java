@@ -55,6 +55,28 @@ public class SerialInputStream extends InputStream
     }
 
     @Override
+    public int read(byte b[], int off, int len)
+    {
+        if(off < 0 ){
+            throw new IndexOutOfBoundsException("Offset must be >= 0");
+        }
+
+        if(len < 0){
+            throw new IndexOutOfBoundsException("Length must positive");
+        }
+
+        if(len > b.length - off) {
+            throw new IndexOutOfBoundsException("Length greater than b.length - off");
+        }
+
+        if (off == 0 && len == b.length) {
+            return read(b);
+        }
+
+        return device.syncRead(b, off, len, timeout);
+    }
+
+    @Override
     public int available() throws IOException {
         if(bufferSize > 0)
             return bufferSize - pointer;

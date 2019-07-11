@@ -5,6 +5,7 @@ import com.felhr.deviceids.CP210xIds;
 import com.felhr.deviceids.FTDISioIds;
 import com.felhr.deviceids.PL2303Ids;
 
+import android.annotation.TargetApi;
 import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
@@ -214,6 +215,35 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
             return 0;
 
         return connection.bulkTransfer(inEndpoint, buffer, buffer.length, timeout);
+    }
+
+    @TargetApi(18)
+    @Override
+    public int syncWrite(byte[] buffer, int offset, int length, int timeout) {
+        if(!asyncMode)
+        {
+            if(buffer == null)
+                return 0;
+
+            return connection.bulkTransfer(outEndpoint, buffer, offset, length, timeout);
+        }else
+        {
+            return -1;
+        }
+    }
+
+    @TargetApi(18)
+    @Override
+    public int syncRead(byte[] buffer, int offset, int length, int timeout) {
+        if(asyncMode)
+        {
+            return -1;
+        }
+
+        if (buffer == null)
+            return 0;
+
+        return connection.bulkTransfer(inEndpoint, buffer, offset, length, timeout);
     }
 
     // Serial port configuration
