@@ -194,7 +194,7 @@ Then add the dependency to your module's build.gradle:
 
 /app/build.gradle
 ```groovy
-implementation 'com.github.felHR85:UsbSerial:6.0.6'
+implementation 'com.github.felHR85:UsbSerial:6.1.0'
 ```
 
 TO-DO
