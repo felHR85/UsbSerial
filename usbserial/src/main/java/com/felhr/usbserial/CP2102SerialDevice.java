@@ -19,6 +19,7 @@ public class CP2102SerialDevice extends UsbSerialDevice
     private static final int CP210x_SET_BAUDDIV = 0x01;
     private static final int CP210x_SET_LINE_CTL = 0x03;
     private static final int CP210x_GET_LINE_CTL = 0x04;
+    private static final int CP210X_SET_BREAK = 0x05;
     private static final int CP210x_SET_MHS = 0x07;
     private static final int CP210x_SET_BAUDRATE = 0x1E;
     private static final int CP210x_SET_FLOW = 0x13;
@@ -30,6 +31,9 @@ public class CP2102SerialDevice extends UsbSerialDevice
 
     private static final int CP210x_REQTYPE_HOST2DEVICE = 0x41;
     private static final int CP210x_REQTYPE_DEVICE2HOST = 0xC1;
+
+    private static final int CP210x_BREAK_ON = 0x0001;
+    private static final int CP210x_BREAK_OFF = 0x0000;
 
     private static final int CP210x_MHS_RTS_ON = 0x202;
     private static final int CP210x_MHS_RTS_OFF = 0x200;
@@ -329,7 +333,11 @@ public class CP2102SerialDevice extends UsbSerialDevice
     @Override
     public void setBreak(boolean state)
     {
-        //TODO Auto-generated method stub
+        if (state) {
+            setControlCommand(CP210X_SET_BREAK, CP210x_BREAK_ON, null);
+        } else {
+            setControlCommand(CP210X_SET_BREAK, CP210x_BREAK_OFF, null);
+        }
     }
 
     @Override
