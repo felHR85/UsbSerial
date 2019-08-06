@@ -16,17 +16,21 @@ public class SerialBuffer
     private byte[] readBufferCompatible; // Read buffer for android < 4.2
     private boolean debugging = false;
 
+    private boolean version;
+    private int readBufferSize = DEFAULT_READ_BUFFER_SIZE;
+
     public SerialBuffer(boolean version)
     {
         writeBuffer = new SynchronizedBuffer();
         if(version)
         {
-            readBuffer = ByteBuffer.allocate(DEFAULT_READ_BUFFER_SIZE);
+            readBuffer = ByteBuffer.allocate(readBufferSize);
 
         }else
         {
-            readBufferCompatible = new byte[DEFAULT_READ_BUFFER_SIZE];
+            readBufferCompatible = new byte[readBufferSize];
         }
+        this.version = version;
     }
 
     /*
@@ -35,6 +39,31 @@ public class SerialBuffer
     public void debug(boolean value)
     {
         debugging = value;
+    }
+
+    public void setReadBufferSize(int readBufferSize)
+    {
+        synchronized (this)
+        {
+            if(version)
+            {
+                readBuffer = ByteBuffer.allocate(readBufferSize);
+
+            }else
+            {
+                readBufferCompatible = new byte[readBufferSize];
+            }
+
+            this.readBufferSize = readBufferSize;
+        }
+    }
+
+    public int getReadBufferSize()
+    {
+        synchronized (this)
+        {
+            return readBufferSize;
+        }
     }
 
     public ByteBuffer getReadBuffer()
