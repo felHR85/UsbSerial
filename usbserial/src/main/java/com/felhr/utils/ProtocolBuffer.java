@@ -132,10 +132,10 @@ public class ProtocolBuffer {
 
         if(prevIndex < rawBuffer.length
                 && prevIndex > 0){
-            byte[] tempBuffer = Arrays.copyOfRange(rawBuffer, prevIndex, rawBuffer.length);
+            byte[] tempBuffer = Arrays.copyOfRange(rawBuffer, prevIndex, bufferPointer);
             bufferPointer = 0;
-            System.arraycopy(tempBuffer, 0, rawBuffer, bufferPointer, rawData.length);
-            bufferPointer += rawData.length;
+            System.arraycopy(tempBuffer, 0, rawBuffer, bufferPointer, tempBuffer.length);
+            bufferPointer += tempBuffer.length;
         }
 
     }
