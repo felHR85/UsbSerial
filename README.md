@@ -13,6 +13,9 @@ UsbSerial wiki available. Read it first
 [**Debugging over Wifi**](https://github.com/felHR85/UsbSerial/wiki/9.-Debugging-over-Wifi)\
 [**UsbSerial video tutorials**](https://github.com/felHR85/UsbSerial/wiki/10.-UsbSerial-video-tutorials)
 
+[I am looking for collaborators to keep this project updated](https://github.com/felHR85/UsbSerial/issues/313)
+--------------------------------------
+
 Support UsbSerial
 --------------------------------------
 [If UsbSerial helped you with your projects please consider donating a little sum](https://www.paypal.me/felhr)\
