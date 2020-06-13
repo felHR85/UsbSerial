@@ -49,6 +49,7 @@ public class CDCSerialDevice extends UsbSerialDevice
     private final UsbInterface mInterface;
     private UsbEndpoint inEndpoint;
     private UsbEndpoint outEndpoint;
+    private int cdcControl = 0;
 
     private int initialBaudRate = 0;
 
@@ -62,6 +63,7 @@ public class CDCSerialDevice extends UsbSerialDevice
     public CDCSerialDevice(UsbDevice device, UsbDeviceConnection connection, int iface)
     {
         super(device, connection);
+        cdcControl = findFirstControl(device); // Not sure how to find the control interface for others.
         mInterface = device.getInterface(iface >= 0 ? iface : findFirstCDC(device));
     }
 
@@ -372,7 +374,7 @@ public class CDCSerialDevice extends UsbSerialDevice
         {
             dataLength = data.length;
         }
-        int response = connection.controlTransfer(CDC_REQTYPE_HOST2DEVICE, request, value, 0, data, dataLength, USB_TIMEOUT);
+        int response = connection.controlTransfer(CDC_REQTYPE_HOST2DEVICE, request, value, cdcControl, data, dataLength, USB_TIMEOUT);
         Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
         return response;
     }
@@ -380,7 +382,7 @@ public class CDCSerialDevice extends UsbSerialDevice
     private byte[] getLineCoding()
     {
         byte[] data = new byte[7];
-        int response = connection.controlTransfer(CDC_REQTYPE_DEVICE2HOST, CDC_GET_LINE_CODING, 0, 0, data, data.length, USB_TIMEOUT);
+        int response = connection.controlTransfer(CDC_REQTYPE_DEVICE2HOST, CDC_GET_LINE_CODING, 0, cdcControl, data, data.length, USB_TIMEOUT);
         Log.i(CLASS_ID,"Control Transfer Response: " + String.valueOf(response));
         return data;
     }
@@ -399,6 +401,23 @@ public class CDCSerialDevice extends UsbSerialDevice
 
         Log.i(CLASS_ID, "There is no CDC class interface");
         return -1;
+    }
+
+    private static int findFirstControl(UsbDevice device)
+    {
+        int interfaceCount = device.getInterfaceCount();
+
+        for (int iIndex = 0; iIndex < interfaceCount; ++iIndex)
+        {
+            if (device.getInterface(iIndex).getInterfaceClass() == UsbConstants.USB_CLASS_COMM)
+            {
+                Log.i(CLASS_ID, "Using CDC control interface " + String.valueOf(iIndex));
+                return iIndex;
+            }
+        }
+
+        Log.i(CLASS_ID, "There is no CDC control interface");
+        return 0;
     }
 
 }
