@@ -30,7 +30,6 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     protected final UsbDeviceConnection connection;
 
     protected static final int USB_TIMEOUT = 0;
-    private static final int USB_MAX_BUFFER = 4096;
 
     protected SerialBuffer serialBuffer;
 
@@ -197,18 +196,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
             if(buffer == null)
                 return 0;
 
-            int totalLength = buffer.length;
-            byte[] bArr2 = new byte[USB_MAX_BUFFER];
-            int i3 = 0;
-            int i4 = 0;
-            while (totalLength > 0 && i3 < totalLength && i4 != -1) {
-                int min = Math.min(USB_MAX_BUFFER, totalLength - i3);
-                System.arraycopy(buffer, i3, bArr2, 0, min);
-                i4 = connection.bulkTransfer(outEndpoint, bArr2, min, timeout);
-                i3 += i4;
-            }
-
-            return i3;
+            return connection.bulkTransfer(outEndpoint, buffer, buffer.length, timeout);
         }else
         {
             return -1;
@@ -237,18 +225,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
             if(buffer == null)
                 return 0;
 
-            int totalLength = buffer.length;
-            byte[] bArr2 = new byte[USB_MAX_BUFFER];
-            int i3 = 0;
-            int i4 = 0;
-            while (totalLength > 0 && i3 < totalLength && i4 != -1) {
-                int min = Math.min(USB_MAX_BUFFER, totalLength - i3);
-                System.arraycopy(buffer, i3, bArr2, 0, min);
-                i4 = connection.bulkTransfer(outEndpoint, bArr2, min, timeout);
-                i3 += i4;
-            }
-
-            return i3;
+            return connection.bulkTransfer(outEndpoint, buffer, offset, length, timeout);
         }else
         {
             return -1;
