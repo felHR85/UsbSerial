@@ -786,7 +786,7 @@ public class FTDISerialDevice extends UsbSerialDevice
     private short getBcdDevice() {
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
             byte[] descriptors = connection.getRawDescriptors();
-            return (short) ((descriptors[12] << 8) + descriptors[13]);
+            return (short) ((descriptors[13] << 8) + descriptors[12]);
         }else{
             return -1;
         }
