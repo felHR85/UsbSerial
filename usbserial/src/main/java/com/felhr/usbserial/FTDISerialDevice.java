@@ -883,12 +883,9 @@ public class FTDISerialDevice extends UsbSerialDevice
         divisor |= (encodedFraction[frac] << 14) | fastClk;
 
         ret[0] = (short) divisor; //loBits
-        ret[1] = (short) (divisor >> 16); //hiBits
-
-
-        if(hIndex) {
-            ret[1] <<= 8;
-        }
+        ret[1] = hIndex ?
+                (short) ((divisor >> 8) & 0xFF00 | (mInterface.getId() + 1))
+                : (short) (divisor >> 16); //hiBits
 
         return ret;
     }
