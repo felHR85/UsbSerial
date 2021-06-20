@@ -160,23 +160,30 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
     @Override
     public int read(UsbReadCallback mCallback)
     {
+        return read(mCallback, serialBuffer.getReadBufferSize());
+    }
+
+    @Override
+    public int read(UsbReadCallback callback, int readBufferSize) {
         if(!asyncMode)
             return -1;
+
+        if(readBufferSize != serialBuffer.getReadBufferSize())
+            serialBuffer.setReadBufferSize(readBufferSize);
 
         if(mr1Version)
         {
             if (workerThread != null) {
-                workerThread.setCallback(mCallback);
-                workerThread.getUsbRequest().queue(serialBuffer.getReadBuffer(), SerialBuffer.DEFAULT_READ_BUFFER_SIZE);
+                workerThread.setCallback(callback);
+                workerThread.getUsbRequest().queue(serialBuffer.getReadBuffer(), serialBuffer.getReadBufferSize());
             }
         }else
         {
-            readThread.setCallback(mCallback);
+            readThread.setCallback(callback);
             //readThread.start();
         }
         return 0;
     }
-
 
     @Override
     public abstract void close();
@@ -366,7 +373,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
                     onReceivedData(data);
                 }
                 // Queue a new request
-                requestIN.queue(serialBuffer.getReadBuffer(), SerialBuffer.DEFAULT_READ_BUFFER_SIZE);
+                requestIN.queue(serialBuffer.getReadBuffer(), serialBuffer.getReadBufferSize());
             }
         }
 
@@ -434,7 +441,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
             int numberBytes;
             if(inEndpoint != null)
                 numberBytes = connection.bulkTransfer(inEndpoint, serialBuffer.getBufferCompatible(),
-                        SerialBuffer.DEFAULT_READ_BUFFER_SIZE, 0);
+                        serialBuffer.getReadBufferSize(), 0);
             else
                 numberBytes = 0;
 
