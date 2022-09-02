@@ -495,15 +495,11 @@ public class FTDISerialDevice extends UsbSerialDevice
         int length = ftdiData.length;
         if(length > 64)
         {
-            int n = 1;
-            int p = 64;
             // Precalculate length without FTDI headers
-            while(p < length)
-            {
-                n++;
-                p = n*64;
-            }
-            int realLength = length - n*2;
+            int realLength = (length / 64) * 62;
+            if (length % 64 > 2)
+                realLength += length % 64 - 2;
+
             byte[] data = new byte[realLength];
             copyData(ftdiData, data);
             return data;
@@ -529,7 +525,7 @@ public class FTDISerialDevice extends UsbSerialDevice
             dstPos += 62;
         }
         int remaining = src.length - srcPos + 2;
-        if (remaining > 0)
+        if (remaining > 2)
         {
             System.arraycopy(src, srcPos, dst, dstPos, remaining - 2);
         }
