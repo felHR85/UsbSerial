@@ -563,7 +563,7 @@ public class FTDISerialDevice extends UsbSerialDevice
 
         public void checkModemStatus(byte[] data)
         {
-            if(data.length == 0) // Safeguard for zero length arrays
+            if(data.length < 2) // Safeguard for zero length arrays
                 return;
 
             boolean cts = (data[0] & 0x10) == 0x10;
