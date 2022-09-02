@@ -93,6 +93,8 @@ public class FTDISerialDevice extends UsbSerialDevice
     private UsbEndpoint inEndpoint;
     private UsbEndpoint outEndpoint;
 
+    private int packetSize = 64;
+
     public FTDIUtilities ftdiUtilities;
 
     private UsbSerialInterface.UsbParityCallback parityCallback;
@@ -452,6 +454,7 @@ public class FTDISerialDevice extends UsbSerialDevice
                     && endpoint.getDirection() == UsbConstants.USB_DIR_IN)
             {
                 inEndpoint = endpoint;
+                packetSize = inEndpoint.getMaxPacketSize();
             }else
             {
                 outEndpoint = endpoint;
@@ -490,15 +493,15 @@ public class FTDISerialDevice extends UsbSerialDevice
     }
 
     // Special treatment needed to FTDI devices
-    static byte[] adaptArray(byte[] ftdiData)
+    byte[] adaptArray(byte[] ftdiData)
     {
         int length = ftdiData.length;
-        if(length > 64)
+        if(length > packetSize)
         {
             // Precalculate length without FTDI headers
-            int realLength = (length / 64) * 62;
-            if (length % 64 > 2)
-                realLength += length % 64 - 2;
+            int realLength = (length / packetSize) * (packetSize - 2);
+            if (length % packetSize > 2)
+                realLength += length % packetSize - 2;
 
             byte[] data = new byte[realLength];
             copyData(ftdiData, data);
@@ -515,14 +518,14 @@ public class FTDISerialDevice extends UsbSerialDevice
     }
 
     // Copy data without FTDI headers
-    private static void copyData(byte[] src, byte[] dst)
+    private void copyData(byte[] src, byte[] dst)
     {
         int srcPos = 2, dstPos = 0;
-        while(srcPos - 2 <= src.length - 64)
+        while(srcPos - 2 <= src.length - packetSize)
         {
-            System.arraycopy(src, srcPos, dst, dstPos, 62);
-            srcPos += 64;
-            dstPos += 62;
+            System.arraycopy(src, srcPos, dst, dstPos, packetSize - 2);
+            srcPos += packetSize;
+            dstPos += packetSize - 2;
         }
         int remaining = src.length - srcPos + 2;
         if (remaining > 2)
@@ -620,8 +623,8 @@ public class FTDISerialDevice extends UsbSerialDevice
             return 0;
         }
 
-        int n = buffer.length / 62;
-        if(buffer.length % 62 != 0)
+        int n = buffer.length / (packetSize - 2);
+        if(buffer.length % (packetSize - 2) != 0)
         {
             n++;
         }
@@ -649,8 +652,8 @@ public class FTDISerialDevice extends UsbSerialDevice
                 byte[] newBuffer = adaptArray(tempBuffer);
                 System.arraycopy(newBuffer, 0, buffer, 0, buffer.length);
 
-                int p = numberBytes / 64;
-                if(numberBytes % 64 != 0)
+                int p = numberBytes / packetSize;
+                if(numberBytes % packetSize != 0)
                 {
                     p++;
                 }
@@ -677,8 +680,8 @@ public class FTDISerialDevice extends UsbSerialDevice
             return 0;
         }
 
-        int n = length / 62;
-        if(length % 62 != 0)
+        int n = length / (packetSize - 2);
+        if(length % (packetSize - 2) != 0)
         {
             n++;
         }
@@ -706,8 +709,8 @@ public class FTDISerialDevice extends UsbSerialDevice
                 byte[] newBuffer = adaptArray(tempBuffer);
                 System.arraycopy(newBuffer, 0, buffer, offset, length);
 
-                int p = numberBytes / 64;
-                if(numberBytes % 64 != 0)
+                int p = numberBytes / packetSize;
+                if(numberBytes % packetSize != 0)
                 {
                     p++;
                 }
@@ -746,7 +749,7 @@ public class FTDISerialDevice extends UsbSerialDevice
 
             if(numberBytes > 2) // Data received
             {
-                numberBytes = connection.bulkTransfer(inEndpoint, buffer, read, 62, timeLeft);
+                numberBytes = connection.bulkTransfer(inEndpoint, buffer, read, (packetSize - 2), timeLeft);
                 read += numberBytes;
             }
         } while(read <= 0);
