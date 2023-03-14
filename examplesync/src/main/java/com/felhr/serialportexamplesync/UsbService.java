@@ -240,8 +240,10 @@ public class UsbService extends Service {
      * Request user permission. The response will be received in the BroadcastReceiver
      */
     private void requestUserPermission() {
+        int flag = (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) ? PendingIntent.FLAG_MUTABLE : 0;
+        
         Log.d(TAG, String.format("requestUserPermission(%X:%X)", device.getVendorId(), device.getProductId() ) );
-        PendingIntent mPendingIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
+        PendingIntent mPendingIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), flag);
         usbManager.requestPermission(device, mPendingIntent);
     }
 
