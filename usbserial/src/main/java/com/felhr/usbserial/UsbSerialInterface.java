@@ -32,6 +32,7 @@ public interface UsbSerialInterface
     boolean open();
     void write(byte[] buffer);
     int read(UsbReadCallback mCallback);
+    int read(UsbReadCallback mCallback, int readBufferSize);
     void close();
 
     // Common Usb Serial Operations (I/O Synchronous)
