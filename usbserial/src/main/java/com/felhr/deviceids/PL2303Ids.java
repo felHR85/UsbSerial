@@ -13,6 +13,7 @@ public class PL2303Ids
     private static final long[] pl2303Devices = createTable(
             createDevice(0x04a5, 0x4027),
             createDevice(0x067b, 0x2303),
+            createDevice(0x067b, 0x23c3),
             createDevice(0x067b, 0x04bb),
             createDevice(0x067b, 0x1234),
             createDevice(0x067b, 0xaaa0),
