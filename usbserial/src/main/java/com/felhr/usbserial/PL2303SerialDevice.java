@@ -32,6 +32,7 @@ public class PL2303SerialDevice extends UsbSerialDevice
             (byte) 0x08  // [6] Data Bits (5=5, 6=6, 7=7, 8=8)
     };
 
+    private int rtsDtrState = 0x0000;
 
     private final UsbInterface mInterface;
     private UsbEndpoint inEndpoint;
@@ -273,13 +274,27 @@ public class PL2303SerialDevice extends UsbSerialDevice
     @Override
     public void setRTS(boolean state)
     {
-        //TODO
+        if(state)
+        {
+            rtsDtrState |= (1 << 1);
+        }else
+        {
+            rtsDtrState &= ~(1 << 1);
+        }
+        setControlCommand(PL2303_REQTYPE_HOST2DEVICE, PL2303_SET_CONTROL_REQUEST, rtsDtrState, 0, null);
     }
 
     @Override
     public void setDTR(boolean state)
     {
-        //TODO
+        if(state)
+        {
+            rtsDtrState |= (1 << 0);
+        }else
+        {
+            rtsDtrState &= ~(1 << 0);
+        }
+        setControlCommand(PL2303_REQTYPE_HOST2DEVICE, PL2303_SET_CONTROL_REQUEST, rtsDtrState, 0, null);
     }
 
     @Override
@@ -368,9 +383,10 @@ public class PL2303SerialDevice extends UsbSerialDevice
         if(setControlCommand(PL2303_REQTYPE_HOST2DEVICE_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x0002, 0x0044, null) < 0)
             return false;
         // End of specific vendor stuff
-        if(setControlCommand(PL2303_REQTYPE_HOST2DEVICE, PL2303_SET_CONTROL_REQUEST, 0x0003, 0,null) < 0)
-            return false;
+        //if(setControlCommand(PL2303_REQTYPE_HOST2DEVICE, PL2303_SET_CONTROL_REQUEST, 0x0000, 0, null) < 0)
         if(setControlCommand(PL2303_REQTYPE_HOST2DEVICE, PL2303_SET_LINE_CODING, 0x0000, 0, defaultSetLine) < 0)
+            return false;
+        if(setControlCommand(PL2303_REQTYPE_HOST2DEVICE, PL2303_SET_CONTROL_REQUEST, rtsDtrState, 0, null) < 0)
             return false;
         if(setControlCommand(PL2303_REQTYPE_HOST2DEVICE_VENDOR, PL2303_VENDOR_WRITE_REQUEST, 0x0505, 0x1311, null) < 0)
             return false;
