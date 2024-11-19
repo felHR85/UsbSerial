@@ -3,6 +3,7 @@ apply plugin: 'com.android.application'
 android {
 
     compileSdkVersion Integer.parseInt(project.ANDROID_BUILD_SDK_VERSION)
+    namespace = 'com.felhr.examplemultipleports'
 
     defaultConfig {
         applicationId "com.felhr.examplemultipleports"
@@ -41,5 +42,5 @@ dependencies {
     testImplementation 'junit:junit:4.12'
 
     implementation project(':usbserial')
-    implementation 'com.annimon:stream:1.2.1'
+    implementation 'com.annimon:stream:1.2.2'
 }
