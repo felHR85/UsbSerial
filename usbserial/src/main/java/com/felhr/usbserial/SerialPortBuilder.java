@@ -9,6 +9,7 @@ import android.content.IntentFilter;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
+import android.os.Build;
 
 import com.annimon.stream.Optional;
 import com.annimon.stream.Stream;
@@ -152,7 +153,11 @@ public class SerialPortBuilder {
     }
 
     private PendingUsbPermission createUsbPermission(Context context, UsbDeviceStatus usbDeviceStatus){
-        PendingIntent mPendingIntent = PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0);
+        int flags = 0;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            flags = PendingIntent.FLAG_IMMUTABLE;
+        }
+        PendingIntent mPendingIntent = PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), flags);
         PendingUsbPermission pendingUsbPermission = new PendingUsbPermission();
         pendingUsbPermission.pendingIntent = mPendingIntent;
         pendingUsbPermission.usbDeviceStatus = usbDeviceStatus;
@@ -176,7 +181,11 @@ public class SerialPortBuilder {
         if(!broadcastRegistered) {
             IntentFilter filter = new IntentFilter();
             filter.addAction(ACTION_USB_PERMISSION);
-            context.registerReceiver(usbReceiver, filter);
+            int flags = 0;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                flags = Context.RECEIVER_NOT_EXPORTED;
+            }
+            context.registerReceiver(usbReceiver, filter, flags);
             broadcastRegistered = true;
         }
     }
